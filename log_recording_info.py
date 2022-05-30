@@ -24,7 +24,7 @@ rec_info['date'] = [rec_date]
 # Get number of probes used
 value = int(input("Enter number of probes used:"))
 
-rec_info['n_areas'] = [value]
+rec_info['n_probes'] = [value]
 
 # Fill in info. for each probe
 for p in range(value):
@@ -51,3 +51,4 @@ for p in range(value):
 base = Path(r'D:\Npx_Data')
 jsonfile_path = base / '{}_{}_rec_info_dict.log'.format(mouse_name, rec_date)
 jsonfile_path.write_text(json.dumps(rec_info))
+print('Saved recording info as .log file in ', base, 'Move it.')
