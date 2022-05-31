@@ -47,8 +47,12 @@ for p in range(value):
 
     rec_info['imec{}'.format(p)] = rec_info_probe
 
-# Save as json
 base = Path(r'D:\Npx_Data')
-jsonfile_path = base / '{}_{}_rec_info_dict.log'.format(mouse_name, rec_date)
-jsonfile_path.write_text(json.dumps(rec_info))
-print('Saved recording info as .log file in ', base, 'Move it.')
+mouse_run_folders = [f for f in os.listdir(base) if mouse_name in f]
+print('SpikeGLX runs recorded:', mouse_run_folders)
+
+# Save recorded info as .log file in each run folder
+for f in mouse_run_folders:
+    jsonfile_path = base / f / '{}_{}_rec_info_dict.log'.format(mouse_name, rec_date)
+    jsonfile_path.write_text(json.dumps(rec_info))
+    print('Saved recording info as .log file in ', jsonfile_path)
