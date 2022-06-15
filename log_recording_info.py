@@ -53,6 +53,6 @@ print('SpikeGLX runs recorded:', mouse_run_folders)
 
 # Save recorded info as .log file in each run folder
 for f in mouse_run_folders:
-    jsonfile_path = base / f / '{}_{}_rec_info_dict.log'.format(mouse_name, rec_date)
+    jsonfile_path = base / f / '{}_{}_rec_info_dict.json'.format(mouse_name, rec_date)
     jsonfile_path.write_text(json.dumps(rec_info))
-    print('Saved recording info as .log file in ', jsonfile_path)
+    print('Saved recording info as .json file in ', jsonfile_path)
