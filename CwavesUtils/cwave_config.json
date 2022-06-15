@@ -1,5 +1,9 @@
 {
-     "base_path": "C:\\Users\\bisi\\CatGTWinApp\\CatGT-win",
+     "base_path": "C:\\Users\\bisi\\C_Waves-win",
      "data_path": "M:\\data",
-     "save_path": "M:\\analysis\\Axel_Bisi\\mice_data"
+     "save_path": "M:\\analysis\\Axel_Bisi\\mice_data",
+     "samples_per_spike": 82,
+     "pre_samples": 20,
+     "num_spikes": 1000,
+     "snr_radius": 8
 }

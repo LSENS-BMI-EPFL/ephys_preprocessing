@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import tkinter.filedialog as fdialog
 from pathlib import Path
 
 # Paths
@@ -128,60 +129,77 @@ def plot_mean_waveform_probe(mean_wf_cwave, clus_info_df, cluster_id):
 def plot_cwave_output(m_name):
     """
     Plot output from C_waves:
-    - mean waveforms,
-    - waveform in probe geometry
+    - mean cluster waveforms,
+    - waveform in probe geometry layout,
     - C_waves waveform SNR information.
 
     :param m_name: Mouse name.
     :return:
     """
 
-    # Load cluster SNR C_waves output
-    cluster_snr = np.load(os.path.join(PATH_ANALYSIS,
-                                       '{0}/Recording/Ephys/{0}_g0/{0}_g0_imec0/cwaves/cluster_snr.npy'.format(m_name)))
+    #Select mouse directory to generate plots from
+    input_dir_mouse = fdialog.askdirectory(title='Please select raw recording directory',
+                                           initialdir=PATH_ANALYSIS)
+    mouse_dir = os.path.join(input_dir_mouse, 'Recording/Ephys')
+    epoch_name = os.listdir(mouse_dir)[0]  # for raw data
+    catgt_epoch_name = 'catgt_{}'.format(epoch_name)  # for CatGT processed data
 
-    # Plot cluster SNRs distribution, spikes per pk. chan. distribution
-    fig = plot_cluster_snr_hist(cluster_snr)
-    fig.savefig(fname=os.path.join(PATH_ANALYSIS,
-                                   '{0}/Recording/Ephys/{0}_g0/{0}_g0_imec0/cwaves/cluster_snr_hist.png'.format(m_name)),
-                bbox_inches='tight')
+    #Count number of probe recordings
+    dirnames=1
+    if Path(mouse_dir, catgt_epoch_name).is_dir():
+        path_cwave_output = Path(mouse_dir, catgt_epoch_name)
+    elif Path(mouse_dir, epoch_name).is_dir():
+        path_cwave_output = Path(mouse_dir, epoch_name)
+    else:
+        print('Neural recordings not available in', PATH_ANALYSIS)
 
-    fig = plot_cluster_spks_per_pkch_hist(cluster_snr)
-    fig.savefig(fname=os.path.join(PATH_ANALYSIS,
-                                   '{0}/Recording/Ephys/{0}_g0/{0}_g0_imec0/cwaves/cluster_spks_pk_ch_hist.png'.format(m_name)),
-                bbox_inches='tight')
+    n_probes = len(next(os.walk(path_cwave_output))[dirnames])
+
+    #Plot for each probe
+    for probe_id in range(n_probes):
+        probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
+        path_cwave_probe = os.path.join(path_cwave_output, probe_folder, 'cwaves')
+        path_kilosort_probe = os.path.join(path_cwave_output, probe_folder, 'ks25')
+        print('Plotting for IMEC probe at {}'.format(os.path.join(path_cwave_output, probe_folder)))
+
+        ## Load cluster SNR C_waves output
+        cluster_snr = np.load(os.path.join(path_cwave_probe, 'cluster_snr.npy'))
+
+        # Plot cluster SNRs distribution
+        fig = plot_cluster_snr_hist(cluster_snr)
+        fig.savefig(fname=os.path.join(path_cwave_probe, 'cluster_snr_hist.png'), bbox_inches='tight')
+
+        # Plot distribution of spikes per pk. chan
+        fig = plot_cluster_spks_per_pkch_hist(cluster_snr)
+        fig.savefig(fname=os.path.join(path_cwave_probe, 'cluster_spks_pk_ch_hist.png'), bbox_inches='tight')
 
 
+        ## Load mean waveforms C_waves output
+        mean_wfs = np.load(os.path.join(path_cwave_probe, 'mean_waveforms.npy'))
 
-    # Load mean waveforms C_waves output
-    mean_wfs = np.load(os.path.join(PATH_ANALYSIS,
-                                    '{0}/Recording/Ephys/{0}_g0/{0}_g0_imec0/cwaves/mean_waveforms.npy'.format(m_name)))
+        # Load cluster info phy output
+        clus_info = pd.read_csv(os.path.join(path_kilosort_probe, 'cluster_info.tsv'), sep='\t') #<- assumes Phy performed
 
-    # Load cluster info phy output
-    clus_info = pd.read_csv(os.path.join(PATH_ANALYSIS,
-                                         '{0}/Recording/Ephys/{0}_g0/{0}_g0_imec0/ks25/cluster_info.tsv'.format(m_name)),
-                                         sep='\t')
-    # Set index s.t. it matches cluster_id range (necessary for C_waves)
-    clus_info.set_index(keys='cluster_id', drop=False, inplace=True)
-    clus_info = clus_info.reindex(range(np.max(clus_info.cluster_id) + 1), fill_value=0, copy=True)
+        # Set index s.t. it matches cluster_id range (necessary for C_waves)
+        clus_info.set_index(keys='cluster_id', drop=False, inplace=True)
+        clus_info = clus_info.reindex(range(np.max(clus_info.cluster_id) + 1), fill_value=0, copy=True)
 
-    # Create figure directory
-    folder_path = os.path.join(PATH_ANALYSIS,
-                               '{0}/Recording/Ephys/{0}_g0/{0}_g0_imec0/cwaves/pk_ch_mean_wf/'.format(m_name))
-    Path(folder_path).mkdir(parents=True, exist_ok=True)
+        # Create figure directory
+        folder_path = os.path.join(path_cwave_probe, 'pk_ch_mean_wf')
+        Path(folder_path).mkdir(parents=True, exist_ok=True)
 
-    # Plot all first 100 clusters
-    for cluster_id in np.unique(clus_info.cluster_id)[:100]:
+        # Plot all clusters
+        for cluster_id in np.unique(clus_info.cluster_id):
 
-        # Plot mean waveform at peak channel
-        fig = plot_mean_waveform_pk_ch(mean_wf_cwave=mean_wfs, clus_info_df=clus_info, cluster_id=cluster_id)
-        fig.savefig(fname=os.path.join(folder_path, 'cluster{}_pk_ch_mean_wf.png'.format(cluster_id)),
-                    bbox_inches='tight')
+            # Plot mean waveform at peak channel
+            fig = plot_mean_waveform_pk_ch(mean_wf_cwave=mean_wfs, clus_info_df=clus_info, cluster_id=cluster_id)
+            fig.savefig(fname=os.path.join(folder_path, 'cluster{}_pk_ch_mean_wf.png'.format(cluster_id)),
+                        bbox_inches='tight')
 
-        # Plot mean waveform per cluster in probe
-        fig = plot_mean_waveform_probe(mean_wf_cwave=mean_wfs, clus_info_df=clus_info, cluster_id=cluster_id)
-        fig.savefig(fname=os.path.join(folder_path, 'cluster{}_probe_mean_wf.png'.format(cluster_id)),
-                    bbox_inches='tight')
+            # Plot mean waveform per cluster in probe
+            fig = plot_mean_waveform_probe(mean_wf_cwave=mean_wfs, clus_info_df=clus_info, cluster_id=cluster_id)
+            fig.savefig(fname=os.path.join(folder_path, 'cluster{}_probe_mean_wf.png'.format(cluster_id)),
+                        bbox_inches='tight')
 
     return
 
