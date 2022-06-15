@@ -1,7 +1,9 @@
 {
-     "base_path": "C:\\Users\\bisi\\TPrime-win\\",
-     "data_path": "M:\\data",
-     "save_path": "M:\\analysis\\Axel_Bisi\\mice_data",
-     "syncperiod": 1,
-     "default_tostream_probe": 0
+     "base_path": "C:\\Users\\bisi\\Kilosort\\Kilosort-2.5",
+     "data_path": "M:\\analysis\\Axel_Bisi\\mice_data",
+     "ks_version": 2.5,
+     "nblocks": 5,
+     "threshold": [10, 4],
+     "lambda": 10,
+     "AUC_for_splits": 0.9
 }

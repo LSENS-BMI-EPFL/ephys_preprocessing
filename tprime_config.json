@@ -1,5 +1,6 @@
 {
-     "base_path": "C:\\Users\\bisi\\CatGTWinApp\\CatGT-win",
-     "data_path": "M:\\data",
-     "save_path": "M:\\analysis\\Axel_Bisi\\mice_data"
+     "base_path": "C:\\Users\\bisi\\TPrime-win\\",
+     "analysis_data_path": "M:\\analysis\\Axel_Bisi\\mice_data",
+     "syncperiod": 1,
+     "default_tostream_probe": 0
 }
