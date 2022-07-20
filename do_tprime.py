@@ -32,9 +32,9 @@ pprint.pprint(config)
 output_dir_mouse = fdialog.askdirectory(title='Please select mouse output directory', initialdir=config['analysis_data_path'])
 output_dir = os.path.join(output_dir_mouse, 'Recording/Ephys')
 
-catgt_epoch_name = os.listdir(output_dir)[0]
-epoch_name = os.listdir(output_dir)[0][6:] #MOUSENAME_gX
-run_name = os.listdir(output_dir)[0][6:-3] # MOUSENAME
+catgt_epoch_name = [d for d in os.listdir(output_dir) if 'catgt' in d][0]
+epoch_name = catgt_epoch_name[6:] #MOUSENAME_gX
+run_name = catgt_epoch_name[6:-3] # MOUSENAME
 
 # Get synchronization period
 sglx_metafile_path = Path(output_dir, catgt_epoch_name, '{}_tcat.nidq.meta'.format(epoch_name))
