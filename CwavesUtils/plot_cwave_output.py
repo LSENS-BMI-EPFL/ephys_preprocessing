@@ -17,7 +17,8 @@ import tkinter.filedialog as fdialog
 from pathlib import Path
 
 # Paths
-PATH_ANALYSIS = 'M:/analysis/Axel_Bisi/mice_data/'
+PATH_ANALYSIS = r'M:/analysis/Axel_Bisi/mice_data/'
+PATH_ANALYSIS = r'D:/Npx_Data/'
 
 def plot_cluster_snr_hist(cluster_snr_cwave):
     """
@@ -156,7 +157,7 @@ def plot_cwave_output(m_name):
     n_probes = len(next(os.walk(path_cwave_output))[dirnames])
 
     #Plot for each probe
-    for probe_id in range(n_probes):
+    for probe_id in range(n_probes)[0:1]:
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
         path_cwave_probe = os.path.join(path_cwave_output, probe_folder, 'cwaves')
         path_kilosort_probe = os.path.join(path_cwave_output, probe_folder, 'ks25')
@@ -205,7 +206,7 @@ def plot_cwave_output(m_name):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--m_name', type=str, nargs='?', default='ABXXX', required=True)
+    parser.add_argument('--m_name', type=str, nargs='?', default='ABXXX', required=False)
     args = parser.parse_args()
 
     plot_cwave_output(args.m_name)
