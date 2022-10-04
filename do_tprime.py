@@ -24,7 +24,7 @@ from SGLXMetaToCoords import readMeta  # read syncperiod
 
 # Load config
 print('Loading TPrime config')
-with open('tprime_config.json') as json_conf:
+with open('configs/tprime_config.json') as json_conf:
     config = json.load(json_conf, strict=False)
 pprint.pprint(config)
 
@@ -92,11 +92,11 @@ Path(path_dest).mkdir(parents=True, exist_ok=True)
 # Set reference streams
 command = ['Tprime',
            '-syncperiod={}'.format(syncperiod),
-            # arg: reference data stream edge times
+           # arg: reference data stream edge times (IMEC 0)
            '-tostream={}'.format(os.path.join(path_ref_probe, ref_probe_edges_file)),
-            # arg: stream index, sync pulse edge times (read from nidq digital)
+           # arg: stream index, sync pulse edge times
            '-fromstream={},{}'.format(nidq_stream_idx,
-                                      os.path.join(output_dir, catgt_epoch_name, epoch_name+'_tcat.nidq.XD_8_0_500.txt')) #TODO: check this: 8 or 0 digital channel
+                                      os.path.join(output_dir, catgt_epoch_name, epoch_name+'_tcat.nidq.XA_0_0.txt'))
            ]
 
 # Add edge times & spike times for each probe
@@ -139,7 +139,14 @@ command.append([
                               os.path.join(path_dest, 'valve_open.txt')),
     '-events={},{},{}'.format(nidq_stream_idx,
                               os.path.join(output_path, '{}_tcat.nidq.XA_5_0.txt'.format(epoch_name)),
-                              os.path.join(path_dest, 'camera_ttl.txt'))
+                              os.path.join(path_dest, 'camera_frame_times.txt')),
+    '-events={},{},{}'.format(nidq_stream_idx,
+                              os.path.join(output_path, '{}_tcat.nidq.XA_6_0.txt'.format(epoch_name)),
+                              os.path.join(path_dest, 'camera_arming_times.txt')),
+    '-events={},{},{}'.format(nidq_stream_idx,
+                              os.path.join(output_path, '{}_tcat.nidq.XA_7_0.txt'.format(epoch_name)),
+                              os.path.join(path_dest, 'piezo_licks.txt'))
+
 ])
 
 def flatten(l):
@@ -167,3 +174,5 @@ print('Opening log file')
 webbrowser.open(os.path.join(config['base_path'], 'Tprime.log'))
 
 print('Finished Tprime.')
+
+#TODO: make a function of class?

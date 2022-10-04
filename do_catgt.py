@@ -23,7 +23,7 @@ from SGLXMetaToCoords import readMeta
 
 # Load config
 print('Loading CatGT config')
-with open('catgt_config.json') as json_conf:
+with open('configs/catgt_config.json') as json_conf:
     config = json.load(json_conf, strict=False)
 pprint.pprint(config)
 
@@ -65,21 +65,23 @@ command = ['CatGT',
            '-prb_fld', '-prb_miss_ok',  #assumes probe data saved in separate folders
            '-g={}'.format(epoch_number),                      #saved SGLX run not necessarily the first one (g-index)
            '-t=0,0', '-t_miss_ok',      #assumes only one SGLX run
-           '-lf', '-ap',
-           '-prb=0:5',                  #assumes at most 6 probes
+           #'-lf', '-ap',
+           #'-prb=0:5',                  #assumes at most 6 probes
            '-ni'
            ]
 for probe_id in range(n_probes):
     command.append(['-SY={},{},6,500'.format(probe_id, n_saved_ch_probes[0]-1)])
 
 command.append([
-           '-XD=-1,0,500',               #Square wave pulse? (-1 takes last)
+           #'-XD=-1,0,500',               #Square wave pulse? (-1 takes last)
+           '-XA=0,1,0,0',               #Square wave pulse from IMEC slot
            '-XA=1,1,0,0',               #Trial start
-           '-XA=2,1,0,0',               #Auditory stimulus
-           '-XA=3,1,0,0',               #Whisker stimulus
-           '-XA=4,1,0,0',               #Valve
-           '-XA=5,1,0,0',               #Behaviour camera frames
-           '-XA=6,1,0,0',               #TRIG (imec acq. module)
+           '-XA=2,0.5,1,0',             #Auditory stimulus
+           '-XA=3,0.5,1,0',             #Whisker stimulus
+           '-XA=4,1,0,0',               #Valve opening
+           '-XA=5,1,0,0',               #Behaviour camera frame times
+           '-XA=6,1,0,0',               #Behaviour camera arming times
+           '-XA=7,0.005,0.010,0',       #Piezo lick sensor #TEST
            '-gblcar',                   #global CAR
            '-dest={}'.format(output_dir),
            '-out_prb_fld'])             #saved in separate probe folders
@@ -110,3 +112,5 @@ print('Opening log file')
 webbrowser.open(os.path.join(config['base_path'], 'CatGT.log'))
 
 print('Finished CatGT.')
+
+#TODO: make a function of class?

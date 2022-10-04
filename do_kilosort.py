@@ -21,7 +21,7 @@ from SGLXMetaToCoords import readMeta
 
 # Load config
 print('Loading Kilosort config')
-with open('kilosort_config.json') as json_conf:
+with open('configs/kilosort_config.json') as json_conf:
     config = json.load(json_conf, strict=False)
 pprint.pprint(config)
 
