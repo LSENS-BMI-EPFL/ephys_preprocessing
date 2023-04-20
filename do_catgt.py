@@ -29,19 +29,25 @@ pprint.pprint(config)
 
 # Select raw input ephys recording run
 input_dir_mouse = fdialog.askdirectory(title='Please select raw recording directory', initialdir=config['data_path'])
-input_dir = os.path.join(input_dir_mouse, 'Recording/Ephys')
+session_name = [i for i in os.listdir( os.path.join(input_dir_mouse, 'Recording')) if 'AB' in i][0]
+input_dir = os.path.join(input_dir_mouse, 'Recording', session_name, 'Ephys')
 
 epoch_name = os.listdir(input_dir)[0]
 epoch_number = epoch_name[-1]
 run_name = os.listdir(input_dir)[0][0:-3]
 
+print('Input data directory:', input_dir, run_name)
+
+
 # Select output mouse directory
 output_dir_mouse = fdialog.askdirectory(title='Please select mouse output directory', initialdir=config['save_path'])
-output_dir = os.path.join(output_dir_mouse, 'Recording/Ephys')
+output_dir = os.path.join(output_dir_mouse, 'Recording', session_name, 'Ephys')
 Path(output_dir).mkdir(parents=True, exist_ok=True) # create output dir
 
+print('Output directory', output_dir)
+
 # Get run info and number of probes/channels saved
-dirnames = 1
+dirnames = 1 # takes first run i.e. gN_1st
 n_probes = len(next(os.walk(os.path.join(input_dir, epoch_name)))[dirnames])
 print('Recorded using {} probe(s)'.format(n_probes))
 n_saved_ch_probes = dict.fromkeys(range(n_probes))
@@ -64,31 +70,30 @@ command = ['CatGT',
            '-run={}'.format(run_name),  #mouse name basically
            '-prb_fld', '-prb_miss_ok',  #assumes probe data saved in separate folders
            '-g={}'.format(epoch_number),                      #saved SGLX run not necessarily the first one (g-index)
-           '-t=0,0', '-t_miss_ok',      #assumes only one SGLX run
-           #'-lf', '-ap',
-           #'-prb=0:5',                  #assumes at most 6 probes
+           '-t=0,0','-t_miss_ok',      #assumes only one SGLX run
+           '-lf', '-ap',
+           '-prb=0:5',                  #assumes at most 6 probes
            '-ni'
            ]
-for probe_id in range(n_probes):
-    command.append(['-SY={},{},6,500'.format(probe_id, n_saved_ch_probes[0]-1)])
+
+#for probe_id in range(n_probes):
+#    command.append(['-SY=2,{},{},6,500'.format(probe_id, n_saved_ch_probes[0]-1)])
 
 command.append([
-           #'-XD=-1,0,500',               #Square wave pulse? (-1 takes last)
-           '-XA=0,1,0,0',               #Square wave pulse from IMEC slot
-           '-XA=1,1,0,0',               #Trial start
-           '-XA=2,0.5,1,0',             #Auditory stimulus
-           '-XA=3,0.5,1,0',             #Whisker stimulus
-           '-XA=4,1,0,0',               #Valve opening
-           '-XA=5,1,0,0',               #Behaviour camera frame times
-           '-XA=6,1,0,0',               #Behaviour camera arming times
-           '-XA=7,0.005,0.010,0',       #Piezo lick sensor #TEST
-           '-gblcar',                   #global CAR
+           '-xa=0,0,0,1,0,0',               #Square wave pulse from IMEC slot
+           '-xa=0,0,1,1,0,0',               #Trial start
+           '-xa=0,0,2,0.5,1,0',             #Auditory stimulus (does not work)
+           '-xa=0,0,3,0.5,1,0',             #Whisker stimulus
+           '-xa=0,0,4,1,0,0',               #Valve opening
+           #'-xa=0,0,5,1,0,0',               #Behaviour camera 0 frame times
+           #'-xa=0,0,6,1,0,0',               #Behaviour camera 1 frame times
+           #'-xa=0,0,7,0.005,0.010,0',       #Piezo lick sensor #TEST #second piezo?
+           '-gblcar',                        #global CAR
            '-dest={}'.format(output_dir),
            '-out_prb_fld'])             #saved in separate probe folders
 
 def flatten(l):
-    """
-    A function to flatten a list of list.
+    """ Flatten a list of list.
     :param l: A list containing lists.
     :return: Generator of the iterable.
     """
@@ -112,5 +117,3 @@ print('Opening log file')
 webbrowser.open(os.path.join(config['base_path'], 'CatGT.log'))
 
 print('Finished CatGT.')
-
-#TODO: make a function of class?
