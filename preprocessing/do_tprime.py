@@ -12,11 +12,12 @@ import json
 import pprint
 import subprocess
 import numpy as np
-import tkinter.filedialog as fdialog  # gui
+import tkinter.filedialog as fdialog
 import webbrowser
 from pathlib import Path
 import sys
-from collections.abc import Iterable
+
+from ephys_utils import flatten_list
 
 # Modules
 sys.path.append('C:\\Users\\bisi\\Github\\ecephys_spike_sorting\\ecephys_spike_sorting\\common')
@@ -24,7 +25,7 @@ from SGLXMetaToCoords import readMeta  # read syncperiod
 
 # Load config
 print('Loading TPrime config')
-with open('configs/tprime_config.json') as json_conf:
+with open('../configs/tprime_config.json') as json_conf:
     config = json.load(json_conf, strict=False)
 pprint.pprint(config)
 
@@ -162,24 +163,12 @@ command.append([
 
 ])
 
-def flatten(l):
-    """
-    A function to flatten a list of list.
-    :param l: A list containing lists.
-    :return: Generator of the iterable.
-    """
-    for el in l:
-        if isinstance(el, Iterable) and not isinstance(el, (str, bytes)):
-            yield from flatten(el)
-        else:
-            yield el
 
-
-print('Tprime command line will run:', list(flatten(command)))
+print('Tprime command line will run:', list(flatten_list(command)))
 
 # Run Tprime
 print('Running TPrime...')
-subprocess.run(list(flatten(command)), shell=True, cwd=config['base_path'])
+subprocess.run(list(flatten_list(command)), shell=True, cwd=config['base_path'])
 print('TPrime done!')
 
 # Open log file

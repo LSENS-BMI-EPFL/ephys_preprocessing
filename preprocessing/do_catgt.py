@@ -11,11 +11,13 @@ import os
 import json
 import pprint
 import subprocess
-import tkinter.filedialog as fdialog #gui
+import tkinter.filedialog as fdialog
 import webbrowser
 from pathlib import Path
 import sys
-from collections.abc import Iterable
+
+from ephys_utils import flatten_list
+
 
 # Modules
 sys.path.append('C:\\Users\\bisi\\Github\\ecephys_spike_sorting\\ecephys_spike_sorting\\common')
@@ -23,7 +25,7 @@ from SGLXMetaToCoords import readMeta
 
 # Load config
 print('Loading CatGT config')
-with open('configs/catgt_config.json') as json_conf:
+with open('../configs/catgt_config.json') as json_conf:
     config = json.load(json_conf, strict=False)
 pprint.pprint(config)
 
@@ -93,24 +95,12 @@ command.append([
            '-dest={}'.format(output_dir),
            '-out_prb_fld'])             #saved in separate probe folders
 
-def flatten(l):
-    """ Flatten a list of list.
-    :param l: A list containing lists.
-    :return: Generator of the iterable.
-    """
-    for el in l:
-        if isinstance(el, Iterable) and not isinstance(el, (str, bytes)):
-            yield from flatten(el)
-        else:
-            yield el
-
-
-print('CatGT command line will run:', list(flatten(command)))
+print('CatGT command line will run:', list(flatten_list(command)))
 
 
 # Run CatGT
 print('Running CatGT...')
-subprocess.run(list(flatten(command)), shell=True, cwd=config['base_path'])
+subprocess.run(list(flatten_list(command)), shell=True, cwd=config['base_path'])
 print('CatGT done!')
 
 # Open log file
