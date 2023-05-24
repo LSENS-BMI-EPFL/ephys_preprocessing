@@ -18,7 +18,7 @@ import webbrowser
 
 # Load config
 print('Loading C_Waves config:')
-with open('cwave_config.json') as json_conf:
+with open('../configs/cwave_config.json') as json_conf:
     config = json.load(json_conf, strict=False)
 pprint.pprint(config)
 
