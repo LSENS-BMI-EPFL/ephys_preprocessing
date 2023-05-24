@@ -1,7 +1,7 @@
 #! /usr/bin/env/python3
 """
 @author: Axel Bisi
-@project: EphysUtils
+@project: ephys_utils
 @file: plot_cwave_output.py
 @time: 17/03/2022 14:51
 """
@@ -73,8 +73,10 @@ def plot_mean_waveform_pk_ch(mean_wf_cwave, clus_info_df, cluster_id):
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     sns.lineplot(ax=ax, x=range(82), y=mean_wf_cwave[cluster_id, pk_chan_id, :], lw=3)
-    ax.set_ylabel(r'$\mu$V')
-    ax.set_xlabel('Time [samples]') #30kHz SR
+    ax.set_ylabel(r'Voltage [$\mu$V]', fontsize=10)
+    ax.set_xticks(ticks=[0, 30, 60, 90], labels=[0, 1, 2, 3])
+    ax.set_xlabel('Time [ms]')
+
 
     return fig
 
@@ -114,7 +116,7 @@ def plot_mean_waveform_probe(mean_wf_cwave, clus_info_df, cluster_id):
             ax.yaxis.set_visible(False)
         if idx % 4 == 0 or idx % 4 == 1:
             ax_pos = ax.get_position()
-            ax_pos.x0 = ax_pos.x0 + 0.05
+            ax_pos.x0 = ax_pos.x0 # + 0.05 #offset to mimic checkerboard pattern
             ax.set_position(ax_pos, which='original')
         try:
             sns.lineplot(ax=ax,
@@ -201,6 +203,7 @@ def plot_cwave_output(m_name):
             fig = plot_mean_waveform_probe(mean_wf_cwave=mean_wfs, clus_info_df=clus_info, cluster_id=cluster_id)
             fig.savefig(fname=os.path.join(folder_path, 'cluster{}_probe_mean_wf.png'.format(cluster_id)),
                         bbox_inches='tight')
+
 
     return
 

@@ -1,7 +1,7 @@
 #! /usr/bin/env/python3
 """
 @author: Axel Bisi
-@project: EphysUtils
+@project: ephys_utils
 @file: do_catgt.py
 @time: 28/03/2022 15:07
 """
@@ -71,16 +71,17 @@ command = ['CatGT',
            '-prb_fld', '-prb_miss_ok',  #assumes probe data saved in separate folders
            '-g={}'.format(epoch_number),                      #saved SGLX run not necessarily the first one (g-index)
            '-t=0,0','-t_miss_ok',      #assumes only one SGLX run
-           '-lf', '-ap',
+           #'-lf', '-ap',
            '-prb=0:5',                  #assumes at most 6 probes
            '-ni'
            ]
 
-#for probe_id in range(n_probes):
+#for probe_id in range(n_probes): #old CatGT version
 #    command.append(['-SY=2,{},{},6,500'.format(probe_id, n_saved_ch_probes[0]-1)])
 
 command.append([
-           '-xa=0,0,0,1,0,0',               #Square wave pulse from IMEC slot
+           #'-xd=2,{},{},6,500'.format(probe_id,  n_saved_ch_probes[0]-1),  #Commmented as performed by default
+           '-xa=0,0,0,1,0,0',               #Square wave pulse from IMEC slot (alsone by default)
            '-xa=0,0,1,1,0,0',               #Trial start
            '-xa=0,0,2,0.5,1,0',             #Auditory stimulus (does not work)
            '-xa=0,0,3,0.5,1,0',             #Whisker stimulus
@@ -88,7 +89,7 @@ command.append([
            #'-xa=0,0,5,1,0,0',               #Behaviour camera 0 frame times
            #'-xa=0,0,6,1,0,0',               #Behaviour camera 1 frame times
            #'-xa=0,0,7,0.005,0.010,0',       #Piezo lick sensor #TEST #second piezo?
-           '-gblcar',                        #global CAR
+           #'-gblcar',                        #global CAR
            '-dest={}'.format(output_dir),
            '-out_prb_fld'])             #saved in separate probe folders
 

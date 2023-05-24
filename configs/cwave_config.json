@@ -1,9 +1,9 @@
 {
      "base_path": "C:\\Users\\bisi\\C_Waves-win",
-     "data_path": "M:\\data",
+     "data_path": "M:\\analysis\\Axel_Bisi\\mice_data",
      "save_path": "M:\\analysis\\Axel_Bisi\\mice_data",
-     "samples_per_spike": 82,
-     "pre_samples": 20,
+     "samples_per_spike": 120,
+     "pre_samples": 60,
      "num_spikes": 1000,
      "snr_radius": 8
 }

@@ -1,7 +1,7 @@
 #! /usr/bin/env/python3
 """
 @author: Axel Bisi
-@project: EphysUtils
+@project: ephys_utils
 @file: do_tprime.py
 @time: 01/04/2022 13:23
 """
@@ -30,7 +30,8 @@ pprint.pprint(config)
 
 # Select processed mouse data directory
 output_dir_mouse = fdialog.askdirectory(title='Please select mouse output directory', initialdir=config['analysis_data_path'])
-output_dir = os.path.join(output_dir_mouse, 'Recording/Ephys')
+session_name = [i for i in os.listdir( os.path.join(output_dir_mouse, 'Recording')) if 'AB' in i][0]
+output_dir = os.path.join(output_dir_mouse, 'Recording', session_name, 'Ephys')
 
 catgt_epoch_name = [d for d in os.listdir(output_dir) if 'catgt' in d][0]
 epoch_name = catgt_epoch_name[6:] #MOUSENAME_gX
@@ -52,6 +53,9 @@ probe_folder_list = [s for s in subfolder_list if 'imec' in s]
 n_probes = len(probe_folder_list)
 print('Recorded using {} probes'.format(n_probes))
 
+# Probe recordings with spikes (to include)
+valid_probes = []
+
 ## Convert spike times from samples to seconds
 print('Convert spike times in seconds')
 for probe_id in range(n_probes):
@@ -62,26 +66,35 @@ for probe_id in range(n_probes):
     metafile_name = '{}_tcat.imec{}.ap.meta'.format(epoch_name, probe_id)
     apbin_metafile_path = os.path.join(output_dir, catgt_epoch_name, probe_folder, metafile_name)
 
-
     #Read probe meta information
     ap_meta_dict = readMeta(Path(apbin_metafile_path))
     imSampRate = float(ap_meta_dict['imSampRate'])  # probe-specific
 
-    # Load spike times
-    spike_times = np.load(os.path.join(output_dir, catgt_epoch_name, probe_folder, 'ks25/spike_times.npy'))
+    try:
+        # Load spike times
+        spike_times = np.load(os.path.join(output_dir, catgt_epoch_name, probe_folder, 'spike_times.npy'))
+        # Convert into seconds
+        np.save(os.path.join(output_dir, catgt_epoch_name, probe_folder, 'spike_times_sec.npy'), spike_times / imSampRate)
+        valid_probes.append(probe_id)
 
-    # Convert into seconds
-    np.save(os.path.join(output_dir, catgt_epoch_name, probe_folder, 'ks25/spike_times_sec.npy'), spike_times / imSampRate)
+    except FileNotFoundError as e:
+        print('No spike times for IMEC probe {}: either spike sorting missing or bad recording'.format(probe_id))
 
 ## Write Tprime command line
 print('Assembling TPrime command')
 nidq_stream_idx = 10 #arbitrary index number
 
-# Set path to reference alignment probe
+## Set path to reference alignment probe
+# First check default reference probe is included
+if config['default_tostream_probe'] not in valid_probes:
+    default_tostream_probe = config['default_tostream_probe'] + 1 #else use next one
+else:
+    default_tostream_probe = config['default_tostream_probe']
+
 path_ref_probe = os.path.join(output_dir, catgt_epoch_name, '{}_imec{}'.format(epoch_name,
-                                                             config['default_tostream_probe']))
-ref_probe_edges_file = '{}_tcat.imec{}.ap.SY_{}_6_500.txt'.format(epoch_name,
-                                                                  config['default_tostream_probe'],
+                                                             default_tostream_probe))
+ref_probe_edges_file = '{}_tcat.imec{}.ap.xd_{}_6_500.txt'.format(epoch_name,
+                                                                  default_tostream_probe,
                                                                   int(ap_meta_dict['nSavedChans'])-1)
 
 # Create output folder with aligned event times
@@ -96,27 +109,27 @@ command = ['Tprime',
            '-tostream={}'.format(os.path.join(path_ref_probe, ref_probe_edges_file)),
            # arg: stream index, sync pulse edge times
            '-fromstream={},{}'.format(nidq_stream_idx,
-                                      os.path.join(output_dir, catgt_epoch_name, epoch_name+'_tcat.nidq.XA_0_0.txt'))
+                                      os.path.join(output_dir, catgt_epoch_name, epoch_name+'_tcat.nidq.xa_0_0.txt'))
            ]
 
-# Add edge times & spike times for each probe
-for probe_id in range(config['default_tostream_probe'], n_probes):
+# Add edge times & spike times for included each probe
+for probe_id in valid_probes:
     print('-- IMEC probe {} spike times sync arguments added'.format(probe_id))
 
     probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
     probe_folder_path = os.path.join(output_dir, catgt_epoch_name, probe_folder)
 
-    probe_edgetime_files = [f for f in os.listdir(probe_folder_path) if 'SY' in f]
+    probe_edgetime_files = [f for f in os.listdir(probe_folder_path) if 'ap.xd' in f]
 
     command.append('-fromstream={},{}'.format(probe_id,
                                               os.path.join(probe_folder_path,
                                                            probe_edgetime_files[0])))  # stream index, edge times (probe)
     command.append('-events={},{},{}'.format(probe_id,
-                                             os.path.join(probe_folder_path, 'ks25/spike_times_sec.npy'),
+                                             os.path.join(probe_folder_path, 'spike_times_sec.npy'),
                                              os.path.join(probe_folder_path, #save in original imec folder
-                                                          'ks25/{}_imec{}_spike_times_sec_sync.npy'.format(epoch_name,probe_id))))  # stream index, spike times
+                                                          '{}_imec{}_spike_times_sec_sync.npy'.format(epoch_name,probe_id))))  # stream index, spike times
     command.append('-events={},{},{}'.format(probe_id,
-                                             os.path.join(probe_folder_path, 'ks25/spike_times_sec.npy'),
+                                             os.path.join(probe_folder_path, 'spike_times_sec.npy'),
                                              os.path.join(path_dest, #save along other aligned event times
                                                           '{}_imec{}_spike_times_sec_sync.npy'.format(epoch_name,
                                                                                                            probe_id))))
@@ -126,26 +139,26 @@ for probe_id in range(config['default_tostream_probe'], n_probes):
 output_path = Path(output_dir, catgt_epoch_name)
 command.append([
     '-events={},{},{}'.format(nidq_stream_idx,
-                              os.path.join(output_path, '{}_tcat.nidq.XA_1_0.txt'.format(epoch_name)),
-                              os.path.join(path_dest, 'trial_start.txt')),
+                              os.path.join(output_path, '{}_tcat.nidq.xa_1_0.txt'.format(epoch_name)),
+                              os.path.join(path_dest, 'trial_start_times.txt')),
     '-events={},{},{}'.format(nidq_stream_idx,
-                              os.path.join(output_path, '{}_tcat.nidq.XA_2_0.txt'.format(epoch_name)),
-                              os.path.join(path_dest, 'auditory_stim.txt')),
+                              os.path.join(output_path, '{}_tcat.nidq.xa_2_0.txt'.format(epoch_name)),
+                              os.path.join(path_dest, 'auditory_stim_times.txt')),
     '-events={},{},{}'.format(nidq_stream_idx,
-                              os.path.join(output_path, '{}_tcat.nidq.XA_3_0.txt'.format(epoch_name)),
-                              os.path.join(path_dest, 'whisker_stim.txt')),
+                              os.path.join(output_path, '{}_tcat.nidq.xa_3_0.txt'.format(epoch_name)),
+                              os.path.join(path_dest, 'whisker_stim_times.txt')),
     '-events={},{},{}'.format(nidq_stream_idx,
-                              os.path.join(output_path, '{}_tcat.nidq.XA_4_0.txt'.format(epoch_name)),
-                              os.path.join(path_dest, 'valve_open.txt')),
-    '-events={},{},{}'.format(nidq_stream_idx,
-                              os.path.join(output_path, '{}_tcat.nidq.XA_5_0.txt'.format(epoch_name)),
-                              os.path.join(path_dest, 'camera_frame_times.txt')),
-    '-events={},{},{}'.format(nidq_stream_idx,
-                              os.path.join(output_path, '{}_tcat.nidq.XA_6_0.txt'.format(epoch_name)),
-                              os.path.join(path_dest, 'camera_arming_times.txt')),
-    '-events={},{},{}'.format(nidq_stream_idx,
-                              os.path.join(output_path, '{}_tcat.nidq.XA_7_0.txt'.format(epoch_name)),
-                              os.path.join(path_dest, 'piezo_licks.txt'))
+                              os.path.join(output_path, '{}_tcat.nidq.xa_4_0.txt'.format(epoch_name)),
+                              os.path.join(path_dest, 'valve_times.txt')),
+    #'-events={},{},{}'.format(nidq_stream_idx, #TODO: replace by camrea strobe out copies, 1 and 2
+    #                          os.path.join(output_path, '{}_tcat.nidq.xa_5_0.txt'.format(epoch_name)),
+    #                          os.path.join(path_dest, 'camera_frame_times.txt')),
+    #'-events={},{},{}'.format(nidq_stream_idx,
+    #                          os.path.join(output_path, '{}_tcat.nidq.xa_6_0.txt'.format(epoch_name)),
+    #                          os.path.join(path_dest, 'camera_arming_times.txt')),
+    #'-events={},{},{}'.format(nidq_stream_idx,
+    #                          os.path.join(output_path, '{}_tcat.nidq.xa_7_0.txt'.format(epoch_name)),
+    #                          os.path.join(path_dest, 'piezo_licks.txt')) #TODO: remove, not working?
 
 ])
 
@@ -175,4 +188,3 @@ webbrowser.open(os.path.join(config['base_path'], 'Tprime.log'))
 
 print('Finished Tprime.')
 
-#TODO: make a function of class?

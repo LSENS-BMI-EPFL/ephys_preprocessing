@@ -1,7 +1,7 @@
 #! /usr/bin/env/python3
 """
 @author: Axel Bisi
-@project: EphysUtils
+@project: ephys_utils
 @file: do_kilosort.py
 @time: 16/05/2022 13:59
 """

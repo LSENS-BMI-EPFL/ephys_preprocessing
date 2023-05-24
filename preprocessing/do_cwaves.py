@@ -1,7 +1,7 @@
 #! /usr/bin/env/python3
 """
 @author: Axel Bisi
-@project: EphysUtils
+@project: ephys_utils
 @file: do_cwaves.py.py
 @time: 30/03/2022 11:40
 """
@@ -24,19 +24,21 @@ pprint.pprint(config)
 
 # Select raw input ephys recording run
 input_dir_mouse = fdialog.askdirectory(title='Please select raw recording directory', initialdir=config['data_path'])
-input_dir = os.path.join(input_dir_mouse, 'Recording/Ephys')
+session_name = [i for i in os.listdir( os.path.join(input_dir_mouse, 'Recording')) if 'AB' in i][0]
+input_dir = os.path.join(input_dir_mouse, 'Recording', session_name, 'Ephys')
+print(input_dir)
 
-epoch_name = os.listdir(input_dir)[0]  # for raw data
-catgt_epoch_name = 'catgt_{}'.format(epoch_name)  # for CatGT processed data
-run_name = os.listdir(input_dir)[0][0:-3]  # mouse name
+catgt_epoch_name = os.listdir(input_dir)[0]  # for CatGT processed data
+epoch_name = catgt_epoch_name.lstrip('catgt_')
 
 # Select output mouse directory
 output_dir_mouse = fdialog.askdirectory(title='Please select mouse output directory', initialdir=config['save_path'])
-output_dir = os.path.join(output_dir_mouse, 'Recording/Ephys')
-
+output_dir = os.path.join(output_dir_mouse, 'Recording', session_name, 'Ephys')
 # Get run info and number of probes saved
 dirnames = 1
-n_probes = len(next(os.walk(os.path.join(output_dir, catgt_epoch_name)))[dirnames])
+
+subdir_list = next(os.walk(os.path.join(output_dir, catgt_epoch_name)))[dirnames]
+n_probes = len([d for d in subdir_list if 'imec' in d])
 print('Run {} recorded using {} probes'.format(epoch_name, n_probes))
 
 # Run C_Waves for each probe
@@ -48,14 +50,20 @@ for probe_id in range(n_probes):
     Path(path_cwave_output).mkdir(parents=True, exist_ok=True)
 
     # Path to SGLX probe .bin file
-    apbin_fname = '{}_t0.imec{}.ap.bin'.format(epoch_name, probe_id)
-    path_to_apbin = os.path.join(input_dir, epoch_name, probe_folder, apbin_fname)
+    apbin_fname = '{}_tcat.imec{}.ap.bin'.format(epoch_name, probe_id)
+    path_to_apbin = os.path.join(input_dir, catgt_epoch_name, probe_folder, apbin_fname)
 
     # Format cluster files
-    path_input_files = os.path.join(output_dir, catgt_epoch_name, probe_folder, 'ks25')
+    path_input_files = os.path.join(output_dir, catgt_epoch_name, probe_folder)
 
     # Cluster table: incl. peak channel id. Need table row <-> cluster_id equivalence.
-    clus_info = pd.read_csv(os.path.join(path_input_files, 'cluster_info.tsv'), sep='\\t')  # <- assumes Phy performed
+
+    try:
+        clus_info = pd.read_csv(os.path.join(path_input_files, 'cluster_info.tsv'), sep='\\t')  # <- assumes Phy performed
+    except FileNotFoundError:
+        print('Skipping. No spike sorting at', path_input_files)
+        continue
+
     clus_info.set_index(keys='cluster_id', drop=False, inplace=True)  # set index to cluster_id
     clus_table = clus_info.reindex(range(np.max(clus_info.cluster_id) + 1), fill_value=0,
                                    copy=True)  # reindex with missing cluster ids
@@ -98,6 +106,3 @@ for probe_id in range(n_probes):
     webbrowser.open(os.path.join(config['base_path'], 'C_Waves.log'))
 
     print('Finished C_waves for IMEC probe {} in {}'.format(probe_id, probe_folder))
-
-
-#TODO: make a function of class Probe?
