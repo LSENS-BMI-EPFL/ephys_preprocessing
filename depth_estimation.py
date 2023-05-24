@@ -8,9 +8,6 @@ import sys
 from scipy.signal import welch
 from scipy.ndimage.filters import gaussian_filter1d
 
-#from ...common.utils import find_range, rms, printProgressBar
-#from ...common.OEFileInfo import get_lfp_channel_order
-#from ...common.SGLXMetaToCoords import MetaToCoords
 
 def find_range(x, a, b, option='within'):
     """

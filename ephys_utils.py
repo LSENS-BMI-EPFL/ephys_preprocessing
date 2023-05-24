@@ -1,7 +1,7 @@
 #! /usr/bin/env/python3
 """
 @author: Axel Bisi
-@project: EphysUtils
+@project: ephys_utils
 @file: ephys_utils.py
 @time: 7/28/2022 10:46 AM
 """
@@ -9,10 +9,71 @@
 # Imports
 import sys
 import numpy as np
+from collections.abc import Iterable
+import neo
+import xarray as xr
+import quantities as pq
+from elephant.conversion import BinnedSpikeTrain
 
 # Modules
 sys.path.append(r'C:\Users\bisi\Github\datamanipulation')
 
+def make_cont_spike_trains(ephys_cluster_df, recording_duration):
+    """
+    Make list spike trains for a list of clusters for continuous session.
+    :param ephys_cluster_df: (pd.DataFrame) from EphysCluster table.
+    :param recording_duration: (float) from EphysSession table.
+    :return:
+    """
+    spike_trains_cont = [neo.SpikeTrain(times=c_id.spike_times, t_stop=recording_duration, units='s')
+                         for idx, c_id in ephys_cluster_df.iterrows()]
+    return spike_trains_cont
+
+def make_binned_cont_spike_trains(spike_trains_cont, bin_size_sec = 0.01):
+    """
+    Make list of binned spike trains for continuous session.
+    :param spike_trains_cont: Output of make_spike_trains.
+    :param bin_size_sec: Binning size in seconds.
+    :return:
+    """
+    spike_trains_cont_bin = BinnedSpikeTrain(spike_trains_cont, bin_size= bin_size_sec * pq.s)
+    return spike_trains_cont_bin
+
+
+def make_binned_trial_xarray(spike_trains_cont_bin, trial_outcomes, trial_start_times):
+    # Make continuous DataArray
+    st_cont_bin_xarr = xr.DataArray(spike_trains_cont_bin.to_array(), dims=('neuron', 'time'))
+
+    trial_xarr_list = []
+    bin_size = float(spike_trains_cont_bin.bin_size)
+    n_bins = int(1 / bin_size)
+
+    # Slice DataArray at each trial
+    for t_start in trial_start_times[:-1]:
+        trial_start = int(t_start * n_bins)
+        trial_pre = trial_start - n_bins
+        trial_post = trial_start + n_bins
+        st_trial_bin_xarr = st_cont_bin_xarr.isel(time=slice(trial_pre, trial_post))
+        trial_xarr_list.append(st_trial_bin_xarr)
+
+    # Make DataArray
+    st_bin_trial_xarr = xr.DataArray(trial_xarr_list, dims=('trial', 'neuron', 'time'),
+                                     coords={'trial': trial_outcomes})
+
+    return st_bin_trial_xarr
+
+
+
+def flatten_list(l):
+    """ Flatten a list of list.
+    :param l: A list containing lists.
+    :return: Generator of the iterable.
+    """
+    for el in l:
+        if isinstance(el, Iterable) and not isinstance(el, (str, bytes)):
+            yield from flatten_list(el)
+        else:
+            yield el
 
 def correct_coil_artefact(dataloader, spike_train_array):
     """
