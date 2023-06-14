@@ -73,7 +73,7 @@ command = ['CatGT',
            '-prb_fld', '-prb_miss_ok',  #assumes probe data saved in separate folders
            '-g={}'.format(epoch_number),                      #saved SGLX run not necessarily the first one (g-index)
            '-t=0,0','-t_miss_ok',      #assumes only one SGLX run
-           #'-lf', '-ap',
+           '-lf', '-ap',
            '-prb=0:5',                  #assumes at most 6 probes
            '-ni'
            ]
