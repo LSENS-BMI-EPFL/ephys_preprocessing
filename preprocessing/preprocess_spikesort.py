@@ -2,7 +2,7 @@
 """
 @author: Axel Bisi
 @project: ephys_utils
-@file: preprocessing.py
+@file: preprocess_spikesort.py
 @time: 25.04.2023 10:18
 """
 
@@ -12,12 +12,13 @@ import os
 import yaml
 import pathlib
 
-import run_catgt, run_kilosort
+import run_catgt
+import run_kilosort
+
 
 def main(input_dir, config_file):
-
-    with open(config_file) as file:
-        config = yaml.safe_load(file)
+    with open(config_file, 'r') as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
 
     print('Preprocessing data from {}...'.format(input_dir))
 
@@ -43,7 +44,6 @@ def main(input_dir, config_file):
     print('Finished Kilosort.')
 
     return
-
 
 
 if __name__ == '__main__':

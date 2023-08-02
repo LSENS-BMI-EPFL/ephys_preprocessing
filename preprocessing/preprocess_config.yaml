@@ -11,3 +11,13 @@ kilosort:
      threshold": [ 10, 4 ]
      lambda": 10
      AUC_for_splits": 0.9
+tprime:
+     tprime_path: "C:\\Users\\bisi\\TPrime-win\\"
+     syncperiod: 1,
+     default_tostream_probe: 0
+cwaves:
+     cwaves_path:  "C:\\Users\\bisi\\C_Waves-win"
+     samples_per_spike: 120
+     pre_samples: 60
+     num_spikes: 1000
+     snr_radius: 8
