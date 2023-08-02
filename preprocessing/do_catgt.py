@@ -43,7 +43,7 @@ print('Input data directory:', input_dir, run_name)
 
 # Select output mouse directory
 output_dir_mouse = fdialog.askdirectory(title='Please select mouse output directory', initialdir=config['save_path'])
-output_dir = os.path.join(output_dir_mouse, 'Recording', session_name, 'Ephys')
+output_dir = os.path.join(output_dir_mouse, run_name, 'Recording', session_name, 'Ephys')
 Path(output_dir).mkdir(parents=True, exist_ok=True) # create output dir
 
 print('Output directory', output_dir)
@@ -69,16 +69,20 @@ for probe_id in range(n_probes):
 # Write CatGT command line
 command = ['CatGT',
            '-dir={}'.format(input_dir),
-           '-run={}'.format(run_name),  #mouse name basically
-           '-prb_fld', '-prb_miss_ok',  #assumes probe data saved in separate folders
-           '-g={}'.format(epoch_number),                      #saved SGLX run not necessarily the first one (g-index)
-           '-t=0,0','-t_miss_ok',      #assumes only one SGLX run
-           '-lf', '-ap',
+           '-run={}'.format(run_name),      # mouse name
+           '-prb_fld',                      # probe data saved in separate folders
+           '-prb_miss_ok',
+           '-g={}'.format(epoch_number),    # (g-index)
+           '-t=0,0',                        # assumes only one SGLX run
+           '-t_miss_ok',
+           '-startsecs=0.0',
+           '-ni',
+           '-lf',
+           '-ap',
            '-prb=0:5',                  #assumes at most 6 probes
-           '-ni'
            ]
 
-#for probe_id in range(n_probes): #old CatGT version
+#for probe_id in range(n_probes): #TODO: old CatGT version -> remove after TPrime check
 #    command.append(['-SY=2,{},{},6,500'.format(probe_id, n_saved_ch_probes[0]-1)])
 
 command.append([
@@ -88,12 +92,12 @@ command.append([
            '-xa=0,0,2,0.5,1,0',             #Auditory stimulus (does not work)
            '-xa=0,0,3,0.5,1,0',             #Whisker stimulus
            '-xa=0,0,4,1,0,0',               #Valve opening
-           #'-xa=0,0,5,1,0,0',               #Behaviour camera 0 frame times
-           #'-xa=0,0,6,1,0,0',               #Behaviour camera 1 frame times
-           #'-xa=0,0,7,0.005,0.010,0',       #Piezo lick sensor #TEST #second piezo?
-           #'-gblcar',                        #global CAR
+           '-xa=0,0,5,1,0,0',               #Behaviour camera 0 frame times
+           '-xa=0,0,6,1,0,0',               #Behaviour camera 1 frame times
+           '-xa=0,0,7,0.005,0.010,0',       #Piezo lick sensor
+           '-gblcar',                       #global CAR
            '-dest={}'.format(output_dir),
-           '-out_prb_fld'])             #saved in separate probe folders
+           '-out_prb_fld'])                   #saved in separate probe folders
 
 print('CatGT command line will run:', list(flatten_list(command)))
 
