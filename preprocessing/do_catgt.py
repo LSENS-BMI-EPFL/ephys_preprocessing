@@ -11,17 +11,13 @@ import os
 import json
 import pprint
 import subprocess
-import tkinter.filedialog as fdialog
+from tkinter.filedialog import askdirectory
 import webbrowser
-from pathlib import Path
-import sys
+import pathlib
 
 from ephys_utils import flatten_list
+import readSGLX
 
-
-# Modules
-sys.path.append('C:\\Users\\bisi\\Github\\ecephys_spike_sorting\\ecephys_spike_sorting\\common')
-from SGLXMetaToCoords import readMeta
 
 # Load config
 print('Loading CatGT config')
@@ -30,21 +26,19 @@ with open('../configs/catgt_config.json') as json_conf:
 pprint.pprint(config)
 
 # Select raw input ephys recording run
-input_dir_mouse = fdialog.askdirectory(title='Please select raw recording directory', initialdir=config['data_path'])
-session_name = [i for i in os.listdir( os.path.join(input_dir_mouse, 'Recording')) if 'AB' in i][0]
+input_dir_mouse = askdirectory(title='Please select raw recording directory', initialdir=config['data_path'])
+session_name = [i for i in os.listdir(os.path.join(input_dir_mouse, 'Recording')) if 'AB' in i][0]
 input_dir = os.path.join(input_dir_mouse, 'Recording', session_name, 'Ephys')
 
 epoch_name = os.listdir(input_dir)[0]
 epoch_number = epoch_name[-1]
 run_name = os.listdir(input_dir)[0][0:-3]
 
-print('Input data directory:', input_dir, run_name)
-
 
 # Select output mouse directory
-output_dir_mouse = fdialog.askdirectory(title='Please select mouse output directory', initialdir=config['save_path'])
+output_dir_mouse = askdirectory(title='Please select mouse output directory', initialdir=config['save_path'])
 output_dir = os.path.join(output_dir_mouse, run_name, 'Recording', session_name, 'Ephys')
-Path(output_dir).mkdir(parents=True, exist_ok=True) # create output dir
+pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True) # create output dir
 
 print('Output directory', output_dir)
 
@@ -59,7 +53,7 @@ for probe_id in range(n_probes):
     metafile_name = '{}_t0.imec{}.ap.meta'.format(epoch_name, probe_id)
     metafile_path = os.path.join(input_dir, epoch_name, probe_folder, metafile_name)
 
-    meta_dict = readMeta(Path(metafile_path))
+    meta_dict = readSGLX.readMeta(pathlib.Path(metafile_path))
 
     # Add number of saved channels
     print('-- IMEC probe', probe_id, ' #channels saved:', meta_dict['nSavedChans'])

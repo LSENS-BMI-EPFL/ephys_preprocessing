@@ -1,0 +1,13 @@
+---
+raw_data_path: "M:\\data"
+output_path: "M:\\analysis\\Axel_Bisi\\data"
+catgt:
+     catgt_path: "C:\\Users\\bisi\\CatGT-win"
+kilosort:
+     kilosort_path: "C:\\Users\\bisi\\Kilosort\\Kilosort-2.0"
+     temp_data_path": "D:\\Npx_Data"
+     ks_version": 2.0
+     nblocks": 5
+     threshold": [ 10, 4 ]
+     lambda": 10
+     AUC_for_splits": 0.9

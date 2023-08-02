@@ -1,0 +1,66 @@
+#! /usr/bin/env/python3
+"""
+@author: Axel Bisi
+@project: EphysUtils
+@file: run_catgt.py
+@time: 8/2/2023 4:39 PM
+"""
+
+
+# Imports
+import os
+import subprocess
+from ephys_utils import flatten_list
+import webbrowser
+
+def main(input_dir, output_dir, config):
+    """
+    Run CatGT on raw ephys data and save to output directory.
+    :param input_dir: path to raw ephys data
+    :param config: config dict
+    :return:
+    """
+
+    # 1. Get epoch number and run name
+    epoch_name = os.listdir(input_dir)[0]
+    epoch_number = epoch_name[-1]
+    run_name = os.listdir(input_dir)[0][0:-3]
+
+    # Write CatGT command line
+    command = ['CatGT',
+               '-dir={}'.format(input_dir),
+               '-run={}'.format(run_name),
+               '-prb_fld',
+               '-prb_miss_ok',
+               '-g={}'.format(epoch_number),
+               '-t=0,0',
+               '-t_miss_ok',
+               '-startsecs=0.0',
+               '-ni',
+               '-lf',
+               '-ap',
+               '-prb=0:5',
+               '-xa=0,0,0,1,0,0',               # Square wave pulse from IMEC slot (on by default)
+               '-xa=0,0,1,1,0,0',               # Trial start
+               '-xa=0,0,2,0.5,1,0',             # Auditory stimulus (does not work)
+               '-xa=0,0,3,0.5,1,0',             # Whisker stimulus
+               '-xa=0,0,4,1,0,0',               # Valve opening
+               '-xa=0,0,5,1,0,0',               # Behaviour camera 0 frame times
+               '-xa=0,0,6,1,0,0',               # Behaviour camera 1 frame times
+               '-xa=0,0,7,0.005,0.010,0',       # Piezo lick sensor
+               '-gblcar',
+               '-dest={}'.format(output_dir),
+               '-out_prb_fld'
+               ]
+
+    print('CatGT command line will run:', list(flatten_list(command)))
+
+    # Run CatGT
+    print('Running CatGT on {}'.format(epoch_name))
+    subprocess.run(list(flatten_list(command)), shell=True, cwd=config['catgt_path'])
+
+    # Open log file
+    print('Opening CatGT log file')
+    webbrowser.open(os.path.join(config['catgt_path'], 'CatGT.log'))
+
+    return
