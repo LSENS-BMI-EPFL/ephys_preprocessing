@@ -40,8 +40,8 @@ def main(input_dir, config_file):
     print('Finished CatGT.')
 
     # Run Kilosort
-    run_kilosort.main(processed_dir, config['kilosort'])
-    print('Finished Kilosort.')
+    #run_kilosort.main(processed_dir, config['kilosort'])
+    #print('Finished Kilosort.')
 
     return
 

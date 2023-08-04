@@ -8,12 +8,18 @@
 
 # Imports
 import argparse
-import os
 import yaml
-import pathlib
-from ephys_utils import flatten_list
+
+import run_tprime
+import run_cwaves
 
 def main(input_dir, config_file):
+    """
+    Run TPrime and Cwaves on preprocessed spike data.
+    :param input_dir: path to CatGT preprocessed data
+    :param config_file: path to config file
+    :return:
+    """
 
     with open(config_file, 'r') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
@@ -21,14 +27,14 @@ def main(input_dir, config_file):
     print('Preprocessing data from {}...'.format(input_dir))
 
     # Run TPrime
-    #run_tprime.main(input_dir, config['tprime'])
+    run_tprime.main(input_dir, config['tprime'])
     print('Finished Tprime.')
 
-
     # Run Cwaves
-    #run_cwaves.main(input_dir, config['cwaves'])
+    run_cwaves.main(input_dir, config['cwaves'])
     print('Finished Cwaves.')
 
+    print('Finished preprocessing for {}.'.format(input_dir))
 
     return
 

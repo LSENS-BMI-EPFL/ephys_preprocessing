@@ -6,6 +6,9 @@
 @time: 8/2/2023 5:31 PM
 """
 import os
+import pathlib
+import readSGLX
+
 import matlab.engine
 
 
@@ -27,16 +30,20 @@ def main(input_dir, config):
         probe_folder = '{}_imec{}'.format(epoch_name.replace('catgt_', ''), probe_id)
         probe_path = os.path.join(input_dir, epoch_name, probe_folder)
 
+        meta_file_name = [f for f in os.listdir(probe_path) if 'ap.meta' in f][0]
+        ap_meta_config = readSGLX.readMeta(pathlib.Path(probe_path, meta_file_name))
+        fs = ap_meta_config['imSampRate']
+
         # Start MATLAB engine
-        eng = matlab.engine.start_matlab()
+        logfile_path = os.path.join(probe_path, 'preprocess_spikesort_log.txt')
+        eng = matlab.engine.start_matlab("-logfile " + str(logfile_path))
         eng.addpath(eng.genpath(r'C:\Users\bisi\Github\npy-matlab'), nargout=0)
         eng.cd(config['kilosort_path'], nargout=0)
 
-        # Run Kilosort for current probe
         print('- Running Kilosort for IMEC probe', probe_id)
-        #eng.run_main_kilosort(probe_path, config['temp_data_path'], nargout=0)
+        eng.run_main_kilosort(probe_path, fs, config['temp_data_path'], nargout=0)
 
-        # Stop MATLAB engin
+        # Stop MATLAB engine
         eng.quit()
 
     return

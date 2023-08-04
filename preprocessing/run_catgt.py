@@ -21,7 +21,7 @@ def main(input_dir, output_dir, config):
     :return:
     """
 
-    # 1. Get epoch number and run name
+    # Get epoch number and run name
     epoch_name = os.listdir(input_dir)[0]
     epoch_number = epoch_name[-1]
     run_name = os.listdir(input_dir)[0][0:-3]
@@ -55,11 +55,9 @@ def main(input_dir, output_dir, config):
 
     print('CatGT command line will run:', list(flatten_list(command)))
 
-    # Run CatGT
     print('Running CatGT on {}'.format(epoch_name))
     subprocess.run(list(flatten_list(command)), shell=True, cwd=config['catgt_path'])
 
-    # Open log file
     print('Opening CatGT log file')
     webbrowser.open(os.path.join(config['catgt_path'], 'CatGT.log'))
 
