@@ -75,7 +75,19 @@ def flatten_list(l):
         else:
             yield el
 
-def correct_coil_artefact(dataloader, spike_train_array):
+def replace_coil_artefact(spike_array, bin_size, artefact_bins):
+    # TODO: to test
+
+    n_neurons = spike_array.shape[0]
+    firing_rates = np.nanmean(spike_array / bin_size, axis=1)
+    lambdas = firing_rates * bin_size
+
+    poisson_spikes = np.random.poisson(lambdas, size=(n_neurons, len(artefact_bins)))
+    spike_array[:, artefact_bins] = poisson_spikes
+
+    return spike_array
+
+def correct_coil_artefact(dataloader, spike_train_array): #TODO: to remove
     """
     Around whisker stimulus time, correct coil artefact by replacing spikes by Poisson spikes.
     :param dataloader: Mouse instance of DataLoader.

@@ -2,7 +2,7 @@
 """
 @author: Axel Bisi
 @project: ephys_utils
-@file: preprocess_spikesort.py
+@file: preprocess_spikesort.sbatch.py
 @time: 25.04.2023 10:18
 """
 
@@ -52,7 +52,7 @@ if __name__ == '__main__':
     parser.add_argument('--config', type=str, nargs='?', required=False)
     args = parser.parse_args()
 
-    args.input = r'M:\data\AB077\Recording\AB077_20230531_143839\Ephys'
+    args.input = r'M:\data\AB082\Recording\AB082_20230630_101353\Ephys'
     args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
 
     main(args.input, args.config)
