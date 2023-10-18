@@ -1,7 +1,7 @@
 #! /usr/bin/env/python3
 """
 @author: Axel Bisi
-@project: EphysUtils
+@project: ephys_utils
 @file: merge_ks_phy_output.py
 @time: 18/03/2022 15:20
 """
