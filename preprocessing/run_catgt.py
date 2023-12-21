@@ -41,14 +41,14 @@ def main(input_dir, output_dir, config):
                '-ap',
                '-prb=0:5',
                '-xa=0,0,0,1,0,0',               # Square wave pulse from IMEC slot (on by default)
-               '-xa=0,0,1,1,0,0',               # Trial start
-               '-xa=0,0,2,0.5,1,0',             # Auditory stimulus (does not work)
-               '-xa=0,0,3,0.5,1,0',             # Whisker stimulus
-               '-xa=0,0,4,1,0,0',               # Valve opening
-               '-xa=0,0,5,1,0,0',               # Behaviour camera 0 frame times
-               '-xa=0,0,6,1,0,0',               # Behaviour camera 1 frame times
+               '-xa=0,0,1,4,0,0',               # Trial start
+               '-xa=0,0,2,1,1,0',               # Auditory stimulus (does not work)
+               '-xa=0,0,3,1,1,0',               # Whisker stimulus
+               '-xa=0,0,4,2,0,0',               # Valve opening
+               '-xa=0,0,5,2,0,0',               # Behaviour camera 0 frame times
+               '-xa=0,0,6,2,0,0',               # Behaviour camera 1 frame times
                '-xa=0,0,7,0.005,0.010,0',       # Piezo lick sensor
-               '-gblcar',
+               '-gblcar',                       # global common average referencing (default)
                '-dest={}'.format(output_dir),
                '-out_prb_fld'
                ]

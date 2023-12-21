@@ -12,9 +12,10 @@ import os
 import yaml
 import pathlib
 
+# Import submodules
 import run_catgt
+import run_overstrike
 import run_kilosort
-
 
 def main(input_dir, config_file):
     with open(config_file, 'r') as f:
@@ -29,10 +30,8 @@ def main(input_dir, config_file):
     print('Recording using {} probe(s)'.format(n_probes))
 
     # Create output folder
-    print(input_dir.split('\\'))
     mouse_name = input_dir.split('\\')[2]
     session_name = input_dir.split('\\')[4]
-    # TODO: fix output path, debug mouse name
     processed_dir = os.path.join(config['output_path'], mouse_name, session_name, 'Ephys')
     print('Saving processed data to {}:'.format(processed_dir))
     pathlib.Path(processed_dir).mkdir(parents=True, exist_ok=True)
@@ -41,9 +40,23 @@ def main(input_dir, config_file):
     run_catgt.main(input_dir, processed_dir, config['catgt'])
     print('Finished CatGT.')
 
-    # Run Kilosort #TODO: check if it is GPU-based?
+    # Optionally, run OverStrike
+    perform_overstrike=False
+    if perform_overstrike:
+
+        # List of time spans to zero out in recording
+        timespans_list = [(),] # in secs, relative to start of recording
+
+        # Run overstrike on all probes
+        run_overstrike.main(processed_dir, config['overstrike'],
+                            timespans_list=timespans_list)
+
+
+        print('Finished OverStrike.')
+
+    # Run Kilosort
     #run_kilosort.main(processed_dir, config['kilosort'])
-    print('Finished Kilosort.')
+    #print('Finished Kilosort.')
 
     return
 
@@ -54,7 +67,7 @@ if __name__ == '__main__':
     parser.add_argument('--config', type=str, nargs='?', required=False)
     args = parser.parse_args()
 
-    args.input = r'M:\data\AB087\Recording\AB087_20231017_141901\Ephys' #until \Ephys
+    args.input = r'M:\data\AB095\Recording\AB095_20231212_141728\Ephys' #until \Ephys
     args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
 
     main(args.input, args.config)

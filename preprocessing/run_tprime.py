@@ -34,10 +34,8 @@ def main(input_dir, config):
     # Get epoch name and run name
     catgt_epoch_name = os.path.basename(input_dir)
     epoch_name = catgt_epoch_name[6:]  # MOUSENAME_gX
-    #run_name = catgt_epoch_name[6:-3]  # MOUSENAME
 
     # Get synchronization period
-    #sglx_metafile_path = pathlib.Path(input_dir, catgt_epoch_name, '{}_tcat.nidq.meta'.format(epoch_name))
     sglx_metafile_path = os.path.join(input_dir, '{}_tcat.nidq.meta'.format(epoch_name))
     sglx_meta_dict = readSGLX.readMeta(pathlib.Path(sglx_metafile_path))
 
@@ -52,7 +50,7 @@ def main(input_dir, config):
     #dirnames = 1
     #subfolder_list = next(os.walk(os.path.join(input_dir, catgt_epoch_name)))[dirnames]
     probe_folders = [f for f in os.listdir(input_dir) if 'imec' in f]
-    n_probes = len(probe_folders)
+    n_probes = len(probe_folders) #TODO: fix probe number with imec0, imec1, etc.?
 
     # Include probe recordings that have spikes
     valid_probes = []
@@ -61,7 +59,7 @@ def main(input_dir, config):
         print('-- IMEC probe {} spike times in seconds'.format(probe_id))
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
         metafile_name = '{}_tcat.imec{}.ap.meta'.format(epoch_name, probe_id)
-        apbin_metafile_path = os.path.join(input_dir, catgt_epoch_name, probe_folder, metafile_name)
+        apbin_metafile_path = os.path.join(input_dir, probe_folder, metafile_name)
         ap_meta_dict = readSGLX.readMeta(pathlib.Path(apbin_metafile_path))
         imSampRate = float(ap_meta_dict['imSampRate'])  # probe-specific
 

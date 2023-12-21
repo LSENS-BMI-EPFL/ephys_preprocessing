@@ -10,13 +10,61 @@
 import sys
 import numpy as np
 from collections.abc import Iterable
-import neo
-import xarray as xr
-import quantities as pq
-from elephant.conversion import BinnedSpikeTrain
+#import neo
+#import xarray as xr
+#import quantities as pq
+#from elephant.conversion import BinnedSpikeTrain
 
 # Modules
 sys.path.append(r'C:\Users\bisi\Github\datamanipulation')
+
+def check_if_valid_recording(cluster_info_df):
+    """
+    Check if recording is valid.
+    :param cluster_info_df:
+    :return:
+    """
+
+    # Check if there are clusters
+    if cluster_info_df.empty:
+        return False
+
+    # Check if there are clusters with good or mua labels
+    if not cluster_info_df['group'].isin(['good', 'mua']).any():
+        return False
+
+    # Check if only noise clusters
+    if cluster_info_df['group'].isin(['noise']).all():
+        print('Only noise clusters in recording.')
+        return False
+
+    return True
+
+
+def convert_stereo_coords(azimuth, elevation):
+    """
+    Change stereotaxic coordinates reference for insertion angles.
+    Source: https://github.com/petersaj/neuropixels_trajectory_explorer/wiki/General-use
+    :param azimuth: (int) azimuth angle as read on L&N setup
+    :param elevation: (int) azimuth angle as read on L&N setup
+    :return:
+    """
+    # Convert azimuth angle
+    if azimuth < 0:
+        azimuth_angle = 360 + azimuth
+    elif azimuth > 0:
+        azimuth_angle = azimuth
+    else: #0°
+        azimuth_angle = azimuth
+
+    # Convert elevation angle
+    if elevation < 0:
+        print('Error, elevation cannot be negative - check probe_insertion sheet.')
+        elevation_angle = abs(elevation)
+    else:
+        elevation_angle = elevation
+
+    return azimuth_angle, elevation_angle
 
 def make_cont_spike_trains(ephys_cluster_df, recording_duration):
     """

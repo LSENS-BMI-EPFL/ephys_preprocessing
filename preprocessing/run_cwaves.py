@@ -6,6 +6,7 @@
 @time: 8/2/2023 11:13 PM
 """
 
+# Imports
 import os
 import pathlib
 import subprocess
@@ -26,10 +27,14 @@ def main(input_dir, config):
     epoch_name = catgt_epoch_name.lstrip('catgt_')
 
     probe_folders = [f for f in os.listdir(input_dir) if 'imec' in f]
-    n_probes = len(probe_folders)
+    probe_ids = [f[-1] for f in probe_folders]
 
     # Run C_Waves for each probe
-    for probe_id in range(n_probes):
+    for probe_id in probe_ids:
+
+        if probe_id == '0':
+            continue
+
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
 
         # Create output folder
@@ -43,7 +48,7 @@ def main(input_dir, config):
         # Prepare spike data for C_Waves
         path_input_files = os.path.join(input_dir, probe_folder)
 
-        # Cluster table: incl. peak channel id. Need table row <-> cluster_id equivalence.
+        # Create cluster table: incl. peak channel id. Need table row number <-> cluster_id equivalence (hence reindexing below).
         try:
             clus_info = pd.read_csv(os.path.join(path_input_files, 'cluster_info.tsv'),   # <- assumes Phy performed
                                     sep='\\t')
@@ -52,7 +57,8 @@ def main(input_dir, config):
             continue
 
         clus_info.set_index(keys='cluster_id', drop=False, inplace=True)  # set index to cluster_id
-        clus_table = clus_info.reindex(range(np.max(clus_info.cluster_id) + 1), fill_value=0,
+        clus_table = clus_info.reindex(range(np.max(clus_info.cluster_id) + 1),
+                                       fill_value=0,
                                        copy=True)  # reindex with missing cluster ids
         clus_table = clus_table[['n_spikes', 'ch']]
         path_clus_table = os.path.join(path_input_files, 'clus_table.npy')
@@ -86,12 +92,19 @@ def main(input_dir, config):
 
         print('C_waves command line will run:', command)
 
-        print('Running C_waves for IMEC probe {}...', probe_id)
+        print('Running C_waves for IMEC probe {}...'.format(probe_id))
         subprocess.run(command, shell=True, cwd=config['cwaves_path'])
 
         print('Opening log file')
         webbrowser.open(os.path.join(config['cwaves_path'], 'C_Waves.log'))
 
 
+        # Remove useless mean_waveform rows (necessary for C_Waves to run), then resave
+        mean_waveforms = np.load(os.path.join(path_cwave_output, 'mean_waveforms.npy'))
+        clus_table['temp_matching'] = clus_table.apply(lambda x: x.n_spikes == x.ch == 0, axis=1)
+        ids_to_remove = clus_table[clus_table['temp_matching'] == True].index
+        mean_waveforms = np.delete(mean_waveforms, ids_to_remove, axis=0)
+
+        np.save(os.path.join(path_cwave_output, 'mean_waveforms.npy'), mean_waveforms)
 
     return

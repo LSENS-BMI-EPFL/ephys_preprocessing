@@ -1,6 +1,8 @@
 ---
 raw_data_path: "M:\\data"
 output_path: "M:\\analysis\\Axel_Bisi\\data"
+overstrike:
+     overstrike_path: "C:\\Users\\bisi\\OverStrike-win"
 catgt:
      catgt_path: "C:\\Users\\bisi\\CatGT-win"
 kilosort:
