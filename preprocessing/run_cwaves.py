@@ -32,9 +32,6 @@ def main(input_dir, config):
     # Run C_Waves for each probe
     for probe_id in probe_ids:
 
-        if probe_id == '0':
-            continue
-
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
 
         # Create output folder
@@ -62,7 +59,7 @@ def main(input_dir, config):
                                        copy=True)  # reindex with missing cluster ids
         clus_table = clus_table[['n_spikes', 'ch']]
         path_clus_table = os.path.join(path_input_files, 'clus_table.npy')
-        np.save(path_clus_table, np.array(clus_table.values, dtype=np.int32))
+        np.save(path_clus_table, np.array(clus_table.values, dtype=np.uint32))
 
         # Cluster time: spike timestamp (in samples) for each spikes
         spk_times = np.load(os.path.join(path_input_files, 'spike_times.npy'))
@@ -74,7 +71,7 @@ def main(input_dir, config):
         spk_clusters = np.load(os.path.join(path_input_files, 'spike_clusters.npy'))
         spk_clusters_df = pd.DataFrame(spk_clusters, columns=['cluster'])
         path_clus_lbl = os.path.join(path_input_files, 'clus_lbl.npy')
-        np.save(path_clus_lbl, spk_clusters_df['cluster'].values)
+        np.save(path_clus_lbl, np.array(spk_clusters_df['cluster'].values, dtype=np.uint32))
 
 
         # Write C_Waves command
@@ -87,7 +84,7 @@ def main(input_dir, config):
                    '-samples_per_spike={}'.format(config['samples_per_spike']),
                    '-pre_samples={}'.format(config['pre_samples']),
                    '-num_spikes={}'.format(config['num_spikes']),
-                   '-snr_radius={}'.format(config['snr_radius'])
+                   '-snr_radius_um={}'.format(config['snr_radius']) # requires snsGeomMap metadata entry, otherwise use -sns_radius
                    ]
 
         print('C_waves command line will run:', command)
@@ -97,8 +94,6 @@ def main(input_dir, config):
 
         print('Opening log file')
         webbrowser.open(os.path.join(config['cwaves_path'], 'C_Waves.log'))
-
-
         # Remove useless mean_waveform rows (necessary for C_Waves to run), then resave
         mean_waveforms = np.load(os.path.join(path_cwave_output, 'mean_waveforms.npy'))
         clus_table['temp_matching'] = clus_table.apply(lambda x: x.n_spikes == x.ch == 0, axis=1)

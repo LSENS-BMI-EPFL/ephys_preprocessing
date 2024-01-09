@@ -34,8 +34,6 @@ def main(input_dir):
     # Perform computations for each probe separately
     for probe_id in probe_ids:
 
-        if probe_id == '0':
-            continue
 
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
 
@@ -50,6 +48,9 @@ def main(input_dir):
 
         # Load mean waveform data from C_waves
         path_mean_waveforms = os.path.join(path_cwave_output, 'mean_waveforms.npy')
+        if not os.path.isfile(path_mean_waveforms):
+            print('Skipping probe. No mean waveforms at', path_mean_waveforms)
+            continue
         mean_waveforms = np.load(path_mean_waveforms)
 
         # Get peak channels information

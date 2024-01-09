@@ -35,7 +35,7 @@ def main(input_dir, config_file):
 
 
     # Run Cwaves
-    run_cwaves.main(input_dir, config['cwaves'])
+    #run_cwaves.main(input_dir, config['cwaves'])
     print('Finished Cwaves.')
 
     # Run mean waveform metrics
@@ -52,8 +52,6 @@ def main(input_dir, config_file):
 
     print('Finished preprocessing for {}.'.format(input_dir))
 
-
-
     return
 
 
@@ -63,7 +61,7 @@ if __name__ == '__main__':
         parser.add_argument('--config', type=str, nargs='?', required=False)
         args = parser.parse_args()
 
-        args.input = r'M:\analysis\Axel_Bisi\data\AB082\AB082_20230630_101353\Ephys\catgt_AB082_g0'
+        args.input = r'M:\analysis\Axel_Bisi\data\AB077\AB077_20230531_143839\Ephys\catgt_AB077_g2'
         args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
 
         main(args.input, args.config)
