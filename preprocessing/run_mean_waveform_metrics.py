@@ -34,6 +34,8 @@ def main(input_dir):
     # Perform computations for each probe separately
     for probe_id in probe_ids:
 
+        #if probe_id != '0':
+        #    continue
 
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
 

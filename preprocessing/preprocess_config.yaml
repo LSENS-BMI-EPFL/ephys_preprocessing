@@ -5,6 +5,8 @@ overstrike:
      overstrike_path: "C:\\Users\\bisi\\OverStrike-win"
 catgt:
      catgt_path: "C:\\Users\\bisi\\CatGT-win"
+artifact_correction:
+     window_ms: 3
 kilosort:
      kilosort_path: "C:\\Users\\bisi\\Kilosort\\Kilosort-2.0"
      temp_data_path: "D:\\Npx_Data"
@@ -15,7 +17,7 @@ kilosort:
      AUC_for_splits: 0.9
 tprime:
      tprime_path: "C:\\Users\\bisi\\TPrime-win\\"
-     syncperiod: 1,
+     syncperiod: 1
      default_tostream_probe: 0
 cwaves:
      cwaves_path:  "C:\\Users\\bisi\\C_Waves-win"

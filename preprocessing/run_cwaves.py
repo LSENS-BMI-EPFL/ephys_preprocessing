@@ -32,6 +32,9 @@ def main(input_dir, config):
     # Run C_Waves for each probe
     for probe_id in probe_ids:
 
+        #if probe_id != '0':
+        #    continue
+
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
 
         # Create output folder

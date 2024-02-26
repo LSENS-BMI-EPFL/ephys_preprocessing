@@ -17,22 +17,26 @@ import readSGLX
 from ephys_utils import flatten_list
 
 
-def main(input_dir, config):
+def main(input_dir, config, pre_ks=False):
     """
     Run TPrime on processed and spike-sorted/curated ephys data.
     :param input_dir:  path to CatGT processed ephys data
     :param config:  config dict
+    :param pre_ks:  bool, True if running TPrime before Kilosort
     :return:
     """
 
-    #catgt_epoch_name = [d for d in os.listdir(input_dir) if 'catgt' in d][0]
+    catgt_epoch_name = [d for d in os.listdir(input_dir) if 'catgt' in d][0]
+    if pre_ks:
+        input_dir = os.path.join(input_dir, catgt_epoch_name)
+    else:
+        pass
 
     # Create output folder with aligned event times
     path_dest = os.path.join(input_dir, 'sync_event_times')
     pathlib.Path(path_dest).mkdir(parents=True, exist_ok=True)
 
     # Get epoch name and run name
-    catgt_epoch_name = os.path.basename(input_dir)
     epoch_name = catgt_epoch_name[6:]  # MOUSENAME_gX
 
     # Get synchronization period
@@ -45,36 +49,37 @@ def main(input_dir, config):
     else:
         syncperiod = float(sglx_meta_dict['syncSourcePeriod'])
 
-
     # Get number of probes
-    #dirnames = 1
-    #subfolder_list = next(os.walk(os.path.join(input_dir, catgt_epoch_name)))[dirnames]
     probe_folders = [f for f in os.listdir(input_dir) if 'imec' in f]
-    n_probes = len(probe_folders) #TODO: fix probe number with imec0, imec1, etc.?
+    n_probes = len(probe_folders)
 
-    # Include probe recordings that have spikes
     valid_probes = []
-    print('Converting spike times in seconds...')
     for probe_id in range(n_probes):
-        print('-- IMEC probe {} spike times in seconds'.format(probe_id))
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
         metafile_name = '{}_tcat.imec{}.ap.meta'.format(epoch_name, probe_id)
         apbin_metafile_path = os.path.join(input_dir, probe_folder, metafile_name)
         ap_meta_dict = readSGLX.readMeta(pathlib.Path(apbin_metafile_path))
         imSampRate = float(ap_meta_dict['imSampRate'])  # probe-specific
 
-        try:
-            # Load spike times and convert in seconds
-            spike_times = np.load(os.path.join(input_dir, probe_folder, 'spike_times.npy'))
-            spike_times_sec = spike_times / imSampRate
-            np.save(os.path.join(input_dir, probe_folder, 'spike_times_sec.npy'), spike_times_sec)
-            valid_probes.append(probe_id)
+        if pre_ks:
+            pass
+        else:
 
-        except FileNotFoundError as e:
-            print('No spike times for IMEC probe {}: either spike sorting missing or bad recording'.format(probe_id))
+            try:
+                print('-- IMEC probe {} spike times in seconds'.format(probe_id))
+                # Load spike times and convert in seconds
+                spike_times = np.load(os.path.join(input_dir, probe_folder, 'spike_times.npy'))
+                spike_times_sec = spike_times / imSampRate
+                np.save(os.path.join(input_dir, probe_folder, 'spike_times_sec.npy'), spike_times_sec)
+                valid_probes.append(probe_id)
+
+            # If no spike times, skip probe
+            except FileNotFoundError as e:
+                print('No spike times for IMEC probe {}: either spike sorting missing or bad recording'.format(probe_id))
 
     # Write TPrime command line
     nidq_stream_idx = 10  # arbitrary index number
+
     ## Set path to reference alignment probe
     # First check default reference probe is included in valid probes
     if config['default_tostream_probe'] not in valid_probes:
@@ -107,16 +112,20 @@ def main(input_dir, config):
                                                   os.path.join(probe_folder_path,
                                                                probe_edgetime_files[
                                                                    0])))  # stream index, edge times (probe)
-        command.append('-events={},{},{}'.format(probe_id,
-                                                 os.path.join(probe_folder_path, 'spike_times_sec.npy'),
-                                                 os.path.join(probe_folder_path,  # save in original imec folder
-                                                              '{}_imec{}_spike_times_sec_sync.npy'.format(epoch_name,
-                                                                                                          probe_id))))  # stream index, spike times
-        command.append('-events={},{},{}'.format(probe_id,
-                                                 os.path.join(probe_folder_path, 'spike_times_sec.npy'),
-                                                 os.path.join(path_dest,  # save again along other aligned event times
-                                                              '{}_imec{}_spike_times_sec_sync.npy'.format(epoch_name,
-                                                                                                          probe_id))))
+
+        if pre_ks:
+            pass
+        else:
+            command.append('-events={},{},{}'.format(probe_id,
+                                                     os.path.join(probe_folder_path, 'spike_times_sec.npy'),
+                                                     os.path.join(probe_folder_path,  # save in original imec folder
+                                                                  '{}_imec{}_spike_times_sec_sync.npy'.format(epoch_name,
+                                                                                                              probe_id))))  # stream index, spike times
+            command.append('-events={},{},{}'.format(probe_id,
+                                                     os.path.join(probe_folder_path, 'spike_times_sec.npy'),
+                                                     os.path.join(path_dest,  # save again along other aligned event times
+                                                                  '{}_imec{}_spike_times_sec_sync.npy'.format(epoch_name,
+                                                                                                              probe_id))))
 
     # Add behaviour and video frame times
     command.append([
