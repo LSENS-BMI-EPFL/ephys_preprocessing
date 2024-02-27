@@ -17,20 +17,15 @@ import readSGLX
 from ephys_utils import flatten_list
 
 
-def main(input_dir, config, pre_ks=False):
+def main(input_dir, config):
     """
     Run TPrime on processed and spike-sorted/curated ephys data.
     :param input_dir:  path to CatGT processed ephys data
     :param config:  config dict
-    :param pre_ks:  bool, True if running TPrime before Kilosort
     :return:
     """
 
     catgt_epoch_name = [d for d in os.listdir(input_dir) if 'catgt' in d][0]
-    if pre_ks:
-        input_dir = os.path.join(input_dir, catgt_epoch_name)
-    else:
-        pass
 
     # Create output folder with aligned event times
     path_dest = os.path.join(input_dir, 'sync_event_times')
@@ -61,21 +56,17 @@ def main(input_dir, config, pre_ks=False):
         ap_meta_dict = readSGLX.readMeta(pathlib.Path(apbin_metafile_path))
         imSampRate = float(ap_meta_dict['imSampRate'])  # probe-specific
 
-        if pre_ks:
-            pass
-        else:
+        try:
+            print('-- IMEC probe {} spike times in seconds'.format(probe_id))
+            # Load spike times and convert in seconds
+            spike_times = np.load(os.path.join(input_dir, probe_folder, 'spike_times.npy'))
+            spike_times_sec = spike_times / imSampRate
+            np.save(os.path.join(input_dir, probe_folder, 'spike_times_sec.npy'), spike_times_sec)
+            valid_probes.append(probe_id)
 
-            try:
-                print('-- IMEC probe {} spike times in seconds'.format(probe_id))
-                # Load spike times and convert in seconds
-                spike_times = np.load(os.path.join(input_dir, probe_folder, 'spike_times.npy'))
-                spike_times_sec = spike_times / imSampRate
-                np.save(os.path.join(input_dir, probe_folder, 'spike_times_sec.npy'), spike_times_sec)
-                valid_probes.append(probe_id)
-
-            # If no spike times, skip probe
-            except FileNotFoundError as e:
-                print('No spike times for IMEC probe {}: either spike sorting missing or bad recording'.format(probe_id))
+        # If no spike times, skip probe
+        except FileNotFoundError as e:
+            print('No spike times for IMEC probe {}: either spike sorting missing or bad recording'.format(probe_id))
 
     # Write TPrime command line
     nidq_stream_idx = 10  # arbitrary index number
@@ -113,21 +104,18 @@ def main(input_dir, config, pre_ks=False):
                                                                probe_edgetime_files[
                                                                    0])))  # stream index, edge times (probe)
 
-        if pre_ks:
-            pass
-        else:
-            command.append('-events={},{},{}'.format(probe_id,
-                                                     os.path.join(probe_folder_path, 'spike_times_sec.npy'),
-                                                     os.path.join(probe_folder_path,  # save in original imec folder
-                                                                  '{}_imec{}_spike_times_sec_sync.npy'.format(epoch_name,
-                                                                                                              probe_id))))  # stream index, spike times
-            command.append('-events={},{},{}'.format(probe_id,
-                                                     os.path.join(probe_folder_path, 'spike_times_sec.npy'),
-                                                     os.path.join(path_dest,  # save again along other aligned event times
-                                                                  '{}_imec{}_spike_times_sec_sync.npy'.format(epoch_name,
-                                                                                                              probe_id))))
+        command.append('-events={},{},{}'.format(probe_id,
+                                                 os.path.join(probe_folder_path, 'spike_times_sec.npy'),
+                                                 os.path.join(probe_folder_path,  # save in original imec folder
+                                                              '{}_imec{}_spike_times_sec_sync.npy'.format(epoch_name,
+                                                                                                          probe_id))))  # stream index, spike times
+        command.append('-events={},{},{}'.format(probe_id,
+                                                 os.path.join(probe_folder_path, 'spike_times_sec.npy'),
+                                                 os.path.join(path_dest,  # save again along other aligned event times
+                                                              '{}_imec{}_spike_times_sec_sync.npy'.format(epoch_name,
+                                                                                                          probe_id))))
 
-    # Add behaviour and video frame times
+# Add behaviour and video frame times
     command.append([
         '-events={},{},{}'.format(nidq_stream_idx,
                                   os.path.join(input_dir, '{}_tcat.nidq.xa_1_0.txt'.format(epoch_name)),
@@ -153,9 +141,10 @@ def main(input_dir, config, pre_ks=False):
 
     ])
 
-    print('Tprime command line will run:', list(flatten_list(command)))
+    print('TPrime command line will run:', list(flatten_list(command)))
 
-    print('Running TPrime...')
+
+    print('Running TPrime to align task events and spike times...')
     subprocess.run(list(flatten_list(command)), shell=True, cwd=config['tprime_path'])
 
     print('Opening log file')

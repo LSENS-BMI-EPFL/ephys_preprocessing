@@ -48,7 +48,7 @@ def main(input_dir, output_dir, config):
                '-xa=0,0,5,2,0,0',               # Behaviour camera 0 frame times
                '-xa=0,0,6,2,0,0',               # Behaviour camera 1 frame times
                '-xa=0,0,7,0.005,0.010,0',       # Piezo lick sensor
-               '-gblcar',                       # global common average referencing (default)
+               '-gblcar',                       # global common median referencing (default), never applied to LFP
                '-dest={}'.format(output_dir),
                '-out_prb_fld'
                ]

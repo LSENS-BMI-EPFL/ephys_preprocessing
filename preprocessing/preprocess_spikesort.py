@@ -44,9 +44,8 @@ def main(input_dir, config_file):
     print('Finished CatGT.')
 
     # Run TPrime a first time to sync whisker artifact times
-    #run_tprime.main(processed_dir, config['tprime'], pre_ks=True)
-    run_artifact_correction.main(processed_dir, config['artifact_correction'])
-    print('Finished TPrime and artifact correction.')
+    run_artifact_correction.main(processed_dir, config)
+    print('Finished artifact correction.')
 
     # Optionally, run OverStrike
     perform_overstrike=False
