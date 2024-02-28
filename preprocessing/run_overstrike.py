@@ -52,7 +52,7 @@ def main(input_dir, config, timespans_list):
     for probe_id in range(n_probes):
         probe_folder = '{}_imec{}'.format(epoch_name.replace('catgt_', ''), probe_id)
         probe_path = os.path.join(input_dir, epoch_name, probe_folder)
-        ap_bin_file_name = [f for f in os.listdir(probe_path) if 'ap.bin' in f][0]
+        ap_bin_file_name = [f for f in os.listdir(probe_path) if 'ap.bin' in f and 'corrected' in f][0]
         ap_bin_path = os.path.join(probe_path, ap_bin_file_name)
 
         # Iterate over timespans to zero-out

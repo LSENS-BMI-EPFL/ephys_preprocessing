@@ -8,6 +8,7 @@ catgt:
 artifact_correction:
      window_ms: 3
 kilosort:
+     matlab_path: "C:\Program Files\MATLAB\R2021b"
      kilosort_path: "C:\\Users\\bisi\\Kilosort\\Kilosort-2.0"
      temp_data_path: "D:\\Npx_Data"
      ks_version: 2.0

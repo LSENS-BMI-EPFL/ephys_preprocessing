@@ -44,7 +44,7 @@ def main(input_dir, config_file):
     print('Finished CatGT.')
 
     # Run TPrime a first time to sync whisker artifact times
-    run_artifact_correction.main(processed_dir, config)
+    #run_artifact_correction.main(processed_dir, config)
     print('Finished artifact correction.')
 
     # Optionally, run OverStrike
@@ -62,8 +62,8 @@ def main(input_dir, config_file):
         print('Finished OverStrike.')
 
     # Run Kilosort
-    #run_kilosort.main(processed_dir, config['kilosort'])
-    #print('Finished Kilosort.')
+    run_kilosort.main(processed_dir, config['kilosort'])
+    print('Finished Kilosort.')
 
     return
 

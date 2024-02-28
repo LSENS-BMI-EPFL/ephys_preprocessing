@@ -6,6 +6,7 @@
 @time: 8/2/2023 5:31 PM
 """
 import os
+import sys
 import pathlib
 import readSGLX
 
@@ -22,7 +23,7 @@ def main(input_dir, config):
 
     epoch_name = os.listdir(input_dir)[0]
     probe_folders = [f for f in os.listdir(os.path.join(input_dir, epoch_name)) if 'imec' in f]
-    print('Data to sort: ', probe_folders)
+    print('Data to spike-sort: ', probe_folders)
     n_probes = len(probe_folders)
 
     print('Running Kilosort...')
@@ -35,6 +36,7 @@ def main(input_dir, config):
         fs = ap_meta_config['imSampRate']
 
         # Start MATLAB engine
+        sys.path.append(config['matlab_path'])
         logfile_path = os.path.join(probe_path, 'preprocess_spikesort_log.txt')
         eng = matlab.engine.start_matlab("-logfile " + str(logfile_path))
         eng.addpath(eng.genpath(r'C:\Users\bisi\Github\npy-matlab'), nargout=0)
