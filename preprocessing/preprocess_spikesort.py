@@ -32,7 +32,7 @@ def main(input_dir, config_file):
     print('Recording using {} probe(s)'.format(n_probes))
 
     # Create output folder
-    mouse_name = input_dir.split('\\')[4]
+    mouse_name = input_dir.split('\\')[2]
     session_name = input_dir.split('\\')[-2]
     processed_dir = os.path.join(config['output_path'], mouse_name, session_name, 'Ephys')
     print('Saving processed data to {}:'.format(processed_dir))
@@ -48,22 +48,24 @@ def main(input_dir, config_file):
     print('Finished artifact correction.')
 
     # Optionally, run OverStrike
-    perform_overstrike=False
+    perform_overstrike=True
     if perform_overstrike:
 
         # List of time spans to zero out in recording
         timespans_list = [(),] # in secs, relative to start of recording
 
+        if mouse_name == 'AB105':
+            timespans_list = [(0,24),(1800,1933),(2389,3161)]
+
         # Run overstrike on all probes
         run_overstrike.main(processed_dir, config['overstrike'],
                             timespans_list=timespans_list)
 
-
         print('Finished OverStrike.')
 
-    # Run Kilosort
-    run_kilosort.main(processed_dir, config['kilosort'])
-    print('Finished Kilosort.')
+    # Run Kilosort #TODO: WIP fix out of memory error
+    #run_kilosort.main(processed_dir, config['kilosort'])
+    #print('Finished Kilosort.')
 
     return
 
@@ -74,7 +76,8 @@ if __name__ == '__main__':
     parser.add_argument('--config', type=str, nargs='?', required=False)
     args = parser.parse_args()
 
-    args.input = r'M:\analysis\Axel_Bisi\data\AB092\AB092_20231205_140109\Ephys' #until \Ephys
+    #args.input = r'M:\analysis\Axel_Bisi\data\AB085\AB085_20231005_152636\Ephys' #until \Ephys
+    args.input = r'M:\data\AB105\Recording\AB105_20240314_115206\Ephys'
     args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
 
     main(args.input, args.config)

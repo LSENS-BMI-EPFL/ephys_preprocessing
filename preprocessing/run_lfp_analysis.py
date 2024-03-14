@@ -318,7 +318,7 @@ def calculate_average_power(lfp_data, sampling_rate, freq_band):
     return average_power
 
 
-def get_lfp_profile(lfp_data, ephys_params, params):
+def get_lfp_profile(lfp_data, ephys_params, params): #todo: not used, delete at some point?
 
     # Remove reference channels
     #lfp_data = np.delete(lfp_data, ephys_params['reference_channels'], axis=1)
@@ -367,7 +367,7 @@ def main(input_dir):
         "smoothing_amount": 5, #default is 5
         "power_thresh": 2.5, #default is 2.5
         "diff_thresh": -0.06, #default is -0.06
-        "freq_range_gamma": [0, 10], #default is [0, 10]
+        "freq_range_gamma": [0, 10], #default is [0, 10] #Todo use real gamma?
         "freq_range_spiking": [500, 1250],
         "max_freq": 150, #default is 150
         "saline_range_um": [2000, 3800], # overwritten using insertion metadata
@@ -452,18 +452,18 @@ def main(input_dir):
         lfp_values = np.array(output_lfp['values_spiking'])
         #lfp_values_to_plot = lfp_values[int(output_lfp['surface_y']/20):-1]
         surface_y = output_lfp['surface_y']
-        print(lfp_values.shape, surface_y)
+        #print(lfp_values.shape, surface_y)
         fig, ax = plt.subplots(1,1, figsize=(5,10), dpi=300)
         x_range = np.arange(min(lfp_values), max(lfp_values), lfp_values.shape)
         x_range = np.linspace(min(lfp_values), max(lfp_values), lfp_values.shape[0])
-        print(x_range.shape, lfp_values[int(surface_y/20):-1].shape)
+        #print(x_range.shape, lfp_values[int(surface_y/20):-1].shape)
         #ax.plot(lfp_values[int(surface_y/20):-1], x_range, lw=2, c='k')
         ax.plot(lfp_values, x_range, lw=2, c='k')
         ax.axhline(y=surface_y/20, color='r', linestyle='--')
         ax.set_title('imec{}'.format(probe_id))
         ax.set_xlabel('Mean log10(power)')
         ax.set_ylabel('Channel number')
-        plt.show()
+        #plt.show()
 
         # -------------------
         # Compute LFP profile

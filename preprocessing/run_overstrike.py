@@ -60,7 +60,7 @@ def main(input_dir, config, timespans_list):
 
             # Write OverStrike command line
             command = ['OverStrike',
-                       '-f={}'.format(ap_bin_path),
+                       '-file={}'.format(ap_bin_path),
                        '-secs={},{}'.format(timespan[0], timespan[1])
                        ]
             print('OverStrike command line will run:', list(flatten_list(command)))
@@ -68,7 +68,7 @@ def main(input_dir, config, timespans_list):
             # Run OverStrike
             subprocess.run(list(flatten_list(command)), shell=True, cwd=config['overstrike_path'])
 
-            print('Opening CatGT log file')
+            print('Opening OverStrike log file')
             webbrowser.open(os.path.join(config['overstrike_path'], 'OverStrike.log'))
 
     # Save overstrike information

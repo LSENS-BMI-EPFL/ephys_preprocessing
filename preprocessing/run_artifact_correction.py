@@ -36,8 +36,10 @@ def main(input_dir, config):
     n_probes = len(probe_folders)
 
     print('Running artifact correction...')
-    for probe_id in range(n_probes):
-        probe_folder = '{}_imec{}'.format(epoch_name.replace('catgt_', ''), probe_id)
+    for probe_folder in probe_folders:
+    #for probe_id in range(n_probes):
+        probe_id = int(probe_folder.split('imec')[-1])
+        #probe_folder = '{}_imec{}'.format(epoch_name.replace('catgt_', ''), probe_id)
         probe_path = os.path.join(input_dir, epoch_name, probe_folder)
 
         # Get ap-band binary data
