@@ -25,7 +25,7 @@ def main(input_dir, config):
     :return:
     """
 
-    catgt_epoch_name = [d for d in os.listdir(input_dir) if 'catgt' in d][0]
+    catgt_epoch_name = pathlib.Path(input_dir).name
 
     # Create output folder with aligned event times
     path_dest = os.path.join(input_dir, 'sync_event_times')
@@ -58,10 +58,13 @@ def main(input_dir, config):
 
         try:
             print('-- IMEC probe {} spike times in seconds'.format(probe_id))
+            # Find any folders that contain kilosort in the name
+            kilosort_folder = [f for f in os.listdir(os.path.join(input_dir, probe_folder)) if 'kilosort' in f][0]
+
             # Load spike times and convert in seconds
-            spike_times = np.load(os.path.join(input_dir, probe_folder, 'spike_times.npy'))
+            spike_times = np.load(os.path.join(input_dir, probe_folder, kilosort_folder, 'spike_times.npy'))
             spike_times_sec = spike_times / imSampRate
-            np.save(os.path.join(input_dir, probe_folder, 'spike_times_sec.npy'), spike_times_sec)
+            np.save(os.path.join(input_dir, probe_folder, kilosort_folder, 'spike_times_sec.npy'), spike_times_sec)
             valid_probes.append(probe_id)
 
         # If no spike times, skip probe
@@ -105,13 +108,13 @@ def main(input_dir, config):
                                                                    0])))  # stream index, edge times (probe)
 
         command.append('-events={},{},{}'.format(probe_id,
-                                                 os.path.join(probe_folder_path, 'spike_times_sec.npy'),
+                                                 os.path.join(probe_folder_path, kilosort_folder, 'spike_times_sec.npy'),
                                                  os.path.join(probe_folder_path,  # save in original imec folder
                                                               '{}_imec{}_spike_times_sec_sync.npy'.format(epoch_name,
                                                                                                           probe_id))))  # stream index, spike times
         command.append('-events={},{},{}'.format(probe_id,
-                                                 os.path.join(probe_folder_path, 'spike_times_sec.npy'),
-                                                 os.path.join(path_dest,  # save again along other aligned event times
+                                                 os.path.join(probe_folder_path, kilosort_folder, 'spike_times_sec.npy'),
+                                                 os.path.join(path_dest,  # save AGAIN along other aligned event times
                                                               '{}_imec{}_spike_times_sec_sync.npy'.format(epoch_name,
                                                                                                           probe_id))))
 
