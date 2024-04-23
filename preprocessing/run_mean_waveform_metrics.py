@@ -56,7 +56,8 @@ def main(input_dir):
         mean_waveforms = np.load(path_mean_waveforms)
 
         # Get peak channels information
-        clus_info = pd.read_csv(os.path.join(input_dir, probe_folder, 'cluster_info.tsv'), sep='\\t')
+        kilosort_folder = [f for f in os.listdir(os.path.join(input_dir, probe_folder)) if 'kilosort' in f][0]
+        clus_info = pd.read_csv(os.path.join(input_dir, probe_folder, kilosort_folder, 'cluster_info.tsv'), sep='\\t')
 
         peak_channels = clus_info['ch'].values
 
