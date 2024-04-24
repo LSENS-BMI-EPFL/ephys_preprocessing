@@ -16,6 +16,9 @@ kilosort:
      threshold: [ 10, 4 ]
      lambda: 10
      AUC_for_splits: 0.9
+bombcell:
+     bombcell_path: 'C:\\Users\\bisi\\Github\\bombcell'
+     matlab_path: 'C:\Program Files\MATLAB\R2021b'
 tprime:
      tprime_path: 'C:\\Users\\bisi\\TPrime-win\\'
      syncperiod: 1

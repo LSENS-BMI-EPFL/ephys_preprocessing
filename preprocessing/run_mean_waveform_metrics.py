@@ -29,13 +29,10 @@ def main(input_dir):
 
     probe_folders = [f for f in os.listdir(input_dir) if 'imec' in f]
     probe_ids = [f[-1] for f in probe_folders]
-    print(probe_folders)
 
     # Perform computations for each probe separately
     for probe_id in probe_ids:
 
-        #if probe_id != '0':
-        #    continue
 
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
 

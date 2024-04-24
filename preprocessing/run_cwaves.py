@@ -41,7 +41,7 @@ def main(input_dir, config):
         path_cwave_output = os.path.join(input_dir, probe_folder, 'cwaves')
         pathlib.Path(path_cwave_output).mkdir(parents=True, exist_ok=True)
 
-        # Path to  probe binary file
+        # Path to probe binary file
         apbin_fname = '{}_tcat_corrected.imec{}.ap.bin'.format(epoch_name, probe_id)
         path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
 

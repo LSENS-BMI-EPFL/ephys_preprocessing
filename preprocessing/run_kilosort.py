@@ -9,7 +9,7 @@ import os
 import sys
 import pathlib
 import readSGLX
-
+os.environ["MATLAB_ENGINE"] = "R2021b"
 import matlab.engine
 
 
@@ -28,8 +28,15 @@ def main(input_dir, config):
 
     print('Running Kilosort...')
     for probe_id in range(n_probes):
+        if probe_id == 0:
+            continue # TODO:to delete
+
         probe_folder = '{}_imec{}'.format(epoch_name.replace('catgt_', ''), probe_id)
         probe_path = os.path.join(input_dir, epoch_name, probe_folder)
+
+        # Create output folder
+        pathlib.Path(os.path.join(probe_path, 'kilosort2')).mkdir(parents=True, exist_ok=True)
+
 
         meta_file_name = [f for f in os.listdir(probe_path) if 'ap.meta' in f][0]
         ap_meta_config = readSGLX.readMeta(pathlib.Path(probe_path, meta_file_name))

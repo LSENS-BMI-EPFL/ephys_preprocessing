@@ -56,16 +56,18 @@ def main(input_dir, config_file):
 
         if mouse_name == 'AB105':
             timespans_list = [(0,24),(1800,1933),(2389,3161)]
+        elif mouse_name == 'AB107':
+            timespans_list = [(1247, 1930)]
 
         # Run overstrike on all probes
-        run_overstrike.main(processed_dir, config['overstrike'],
-                            timespans_list=timespans_list)
+        #run_overstrike.main(processed_dir, config['overstrike'],
+        #                    timespans_list=timespans_list)
 
         print('Finished OverStrike.')
 
-    # Run Kilosort #TODO: WIP fix out of memory error
-    #run_kilosort.main(processed_dir, config['kilosort'])
-    #print('Finished Kilosort.')
+    # Run Kilosort #TODO: call kilosort 4?
+    run_kilosort.main(processed_dir, config['kilosort'])
+    print('Finished Kilosort.')
 
     return
 
@@ -77,7 +79,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     #args.input = r'M:\analysis\Axel_Bisi\data\AB085\AB085_20231005_152636\Ephys' #until \Ephys
-    args.input = r'M:\data\AB105\Recording\AB105_20240314_115206\Ephys'
+    args.input = r'M:\data\AB107\Recording\AB107_20240318_121423\Ephys'
     args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
 
     main(args.input, args.config)
