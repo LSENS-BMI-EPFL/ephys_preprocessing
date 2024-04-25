@@ -28,8 +28,6 @@ def main(input_dir, config):
 
     print('Running Kilosort...')
     for probe_id in range(n_probes):
-        if probe_id == 0:
-            continue # TODO:to delete
 
         probe_folder = '{}_imec{}'.format(epoch_name.replace('catgt_', ''), probe_id)
         probe_path = os.path.join(input_dir, epoch_name, probe_folder)
@@ -40,7 +38,7 @@ def main(input_dir, config):
 
         meta_file_name = [f for f in os.listdir(probe_path) if 'ap.meta' in f][0]
         ap_meta_config = readSGLX.readMeta(pathlib.Path(probe_path, meta_file_name))
-        fs = ap_meta_config['imSampRate']
+        fs = float(ap_meta_config['imSampRate'])
 
         # Start MATLAB engine
         sys.path.append(config['matlab_path'])

@@ -25,6 +25,9 @@ import readSGLX
 def main(input_dir, config):
     """
     Run artifact correction on CatGT-processed ephys data using TPrime-aligned artifact times.
+    This runs T-Prime to get artifact times aligned to probe timebase, and then replaces the artifact times with
+    the mean of the data just before the artifact times.
+    This reduces saturation/neuron-like/extra-filtering artifacts in the data, and is beneficial before spike sorting.
     :param input_dir:
     :param config:
     :return:

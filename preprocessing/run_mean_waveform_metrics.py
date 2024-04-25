@@ -19,6 +19,7 @@ from waveform_metrics_utils import calculate_waveform_metrics_from_avg
 def main(input_dir):
     """
     Run mean waveform metrics on preprocessed spike data.
+    This computes metrics for each cluster waveforms after C_Waves.
     :param input_dir: path to CatGT preprocessed data
     :param config: config dict
     :return:

@@ -17,7 +17,9 @@ import numpy as np
 
 def main(input_dir, config):
     """
-
+    Run C_Waves on preprocessed spike data.
+    This computes mean waveforms and SNR for each cluster identified by Kilosort.
+    This does not need synchronization with task events as we're just looking at mean waveforms.
     :param input_dir:
     :param config:
     :return:

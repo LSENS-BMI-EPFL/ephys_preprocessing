@@ -20,6 +20,7 @@ from ephys_utils import flatten_list
 def main(input_dir, config):
     """
     Run TPrime on processed and spike-sorted/curated ephys data.
+    This aligns task events and spike times to the same time base.
     :param input_dir:  path to CatGT processed ephys data
     :param config:  config dict
     :return:

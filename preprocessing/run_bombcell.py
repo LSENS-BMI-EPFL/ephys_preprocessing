@@ -15,6 +15,8 @@ import matlab.engine
 def main(input_dir, config):
     """
     Run bombcell from MATLAB on kilosort output data.
+    This computes quality metrics for each cluster identified by Kilosort.
+    This does not need to be run on synchronized data so it could be run after Kilosort.
     :param input_dir:
     :param config:
     :return:
