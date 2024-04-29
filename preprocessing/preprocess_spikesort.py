@@ -65,7 +65,7 @@ def main(input_dir, config_file):
         print('Finished OverStrike.')
 
     # Run Kilosort
-    #run_kilosort.main(processed_dir, config)
+    run_kilosort.main(processed_dir, config)
     print('Finished Kilosort.')
 
     # Run quality metrics e.g. bombcell
@@ -84,7 +84,7 @@ if __name__ == '__main__':
 
     #args.input = r'M:\analysis\Axel_Bisi\data\AB085\AB085_20231005_152636\Ephys' #until \Ephys
     args.input = r'M:\data\AB105\Recording\AB105_20240314_115206\Ephys'
-    args.input = r'M:\data\AB102\Recording\AB102_20240309_114107\Ephys'
+    args.input = r'M:\data\AB104\Recording\AB104_20240313_145433\Ephys'
     args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
 
     main(args.input, args.config)

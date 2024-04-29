@@ -57,7 +57,7 @@ def main(input_dir, config):
         eng.cd(config['kilosort']['kilosort_path'], nargout=0)
 
         print('- Running Kilosort for IMEC probe', probe_id)
-        #eng.run_main_kilosort(probe_path, fs, config['kilosort']['temp_data_path'], nargout=0)
+        eng.run_main_kilosort(probe_path, fs, config['kilosort']['temp_data_path'], nargout=0)
 
         # Stop MATLAB engine
         eng.quit()
