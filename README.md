@@ -12,16 +12,17 @@ Pipeline to preprocess extracellular electrophysiology Neuropixels data acquired
 ### Overview of the pipeline
 ```mermaid
 graph LR
-    Step1["Event extraction <br/> filtering"] -.-> Step2["Coil artifact <br/> correction"]
-    Step2 -.-> Step3(["Optional: <br/> chunk zeroing"])
-    Step3 -.-> Step4["Spike sorting <br/> & quality metrics"]
-    Step4 -.-> Step5["Data stream <br/> synchronization"]
-    Step5 -.-> Step6["Mean waveform <br/> & metrics"]
-    Step6 -.-> Step7["LFP <br/> analysis"]
+    Step1["1. Event extraction <br/> filtering"] -.-> Step2["2. Coil artifact <br/> correction"]
+    Step2 -.-> Step3(["3. Optional: <br/> chunk zeroing"])
+    Step3 -.-> Step4["4. Spike sorting <br/> & quality metrics"]
+    Step4 -.-> Step5["5. Data stream <br/> synchronization"]
+    Step5 -.-> Step6["6. Mean waveform <br/> & metrics"]
+    Step6 -.-> Step7["7. LFP <br/> analysis"]
 
 ````
-#### Summary of the main steps
 
+
+### Summary of the main steps
 - **Events extraction (CatGT)**: extracts times of TTL pulses acquired with the NI card in the `nidq.bin` output file of SpikeGLX
 - **Filtering (CatGT)**: common median referencing by default
 - **Coil artifact correction (TPrime)**:
@@ -40,14 +41,22 @@ graph LR
 - **LFP analysis**: performs depth estimation on LFP data
 
   
-#### Installation
+### Installation
 - Install the associated conda environment `ephys_utils`
 - MATLAB e.g. R2021b - specify the MATLAB version to use when calling the MATLAB engine in Python:
   - In MATLAB command window, type `matlabroot` to get root path
   - In terminal, go to `<matlabroot>\extern\engines\pyton`, then type `python setup.py install`
   - If the previous did not work, try: https://ch.mathworks.com/matlabcentral/answers/1998578-invalid-version-r2021-when-installing-for-python-3-7-3-9
 - You need to also have a separate conda environment for Phy: https://github.com/cortex-lab/phy/
-    
+
+
+### Usage
+The pipeline is separated into two main scripts:
+1. `preprocess_spikesort.py`: performs Steps 1-2-3-4
+2. inspect spike sorting and curation results using Phy
+3. `preprocess_sync.py`: performs Steps 5-6-7
+
+
 ### Possible future improvements (and ideas):
 - Adaptation/robustness for Neuropixels 2.0 probes specifications and metadata (although most tools do take care of different metadata files) 
 - Kilosort 4.0 called from python directly
