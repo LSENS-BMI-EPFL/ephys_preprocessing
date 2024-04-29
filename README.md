@@ -6,7 +6,7 @@ Pipeline to preprocess extracellular electrophysiology Neuropixels data acquired
 ### Notes about this pipeline:
 - Works with the suite of SpikeGLX tools i.e. **CatGT**, **TPrime**, etc. : https://billkarsh.github.io/SpikeGLX/
 - Borrows/adapts some code found in the SpikeGLX-adapted fork of the Allen's ecephys pipeline: https://github.com/jenniferColonell/ecephys_spike_sorting (e.g. mean waveform calculation)
-- Written for Kilosort spike sorting (KS2 mostly):  https://github.com/MouseLand/Kilosort?tab=readme-ov-file (KS4 now)
+- Written for Kilosort spike sorting (KS2 mostly):  https://github.com/MouseLand/Kilosort?tab=readme-ov-file (doc for KS4)
 - Includes semi-automated curation using Bombcell: https://github.com/Julie-Fabre/bombcell
 
 ### Overview of the pipeline
@@ -53,9 +53,10 @@ graph LR
 ### Usage
 The pipeline is separated into two main scripts:
 1. `preprocess_spikesort.py`: performs Steps 1-2-3-4
-2. inspect spike sorting and curation results using Phy
+2. optionally, inspect spike sorting and curation results using Phy
 3. `preprocess_sync.py`: performs Steps 5-6-7
 
+The output of this pipeline can then be used to create NWB files using the [NWB_converter](https://github.com/LSENS-BMI-EPFL/NWB_converter).
 
 ### Possible future improvements (and ideas):
 - Adaptation/robustness for Neuropixels 2.0 probes specifications and metadata (although most tools do take care of different metadata files) 
