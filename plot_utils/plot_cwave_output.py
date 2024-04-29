@@ -17,7 +17,7 @@ import tkinter.filedialog as fdialog
 from pathlib import Path
 
 # Paths
-PATH_ANALYSIS = r'M:/analysis/Axel_Bisi/mice_data/'
+PATH_ANALYSIS = r'M:/analysis/Axel_Bisi/data/'
 PATH_ANALYSIS = r'D:/Npx_Data/'
 
 def plot_cluster_snr_hist(cluster_snr_cwave):
