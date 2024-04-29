@@ -12,7 +12,6 @@ import readSGLX
 import numpy as np
 import pathlib
 import pandas as pd
-from ephys_utils import check_if_valid_recording
 from waveform_metrics_utils import calculate_waveform_metrics_from_avg
 
 
@@ -34,11 +33,10 @@ def main(input_dir):
     # Perform computations for each probe separately
     for probe_id in probe_ids:
 
-
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
 
         # Get output folder
-        path_cwave_output = os.path.join(input_dir, probe_folder, 'cwaves')
+        path_cwave_output = os.path.join(input_dir, probe_folder, 'kilosort2', 'cwaves')
 
         # Get sampling rate
         metafile_name = '{}_tcat.imec{}.ap.meta'.format(epoch_name, probe_id)
@@ -54,8 +52,8 @@ def main(input_dir):
         mean_waveforms = np.load(path_mean_waveforms)
 
         # Get peak channels information
-        kilosort_folder = [f for f in os.listdir(os.path.join(input_dir, probe_folder)) if 'kilosort' in f][0]
-        clus_info = pd.read_csv(os.path.join(input_dir, probe_folder, kilosort_folder, 'cluster_info.tsv'), sep='\\t')
+        #kilosort_folder = [f for f in os.listdir(os.path.join(input_dir, probe_folder)) if 'kilosort' in f][0]
+        clus_info = pd.read_csv(os.path.join(input_dir, probe_folder, 'kilosort2', 'cluster_info.tsv'), sep='\\t')
 
         peak_channels = clus_info['ch'].values
 

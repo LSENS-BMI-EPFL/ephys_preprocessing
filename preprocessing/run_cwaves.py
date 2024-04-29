@@ -34,13 +34,10 @@ def main(input_dir, config):
     # Run C_Waves for each probe
     for probe_id in probe_ids:
 
-        #if probe_id != '0':
-        #    continue
-
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
 
         # Create output folder
-        path_cwave_output = os.path.join(input_dir, probe_folder, 'cwaves')
+        path_cwave_output = os.path.join(input_dir, probe_folder, 'kilosort2', 'cwaves')
         pathlib.Path(path_cwave_output).mkdir(parents=True, exist_ok=True)
 
         # Path to probe binary file
@@ -48,17 +45,14 @@ def main(input_dir, config):
         path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
 
         # Prepare spike data for C_Waves
-        # Find any folders that contain kilosort in the name
-        kilosort_folder = [f for f in os.listdir(os.path.join(input_dir, probe_folder)) if 'kilosort' in f][0]
-        path_ks_files = os.path.join(input_dir, probe_folder, kilosort_folder)
-        path_cwave_files = os.path.join(input_dir, probe_folder)
+        path_input_files = os.path.join(input_dir, probe_folder, 'kilosort2')
 
         # Create cluster table: incl. peak channel id. Need table row number <-> cluster_id equivalence (hence reindexing below).
         try:
-            clus_info = pd.read_csv(os.path.join(path_ks_files, 'cluster_info.tsv'),  # <- assumes Phy performed
+            clus_info = pd.read_csv(os.path.join(path_input_files, 'cluster_info.tsv'),  # <- assumes Phy performed
                                     sep='\\t')
         except FileNotFoundError:
-            print('Skipping probe. No spike sorting at', path_ks_files)
+            print('Skipping probe. No spike sorting at', path_input_files)
             continue
 
         clus_info.set_index(keys='cluster_id', drop=False, inplace=True)  # set index to cluster_id
@@ -66,26 +60,25 @@ def main(input_dir, config):
                                        fill_value=0,
                                        copy=True)  # reindex with missing cluster ids
         clus_table = clus_table[['n_spikes', 'ch']]
-        path_clus_table = os.path.join(path_cwave_files, 'clus_table.npy')
+        path_clus_table = os.path.join(path_input_files, 'clus_table.npy')
         np.save(path_clus_table, np.array(clus_table.values, dtype=np.uint32))
 
         # Cluster time: spike timestamp (in samples) for each spikes
-        spk_times = np.load(os.path.join(path_ks_files, 'spike_times.npy'))
+        spk_times = np.load(os.path.join(path_input_files, 'spike_times.npy'))
         spk_times_df = pd.DataFrame(spk_times, columns=['ts'])  # timestamps col
 
-        # Set negative times to zero, and report how many were set TODO: future C_Waves versions may not require this step
+        # Set negative times to zero, and report how many were set TODO: future C_Waves versions may not require this step (observed with Kilosort4)
         spk_times_df.loc[spk_times_df['ts'] < 0, 'ts'] = 0
         print('Negative spike times set to zero:', len(spk_times_df[spk_times_df['ts'] == 0]))
 
-        path_clus_time = os.path.join(path_cwave_files, 'clus_time.npy')
+        path_clus_time = os.path.join(path_input_files, 'clus_time.npy')
         clus_time_array = np.array(spk_times_df['ts'].values).astype(dtype=np.uint64)       # older syntax to convert negative int into unsigned
         np.save(path_clus_time, clus_time_array)
 
-
         # Cluster label: Cluster id for each spike event
-        spk_clusters = np.load(os.path.join(path_ks_files, 'spike_clusters.npy'))
+        spk_clusters = np.load(os.path.join(path_input_files, 'spike_clusters.npy'))
         spk_clusters_df = pd.DataFrame(spk_clusters, columns=['cluster'])
-        path_clus_lbl = os.path.join(path_cwave_files, 'clus_lbl.npy')
+        path_clus_lbl = os.path.join(path_input_files, 'clus_lbl.npy')
         np.save(path_clus_lbl, np.array(spk_clusters_df['cluster'].values, dtype=np.uint32))
 
         # Write C_Waves command

@@ -61,6 +61,7 @@ def main(input_dir, config):
             print('-- IMEC probe {} spike times in seconds'.format(probe_id))
             # Find any folders that contain kilosort in the name
             kilosort_folder = [f for f in os.listdir(os.path.join(input_dir, probe_folder)) if 'kilosort' in f][0]
+            kilosort_folder = 'kilosort2'
 
             # Load spike times and convert in seconds
             spike_times = np.load(os.path.join(input_dir, probe_folder, kilosort_folder, 'spike_times.npy'))

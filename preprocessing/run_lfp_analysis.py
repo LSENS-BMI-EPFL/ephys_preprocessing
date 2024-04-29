@@ -38,7 +38,7 @@ def find_range(x, a, b, option='within'):
     elif option == 'outside':
         return np.where(np.logical_or(x < a, x > b))[0]
     else:
-        raise ValueError('unrecognized option paramter: {}'.format(option))
+        raise ValueError('unrecognized option parameter: {}'.format(option))
 
 
 def rms(data):

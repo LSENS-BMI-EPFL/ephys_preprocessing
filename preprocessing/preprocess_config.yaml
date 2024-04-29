@@ -1,6 +1,7 @@
 ---
 raw_data_path: 'M:\\data'
 output_path: 'M:\\analysis\\Axel_Bisi\\data'
+mice_info_path: 'M:\\analysis\\Axel_Bisi\\mice_info'
 overstrike:
      overstrike_path: 'C:\\Users\\bisi\\OverStrike-win'
 catgt:

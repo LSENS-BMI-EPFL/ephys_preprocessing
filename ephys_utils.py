@@ -8,6 +8,8 @@
 
 # Imports
 import sys
+import os
+import pandas as pd
 import numpy as np
 from collections.abc import Iterable
 #import neo
@@ -18,27 +20,40 @@ from collections.abc import Iterable
 # Modules
 sys.path.append(r'C:\Users\bisi\Github\datamanipulation')
 
-def check_if_valid_recording(cluster_info_df):
+def check_if_valid_recording(config, mouse_id, probe_id):
     """
     Check if recording is valid.
-    :param cluster_info_df:
+    :param config: (dict) config dict.
+    :param mouse_id: (str) mouse name.
+    :param probe_id: (int) probe id.
     :return:
     """
 
-    # Check if there are clusters
-    if cluster_info_df.empty:
+    path_to_probe_insertion_info = os.path.join(config['mice_info_path'], 'probe_insertion_info.xlsx')
+    probe_info_df = pd.read_excel(path_to_probe_insertion_info)
+    probe_info = probe_info_df.loc[(probe_info_df['mouse_name'] == mouse_id)
+                                      & (probe_info_df['probe_id'] == int(probe_id))]
+    if probe_info['valid'].values[0] == 0:
+        print('{} probe recording {} not valid. Skipping...'.format(mouse_id, probe_id))
         return False
+    return True
+
+
+
+    # Check if there are clusters
+    #if cluster_info_df.empty:
+    #    return False
 
     # Check if there are clusters with good or mua labels
-    if not cluster_info_df['group'].isin(['good', 'mua']).any():
-        return False
+    #if not cluster_info_df['group'].isin(['good', 'mua']).any():
+    #    return False
 
     # Check if only noise clusters
-    if cluster_info_df['group'].isin(['noise']).all():
-        print('Only noise clusters in recording.')
-        return False
+    #if cluster_info_df['group'].isin(['noise']).all():
+    #    print('Only noise clusters in recording.')
+    #    return False
 
-    return True
+    return
 
 
 def convert_stereo_coords(azimuth, elevation):

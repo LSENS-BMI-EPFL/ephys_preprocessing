@@ -31,23 +31,19 @@ def main(input_dir, config_file):
     print('Preprocessing data from {}...'.format(input_dir))
 
     # Run TPrime
-    #run_tprime.main(input_dir, config['tprime'])
+    run_tprime.main(input_dir, config['tprime'])
     print('Finished Tprime.')
 
     # Run Cwaves
-    #run_cwaves.main(input_dir, config['cwaves'])
+    run_cwaves.main(input_dir, config['cwaves'])
     print('Finished Cwaves.')
 
     # Run mean waveform metrics
-    #run_mean_waveform_metrics.main(input_dir)
+    run_mean_waveform_metrics.main(input_dir)
     print('Finished mean waveform metrics.')
 
-    # Run quality metrics e.g. bombcell
-    run_bombcell.main(input_dir, config['bombcell'])
-    print('Finished bombcell quality metrics.')
-
     # LFP analysis for depth estimation
-    #run_lfp_analysis.main(input_dir)
+    run_lfp_analysis.main(input_dir)
 
     print('Finished preprocessing for {}.'.format(input_dir))
 
@@ -60,7 +56,7 @@ if __name__ == '__main__':
         parser.add_argument('--config', type=str, nargs='?', required=False)
         args = parser.parse_args()
 
-        args.input = r'M:\analysis\Axel_Bisi\data\AB104\AB104_20240313_145433\Ephys\catgt_AB104_g1'
+        args.input = r'M:\analysis\Axel_Bisi\data\AB102\AB102_20240309_114107\Ephys\catgt_AB102_g0'
         args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
 
         main(args.input, args.config)
