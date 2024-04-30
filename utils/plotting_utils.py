@@ -4,6 +4,7 @@
 @project: EphysUtils
 @file: plotting_utils.py
 @time: 10.05.2023 10:47
+@description: Utility functions for plotting.
 """
 
 # Imports

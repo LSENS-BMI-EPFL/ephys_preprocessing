@@ -4,6 +4,7 @@
 @project: ephys_utils
 @file: ephys_utils.py
 @time: 7/28/2022 10:46 AM
+@description: Ephys data manipulation and script utilities.
 """
 
 # Imports

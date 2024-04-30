@@ -4,6 +4,7 @@
 @project: ephys_utils
 @file: plot_cwave_output.py
 @time: 17/03/2022 14:51
+@description: Plot C_waves output.
 """
 
 # Imports
