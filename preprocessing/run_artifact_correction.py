@@ -11,7 +11,6 @@
 import os
 import shutil
 import subprocess
-import webbrowser
 
 import numpy as np
 import pathlib
@@ -19,7 +18,7 @@ import pathlib
 from matplotlib import pyplot as plt
 
 # Import readers
-import readSGLX
+from utils import readSGLX
 
 
 def main(input_dir, config):

@@ -13,8 +13,8 @@ import webbrowser
 import pathlib
 import numpy as np
 
-import readSGLX
-from ephys_utils import flatten_list
+from utils import readSGLX
+from utils.ephys_utils import flatten_list
 
 
 def main(input_dir, config):

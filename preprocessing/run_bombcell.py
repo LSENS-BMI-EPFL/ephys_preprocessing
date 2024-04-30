@@ -9,11 +9,10 @@
 import os
 import subprocess
 import sys
-import pathlib
 import pyautogui
 import time
 
-from ephys_utils import check_if_valid_recording
+from utils.ephys_utils import check_if_valid_recording
 
 os.environ["MATLAB_ENGINE"] = "R2021b"
 import matlab.engine
@@ -38,6 +37,8 @@ def main(input_dir, config):
 
     # Perform computations for each probe separately
     for probe_id in probe_ids:
+        if probe_id == '2':
+            continue
 
         # Check if probe recording is valid
         mouse_id = epoch_name.split('_')[0]

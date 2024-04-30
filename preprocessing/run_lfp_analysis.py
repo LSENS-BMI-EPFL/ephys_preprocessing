@@ -20,8 +20,8 @@ from scipy.signal import welch
 from scipy.ndimage.filters import gaussian_filter1d
 
 # Import modules
-import readSGLX
-from sglx_meta_to_coords import MetaToCoords
+from utils import readSGLX
+from utils.sglx_meta_to_coords import MetaToCoords
 
 
 def find_range(x, a, b, option='within'):

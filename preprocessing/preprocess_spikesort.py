@@ -65,7 +65,7 @@ def main(input_dir, config_file):
         print('Finished OverStrike.')
 
     # Run Kilosort
-    run_kilosort.main(processed_dir, config)
+    #run_kilosort.main(processed_dir, config)
     print('Finished Kilosort.')
 
     # Run quality metrics e.g. bombcell

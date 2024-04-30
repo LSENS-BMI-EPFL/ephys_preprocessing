@@ -9,7 +9,7 @@
 # Imports
 import os
 import subprocess
-from ephys_utils import flatten_list
+from utils.ephys_utils import flatten_list
 import webbrowser
 import yaml
 

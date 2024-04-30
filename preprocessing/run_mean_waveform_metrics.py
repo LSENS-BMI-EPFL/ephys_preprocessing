@@ -8,11 +8,11 @@
 
 # Imports
 import os
-import readSGLX
+from utils import readSGLX
 import numpy as np
 import pathlib
 import pandas as pd
-from waveform_metrics_utils import calculate_waveform_metrics_from_avg
+from utils.waveform_metrics_utils import calculate_waveform_metrics_from_avg
 
 
 def main(input_dir):

@@ -2,7 +2,7 @@
 """
 @author: Axel Bisi
 @project: ephys_datajoint
-@file: utils.py
+@file: plotting_utils.py
 @time: 28.04.2023 09:10
 @description: Script for various utilities.
 """

@@ -2,7 +2,7 @@
 """
 @author: Axel Bisi
 @project: EphysUtils
-@file: utils.py
+@file: plotting_utils.py
 @time: 10.05.2023 10:47
 """
 
@@ -99,3 +99,72 @@ def halfgaussian_filter1d(input, sigma, axis=-1, output=None,
     weights = halfgaussian_kernel1d(sigma, lw)
     origin = -lw // 2
     return scipy.ndimage.convolve1d(input, weights, axis, output, mode, cval, origin)
+
+def make_raster_plot(cluster_key, trial_start_times, trial_ids_dict, trial_type_dict):
+
+    # Get cluster data from datajoint
+    cluster_data_df = pd.DataFrame(cluster_key)
+
+    # Get spikes and cluster information
+    c_spk_times = np.asarray(cluster_data_df['spike_times'].values)
+    cluster_id = cluster_data_df['cluster_id'].values[0]
+    depth = cluster_data_df['depth'].values[0]  # distance relative to probe tip
+    # area = cluster_data_df['area'].values[0] #TODO :
+    title_str = 'id {}, {:.0f}$\mu m$'.format(cluster_id, depth)
+
+    # Plot settings
+
+    pre_event_win = 0.02  # in sec
+    post_event_win = 0.05  # in sec
+    time_ticks = np.arange(-pre_event_win, post_event_win, 0.01)
+    time_ticks_labels = np.arange(-pre_event_win, post_event_win, 0.01) * 1e3  # in msec
+    time_ticks_labels = np.round(time_ticks_labels).astype(int)  # format as int
+    n_trials = len(trial_start_times)
+    trial_ticks = np.arange(0, n_trials, 100)
+    ft_size = 13
+
+    #line_prop = dict(joinstyle='miter')
+
+    # Make figure
+    fig, ax = plt.subplots(1, 1, figsize=(2, 3), dpi=200)
+    remove_top_right_frame(ax)
+    ax.set_ylabel('Trials', fontsize=ft_size - 4)
+    ax.set_xlabel('Time [ms]', fontsize=ft_size - 4)
+    ax.set_yticks(ticks=trial_ticks, labels=trial_ticks, fontsize=ft_size - 5)
+    ax.set_xticks(ticks=time_ticks, labels=time_ticks_labels, fontsize=ft_size - 5)
+    ax.set_title(title_str, fontsize=ft_size / 2)
+    ax.tick_params(axis='both', which='major', labelsize=ft_size / 2)
+
+    trial_type_delimiters = []
+    # Iterate over trial types
+    for idx, (t_type, t_color) in enumerate(trial_type_dict.items()):
+        trial_type_starts = trial_start_times[trial_ids_dict[t_type]]
+        trial_type_delimiters.append(len(trial_type_starts))
+
+        c_spks_aligned = []
+        # Iterate over ordered trials
+        for t_time in trial_type_starts:
+            start_sec = t_time - pre_event_win
+            end_sec = t_time + post_event_win
+            c_spk_times_win = c_spk_times[(np.where((c_spk_times >= start_sec) & (c_spk_times <= end_sec)))] - t_time
+            c_spks_aligned.append(c_spk_times_win)
+
+        # Add raster per trial type
+        if idx == 0:
+            offset_start = 0
+        else:
+            offset_start = np.cumsum(trial_type_delimiters)[idx - 1]
+        offset_end = np.cumsum(trial_type_delimiters)[idx]
+        ax.eventplot(positions=c_spks_aligned,
+                     lineoffsets=np.arange(offset_start, offset_end),
+                     linewidths=1,
+                     linelengths=6,
+                     colors=[t_color] * len(c_spks_aligned),
+                     linestyles='dotted',
+                     )
+
+    ax.axvline(x=0, lw=0.5, ls='--', c='k', zorder=0)
+    ax.set_ylim(0, n_trials)
+    ax.set_xlim(-pre_event_win, post_event_win)
+
+    return fig
