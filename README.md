@@ -35,14 +35,15 @@ graph LR
   - Plotting is set to off (one plot/cluster generated), set to True for initial debugging/inspection
   - Further splitting of non-somatic to mua/good is set False
   - Computations of drift estimation/ephys properties is set to False (not immediately necessary)
-- **Data stream synchronization (TPrime)**: synchronizes task event times (e.g. trial starts) and spikes times to a the same time from a reference stream (default is the first imec probe clock)
+- **Data stream synchronization (TPrime)**: synchronizes task event times (e.g. trial starts) and spikes times to the same time from a reference stream (default is the first IMEC probe clock)
 - **Mean waveform estimation (C_Waves)**: efficient parsing of raw recordings to extract single spike waveforms to compute mean waveforms for each cluster
-- **Mean waveform metrics**: code that calculates waveform metrics like peak-to-trough duration, etc. (note, bombcell looks at template waveforms for peaks/troughs, but can also get raw mean waveforms and metrics)
+- **Mean waveform metrics**: code that calculates waveform metrics like peak-to-trough duration, etc. (note, bombcell looks at _template_ waveforms for peaks/troughs, but can also get raw mean waveforms and metrics)
 - **LFP analysis**: performs depth estimation on LFP data
 
   
 ### Installation
-- Install the associated conda environment `ephys_utils`
+- Install the associated conda environment:
+    - `conda env create -f environment.yml` or `conda create --name ephys_utils --file requirements.txt`
 - MATLAB e.g. R2021b - specify the MATLAB version to use when calling the MATLAB engine in Python:
   - In MATLAB command window, type `matlabroot` to get root path
   - In terminal, go to `<matlabroot>\extern\engines\pyton`, then type `python setup.py install`
