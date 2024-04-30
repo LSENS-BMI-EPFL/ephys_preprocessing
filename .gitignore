@@ -52,11 +52,7 @@ wheels/
 
 # Directories and notebooks
 .ipynb_checkpoints/
-notebooks/
 *ipynb
-plot_utils/__pycache__
-/notebooks/
 /.ipynb_checkpoints/
-/plot_utils/
 
 
