@@ -79,5 +79,6 @@ def main(input_dir, config):
         pyautogui.hotkey('ctrl', 'q') # close GUI
         time.sleep(15)
         process.terminate() # terminate process
+        print('- Phy GUI saved and closed.')
 
     return
