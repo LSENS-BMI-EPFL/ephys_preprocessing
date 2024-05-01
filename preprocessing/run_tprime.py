@@ -52,7 +52,7 @@ def main(input_dir, config):
     valid_probes = []
     for probe_id in range(n_probes):
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
-        metafile_name = '{}_tcat.imec{}.ap.meta'.format(epoch_name, probe_id)
+        metafile_name = '{}_tcat_corrected.imec{}.ap.meta'.format(epoch_name, probe_id)
         apbin_metafile_path = os.path.join(input_dir, probe_folder, metafile_name)
         ap_meta_dict = readSGLX.readMeta(pathlib.Path(apbin_metafile_path))
         imSampRate = float(ap_meta_dict['imSampRate'])  # probe-specific
