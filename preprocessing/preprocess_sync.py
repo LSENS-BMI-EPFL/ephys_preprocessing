@@ -44,8 +44,9 @@ def main(input_dir, config_file):
 
     # LFP analysis for depth estimation
     run_lfp_analysis.main(input_dir)
+    print('Finished LFP analysis.')
 
-    print('Finished preprocessing for {}.'.format(input_dir))
+    print('Finished sync preprocessing for {}.'.format(input_dir))
 
     return
 
@@ -56,7 +57,7 @@ if __name__ == '__main__':
         parser.add_argument('--config', type=str, nargs='?', required=False)
         args = parser.parse_args()
 
-        args.input = r'M:\analysis\Axel_Bisi\data\AB102\AB102_20240309_114107\Ephys\catgt_AB102_g0'
+        args.input = r'M:\analysis\Axel_Bisi\data\AB086\AB086_20231015_141742\Ephys\catgt_AB086_g0'
         args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
 
         main(args.input, args.config)

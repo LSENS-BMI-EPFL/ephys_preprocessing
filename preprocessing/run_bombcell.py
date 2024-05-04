@@ -37,8 +37,6 @@ def main(input_dir, config):
 
     # Perform computations for each probe separately
     for probe_id in probe_ids:
-        if probe_id == '2':
-            continue
 
         # Check if probe recording is valid
         mouse_id = epoch_name.split('_')[0]
@@ -74,11 +72,13 @@ def main(input_dir, config):
         # Execute Phy to generate cluster_info table
         command = 'conda activate phy2 && phy template-gui params.py && conda deactivate'
         process = subprocess.Popen(command,  shell=True, cwd=os.path.join(probe_path, 'kilosort2'))
+        pyautogui.FAILSAFE = False # disable mouse moving fail-safe
         time.sleep(15) # wait for GUI to load
         pyautogui.hotkey('ctrl', 's') # simulate CTRL+S key press to save the file
         time.sleep(15) # wait for saving to complete
         pyautogui.hotkey('ctrl', 'q') # close GUI
         time.sleep(15)
         process.terminate() # terminate process
+        print('- Phy GUI saved and closed.')
 
     return

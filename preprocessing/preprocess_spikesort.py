@@ -65,13 +65,13 @@ def main(input_dir, config_file):
         print('Finished OverStrike.')
 
     # Run Kilosort
-    #run_kilosort.main(processed_dir, config)
+    run_kilosort.main(processed_dir, config)
     print('Finished Kilosort.')
 
     # Run quality metrics e.g. bombcell
     run_bombcell.main(processed_dir, config)
     print('Finished bombcell quality metrics.')
-
+    print('Finished spike-sorting preprocessing for {}.'.format(processed_dir))
 
     return
 
@@ -82,9 +82,8 @@ if __name__ == '__main__':
     parser.add_argument('--config', type=str, nargs='?', required=False)
     args = parser.parse_args()
 
-    #args.input = r'M:\analysis\Axel_Bisi\data\AB085\AB085_20231005_152636\Ephys' #until \Ephys
-    args.input = r'M:\data\AB105\Recording\AB105_20240314_115206\Ephys'
-    args.input = r'M:\data\AB104\Recording\AB104_20240313_145433\Ephys'
+    args.input = r'M:\data\AB105\Recording\AB105_20240314_115206\Ephys' #until \Ephys
+    args.input = r'M:\data\AB087\Recording\AB087_20231017_141901\Ephys' #until \Ephys
     args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
 
     main(args.input, args.config)

@@ -61,5 +61,4 @@ def main(input_dir, config):
         # Stop MATLAB engine
         eng.quit()
 
-
     return
