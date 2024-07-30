@@ -48,6 +48,7 @@ graph LR
   - In MATLAB command window, type `matlabroot` to get root path
   - In terminal, go to `<matlabroot>\extern\engines\pyton`, then type `python setup.py install`
   - If the previous did not work, try: https://ch.mathworks.com/matlabcentral/answers/1998578-invalid-version-r2021-when-installing-for-python-3-7-3-9
+  -     That is, first run: `python -m pip install --upgrade setuptools`
   - Example for R2021b, run `python -m pip install matlabengine==9.11.21`
 - You need to also have a separate conda environment for Phy: https://github.com/cortex-lab/phy/
 
