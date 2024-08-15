@@ -50,6 +50,7 @@ graph LR
   - If the previous did not work, try: https://ch.mathworks.com/matlabcentral/answers/1998578-invalid-version-r2021-when-installing-for-python-3-7-3-9
   -     That is, first run: `python -m pip install --upgrade setuptools`
   - Example for R2021b, run `python -m pip install matlabengine==9.11.21`
+  - **Note**: if you can't run the matlab engine to run kilosort, run kilosort separately in MATLAB directly. Then continue with the steps of this pipeline.
 - You need to also have a separate conda environment for Phy: https://github.com/cortex-lab/phy/
 
 ### Usage
@@ -58,12 +59,13 @@ The pipeline is separated into two main scripts:
 2. optionally, inspect spike sorting and curation results using Phy
 3. `preprocess_sync.py`: performs Steps 5-6-7
 
-The output of this pipeline can then be used to create NWB files using the [NWB_converter](https://github.com/LSENS-BMI-EPFL/NWB_converter).
+The output of this pipeline can then be used to create NWB files using the [NWB_converter](https://github.com/LSENS-BMI-EPFL/NWB_converter) in particular the `ephys_to_nwb.py` converter.
 
 ### Possible future improvements (and ideas):
 - Adaptation/robustness for Neuropixels 2.0 probes specifications and metadata (although most tools do take care of different metadata files) 
-- Kilosort 4.0 called from python directly
+- Kilosort 4.0 called from python directly (if performance judged satisfactory)
 - Integration of [SpikeInterface](https://github.com/SpikeInterface) tool(s)
 - More LFP analyses...?
+-  etc.
 
   
