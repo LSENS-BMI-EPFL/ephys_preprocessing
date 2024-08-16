@@ -5,7 +5,7 @@ Pipeline to preprocess extracellular electrophysiology Neuropixels data acquired
 
 ### Notes about this pipeline:
 - Works with the suite of SpikeGLX tools i.e. **CatGT**, **TPrime**, etc. : https://billkarsh.github.io/SpikeGLX/
-- Borrows/adapts some code found in the SpikeGLX-adapted fork of the Allen's ecephys pipeline: https://github.com/jenniferColonell/ecephys_spike_sorting (e.g. mean waveform calculation)
+- Borrows/adapts some code in the SpikeGLX-adapted fork of the Allen's ecephys pipeline: https://github.com/jenniferColonell/ecephys_spike_sorting (e.g. mean waveform calculation)
 - Written for Kilosort spike sorting (KS2 mostly):  https://github.com/MouseLand/Kilosort?tab=readme-ov-file (doc for KS4)
 - Includes semi-automated curation using Bombcell: https://github.com/Julie-Fabre/bombcell
 
@@ -48,7 +48,9 @@ graph LR
   - In MATLAB command window, type `matlabroot` to get root path
   - In terminal, go to `<matlabroot>\extern\engines\pyton`, then type `python setup.py install`
   - If the previous did not work, try: https://ch.mathworks.com/matlabcentral/answers/1998578-invalid-version-r2021-when-installing-for-python-3-7-3-9
+  -     That is, first run: `python -m pip install --upgrade setuptools`
   - Example for R2021b, run `python -m pip install matlabengine==9.11.21`
+  - **Note**: if you can't run the matlab engine to run kilosort, run kilosort separately in MATLAB directly. Then continue with the steps of this pipeline.
 - You need to also have a separate conda environment for Phy: https://github.com/cortex-lab/phy/
 
 ### Usage
@@ -57,12 +59,13 @@ The pipeline is separated into two main scripts:
 2. optionally, inspect spike sorting and curation results using Phy
 3. `preprocess_sync.py`: performs Steps 5-6-7
 
-The output of this pipeline can then be used to create NWB files using the [NWB_converter](https://github.com/LSENS-BMI-EPFL/NWB_converter).
+The output of this pipeline can then be used to create NWB files using the [NWB_converter](https://github.com/LSENS-BMI-EPFL/NWB_converter) in particular the `ephys_to_nwb.py` converter.
 
 ### Possible future improvements (and ideas):
 - Adaptation/robustness for Neuropixels 2.0 probes specifications and metadata (although most tools do take care of different metadata files) 
-- Kilosort 4.0 called from python directly
+- Kilosort 4.0 called from python directly (if performance judged satisfactory)
 - Integration of [SpikeInterface](https://github.com/SpikeInterface) tool(s)
 - More LFP analyses...?
+-  etc.
 
   
