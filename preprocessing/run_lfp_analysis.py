@@ -14,6 +14,8 @@ import json
 import numpy as np
 import pandas as pd
 from pathlib import Path
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import scipy as sp
 from scipy.signal import welch

@@ -41,11 +41,13 @@ def main(input_dir, config_file):
     pathlib.Path(processed_dir).mkdir(parents=True, exist_ok=True)
 
     # Run CatGT
-    #run_catgt.main(input_dir, processed_dir, config['catgt'])
+    print('Starting CatGT.')
+    run_catgt.main(input_dir, processed_dir, config['catgt'])
     print('Finished CatGT.')
 
     # Run TPrime a first time to sync whisker artifact times
-    #run_artifact_correction.main(processed_dir, config)
+    print('Starting artifact correction.')
+    run_artifact_correction.main(processed_dir, config)
     print('Finished artifact correction.')
 
     # Optionally, run OverStrike
@@ -65,13 +67,16 @@ def main(input_dir, config_file):
         print('Finished OverStrike.')
 
     # Run Kilosort
+    print('Starting Kilosort.')
     run_kilosort.main(processed_dir, config)
     print('Finished Kilosort.')
 
     # Run quality metrics e.g. bombcell
+    print('Starting bombcell quality metrics.')
     run_bombcell.main(processed_dir, config)
     print('Finished bombcell quality metrics.')
-    print('Finished spike-sorting preprocessing for {}.'.format(processed_dir))
+    catgt_epoch_name = os.listdir(processed_dir)[0]
+    print('Finished spike-sorting preprocessing in: {}.'.format(os.path.join(processed_dir, catgt_epoch_name)))
 
     return
 
@@ -82,8 +87,7 @@ if __name__ == '__main__':
     parser.add_argument('--config', type=str, nargs='?', required=False)
     args = parser.parse_args()
 
-    args.input = r'M:\data\AB105\Recording\AB105_20240314_115206\Ephys' #until \Ephys
-    args.input = r'M:\data\AB087\Recording\AB087_20231017_141901\Ephys' #until \Ephys
+    args.input = r'M:\data\AB122\Recording\AB122_20240804_134554\Ephys' #until \Ephys
     args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
 
     main(args.input, args.config)

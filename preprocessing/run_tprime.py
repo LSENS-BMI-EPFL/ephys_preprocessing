@@ -60,13 +60,13 @@ def main(input_dir, config):
         try:
             print('-- IMEC probe {} spike times in seconds'.format(probe_id))
             # Find any folders that contain kilosort in the name
-            #kilosort_folder = [f for f in os.listdir(os.path.join(input_dir, probe_folder)) if 'kilosort' in f][0]
-            kilosort_folder = 'kilosort2'
+            kilosort_folder = 'kilosort2' # TODO: if other KS version used, generalize this
 
             # Load spike times and convert in seconds
             spike_times = np.load(os.path.join(input_dir, probe_folder, kilosort_folder, 'spike_times.npy'))
             spike_times_sec = spike_times / imSampRate
-            np.save(os.path.join(input_dir, probe_folder, kilosort_folder, 'spike_times_sec.npy'), spike_times_sec)
+            path_to_spikes = os.path.join(input_dir, probe_folder, kilosort_folder, 'spike_times_sec.npy')
+            np.save(path_to_spikes, spike_times_sec)
             valid_probes.append(probe_id)
 
         # If no spike times, skip probe

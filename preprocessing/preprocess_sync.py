@@ -31,18 +31,22 @@ def main(input_dir, config_file):
     print('Preprocessing data from {}...'.format(input_dir))
 
     # Run TPrime
+    print('Starting Tprime.')
     run_tprime.main(input_dir, config['tprime'])
     print('Finished Tprime.')
 
     # Run Cwaves
+    print('Starting Cwaves.')
     run_cwaves.main(input_dir, config['cwaves'])
     print('Finished Cwaves.')
 
     # Run mean waveform metrics
+    print('Starting mean waveform metrics.')
     run_mean_waveform_metrics.main(input_dir)
     print('Finished mean waveform metrics.')
 
     # LFP analysis for depth estimation
+    print('Starting LFP analysis.')
     run_lfp_analysis.main(input_dir)
     print('Finished LFP analysis.')
 
@@ -57,7 +61,7 @@ if __name__ == '__main__':
         parser.add_argument('--config', type=str, nargs='?', required=False)
         args = parser.parse_args()
 
-        args.input = r'M:\analysis\Axel_Bisi\data\AB086\AB086_20231015_141742\Ephys\catgt_AB086_g0'
+        args.input = r'M:\\analysis\\Axel_Bisi\\data\AB122\AB122_20240804_134554\Ephys\catgt_AB122_g0'
         args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
 
         main(args.input, args.config)

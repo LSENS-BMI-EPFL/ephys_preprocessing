@@ -70,14 +70,17 @@ def main(input_dir, config):
         eng.quit()
 
         # Execute Phy to generate cluster_info table
+        print('- Opening Phy GUI to generate cluster_info table.')
         command = 'conda activate phy2 && phy template-gui params.py && conda deactivate'
         process = subprocess.Popen(command,  shell=True, cwd=os.path.join(probe_path, 'kilosort2'))
         pyautogui.FAILSAFE = False # disable mouse moving fail-safe
-        time.sleep(15) # wait for GUI to load
-        pyautogui.hotkey('ctrl', 's') # simulate CTRL+S key press to save the file
-        time.sleep(15) # wait for saving to complete
+        time.sleep(30) # wait for GUI to load
+        pyautogui.keyDown('ctrl')
+        pyautogui.press('s')
+        pyautogui.keyUp('ctrl')
+        time.sleep(20) # wait for saving to complete
         pyautogui.hotkey('ctrl', 'q') # close GUI
-        time.sleep(15)
+        time.sleep(30)
         process.terminate() # terminate process
         print('- Phy GUI saved and closed.')
 
