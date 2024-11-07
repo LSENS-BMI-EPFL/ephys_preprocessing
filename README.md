@@ -19,7 +19,7 @@ graph LR
     Step5 -.-> Step6["6. Mean waveform <br/> & metrics"]
     Step6 -.-> Step7["7. LFP <br/> analysis"]
 
-````
+```
 
 
 ### Summary of the main steps
