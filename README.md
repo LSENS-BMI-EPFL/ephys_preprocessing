@@ -12,13 +12,12 @@ Pipeline to preprocess extracellular electrophysiology Neuropixels data acquired
 ### Overview of the pipeline
 ```mermaid
 graph LR
-    Step1["1. Event extraction <br/> filtering"] -.-> Step2["2. Coil artifact <br/> correction"]
-    Step2 -.-> Step3(["3. Optional: <br/> chunk zeroing"])
-    Step3 -.-> Step4["4. Spike sorting <br/> & quality metrics"]
-    Step4 -.-> Step5["5. Data stream <br/> synchronization"]
-    Step5 -.-> Step6["6. Mean waveform <br/> & metrics"]
-    Step6 -.-> Step7["7. LFP <br/> analysis"]
-
+    Step1["1- Event extraction <br/> filtering"] -.-> Step2["2- Coil artifact <br/> correction"]
+    Step2 -.-> Step3(["3- Optional: <br/> chunk zeroing"])
+    Step3 -.-> Step4["4- Spike sorting <br/> & quality metrics"]
+    Step4 -.-> Step5["5- Data stream <br/> synchronization"]
+    Step5 -.-> Step6["6- Mean waveform <br/> & metrics"]
+    Step6 -.-> Step7["7- LFP <br/> analysis"]
 ```
 
 
