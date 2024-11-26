@@ -372,7 +372,7 @@ def main(input_dir):
         "freq_range_gamma": [0, 10], #default is [0, 10] #Todo use real gamma?
         "freq_range_spiking": [500, 1250],
         "max_freq": 150, #default is 150
-        "saline_range_um": [2000, 3800], # overwritten using insertion metadata
+        "saline_range_um": [2000, 4000], # overwritten using insertion metadata
         "n_passes": 10, #default is 10
         "air_gap_um": 1000, #default is 1000
         "time_interval": 5, #default is 5
@@ -401,7 +401,14 @@ def main(input_dir):
                                   &
                                   (probe_info_df['probe_id'] == int(probe_id))]
         insertion_depth = probe_row['depth'].values[0]
-        params['saline_range_um'] = [insertion_depth, 3800]
+
+        # Check that depth estimation using LFP is possible using electrodes in saline
+        if insertion_depth > 4000:
+            print('Probe {} insertion depth ({}) is too deep for LFP depth estimation. Skipped.'.format(probe_id, insertion_depth))
+            continue
+
+
+        params['saline_range_um'] = [insertion_depth, 4000]
 
         # Path to probe and output
         path_to_probe_folder = os.path.join(input_dir, probe_folder)
