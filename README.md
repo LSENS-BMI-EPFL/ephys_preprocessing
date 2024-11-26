@@ -75,7 +75,7 @@ The pipeline is separated into two main scripts:
 1. `preprocess_spikesort.py`: performs Steps 1-2-3-4 -> specify raw data input folder path in lab server `data/`
 2. optionally, inspect spike sorting and curation results using Phy and Phy's environment
     - `conda activate phy2`
-    - `phy template-gui params.py` in the Kilosort output folder (**note**: edit `params.py` to point the .ap.bin file if you want to see TraceView or single waveforms)
+    - `phy template-gui params.py` in the Kilosort output folder (**note**: edit `params.py` to point to the .ap.bin file if you want to see TraceView or single waveforms)
 4. `preprocess_sync.py`: performs Steps 5-6-7 -> specify processed data input folder path in lab server `analysis/FirstName_LastName/data`
 
 The output of this pipeline can then be used to create NWB files using the [NWB_converter](https://github.com/LSENS-BMI-EPFL/NWB_converter) in particular the `ephys_to_nwb.py` converter.
