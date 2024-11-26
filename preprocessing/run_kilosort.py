@@ -51,8 +51,7 @@ def main(input_dir, config):
         sys.path.append(config['kilosort']['matlab_path'])
         logfile_path = os.path.join(probe_path, 'preprocess_spikesort_log.txt')
         eng = matlab.engine.start_matlab("-logfile " + str(logfile_path))
-        eng.addpath(eng.genpath(r'C:\Users\bisi\Github\npy-matlab'), nargout=0)
-        eng.addpath(eng.genpath(r'C:\Users\bisi\Github\npy-matlab'), nargout=0)
+        #eng.addpath(eng.genpath(r'C:\Users\bisi\Github\npy-matlab'), nargout=0)
         eng.cd(config['kilosort']['kilosort_path'], nargout=0)
 
         print('- Running Kilosort for IMEC probe', probe_id)
