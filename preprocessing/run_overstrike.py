@@ -47,7 +47,6 @@ def main(input_dir, config, timespans_list):
         logger.error('Timespans_list cannot be empty. Skipping OverStrike.')
         return
 
-
     logger.info('Striking timespans: {}'.format(timespans_list))
     for probe_id in range(n_probes):
         probe_folder = '{}_imec{}'.format(epoch_name.replace('catgt_', ''), probe_id)

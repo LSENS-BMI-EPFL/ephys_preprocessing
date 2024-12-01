@@ -58,7 +58,7 @@ def main(input_dir, output_dir, config):
     logger.info('CatGT command line will run: {}'.format(list(flatten_list(command))))
 
     logger.info('Running CatGT on {}.'.format(epoch_name))
-    #subprocess.run(list(flatten_list(command)), shell=True, cwd=config['catgt_path'])
+    subprocess.run(list(flatten_list(command)), shell=True, cwd=config['catgt_path'])
 
     logger.info('Opening CatGT log file at: {}'.format(os.path.join(config['catgt_path'], 'CatGT.log')))
     webbrowser.open(os.path.join(config['catgt_path'], 'CatGT.log'))
