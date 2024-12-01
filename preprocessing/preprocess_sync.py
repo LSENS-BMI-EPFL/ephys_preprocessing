@@ -9,12 +9,15 @@
 # Imports
 import argparse
 import yaml
+from loguru import logger
+logger.add("log/preprocess_sync_{time}.log", colorize=True,
+              format="{name} {message}", level="INFO", rotation="10 MB", retention="1 week")
 
+# Import submodules
 import run_tprime
 import run_cwaves
 import run_mean_waveform_metrics
 import run_lfp_analysis
-from preprocessing import run_bombcell
 
 
 def main(input_dir, config_file):
@@ -28,29 +31,29 @@ def main(input_dir, config_file):
     with open(config_file, 'r') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
 
-    print('Preprocessing data from {}...'.format(input_dir))
+    logger.info('Preprocessing data from {}.'.format(input_dir))
 
     # Run TPrime
-    print('Starting Tprime.')
+    logger.info('Starting Tprime.')
     run_tprime.main(input_dir, config['tprime'])
-    print('Finished Tprime.')
+    logger.info('Finished Tprime.')
 
     # Run Cwaves
-    print('Starting Cwaves.')
+    logger.info('Starting Cwaves.')
     run_cwaves.main(input_dir, config['cwaves'])
-    print('Finished Cwaves.')
+    logger.info('Finished Cwaves.')
 
     # Run mean waveform metrics
-    print('Starting mean waveform metrics.')
+    logger.info('Starting mean waveform metrics.')
     run_mean_waveform_metrics.main(input_dir)
-    print('Finished mean waveform metrics.')
+    logger.info('Finished mean waveform metrics.')
 
     # LFP analysis for depth estimation
-    print('Starting LFP analysis.')
+    logger.info('Starting LFP analysis.')
     run_lfp_analysis.main(input_dir)
-    print('Finished LFP analysis.')
+    logger.info('Finished LFP analysis.')
 
-    print('Finished sync preprocessing for {}.'.format(input_dir))
+    logger.success('Finished sync preprocessing for {}.'.format(input_dir))
 
     return
 
@@ -61,7 +64,7 @@ if __name__ == '__main__':
         parser.add_argument('--config', type=str, nargs='?', required=False)
         args = parser.parse_args()
 
-        args.input = r'M:\\analysis\\Axel_Bisi\\data\AB122\AB122_20240804_134554\Ephys\catgt_AB122_g0'
+        args.input = r'M:\\analysis\\Axel_Bisi\\data\AB143\AB143_20241126_115737\Ephys\catgt_AB143_g1'
         args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
 
         main(args.input, args.config)

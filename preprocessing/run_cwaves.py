@@ -13,6 +13,7 @@ import subprocess
 import webbrowser
 import pandas as pd
 import numpy as np
+from loguru import logger
 
 
 def main(input_dir, config):
@@ -52,7 +53,7 @@ def main(input_dir, config):
             clus_info = pd.read_csv(os.path.join(path_input_files, 'cluster_info.tsv'),  # <- assumes Phy performed
                                     sep='\\t')
         except FileNotFoundError:
-            print('Skipping probe. No spike sorting at', path_input_files, 'or cluster_info.tsv file missing.')
+            logger.warning('Skipping probe. No spike sorting at', path_input_files, 'or cluster_info.tsv file missing.')
             continue
 
         clus_info.set_index(keys='cluster_id', drop=False, inplace=True)  # set index to cluster_id
@@ -69,7 +70,7 @@ def main(input_dir, config):
 
         # Set negative times to zero, and report how many were set TODO: future C_Waves versions may not require this step (observed with Kilosort4)
         spk_times_df.loc[spk_times_df['ts'] < 0, 'ts'] = 0
-        print('Negative spike times set to zero:', len(spk_times_df[spk_times_df['ts'] == 0]))
+        logger.info('Negative spike times set to zero:', len(spk_times_df[spk_times_df['ts'] == 0]))
 
         path_clus_time = os.path.join(path_input_files, 'clus_time.npy')
         clus_time_array = np.array(spk_times_df['ts'].values).astype(dtype=np.uint64)       # older syntax to convert negative int into unsigned
@@ -93,21 +94,24 @@ def main(input_dir, config):
                    '-num_spikes={}'.format(config['num_spikes']),
                    '-snr_radius_um={}'.format(config['snr_radius']) # requires snsGeomMap metadata entry, otherwise use -sns_radius
                    ]
+        logger.info('C_waves command line will run: {}'.format(command))
 
-        print('C_waves command line will run:', command)
-
-        print('Running C_waves for IMEC probe {}...'.format(probe_id))
+        logger.info('Running C_waves for IMEC probe {}.'.format(probe_id))
         subprocess.run(command, shell=True, cwd=config['cwaves_path'])
 
-        print('Opening log file')
+        logger.info('Opening C_Waves log file at {}'.format(os.path.join(config['cwaves_path'], 'C_Waves.log')))
         webbrowser.open(os.path.join(config['cwaves_path'], 'C_Waves.log'))
 
         # Remove useless mean_waveform rows (necessary for C_Waves to run), then resave (to match index size)
-        mean_waveforms = np.load(os.path.join(path_cwave_output, 'mean_waveforms.npy'))
-        clus_table['temp_matching'] = clus_table.apply(lambda x: x.n_spikes == x.ch == 0, axis=1)
-        ids_to_remove = clus_table[clus_table['temp_matching'] == True].index
-        mean_waveforms = np.delete(mean_waveforms, ids_to_remove, axis=0)
-#
-        np.save(os.path.join(path_cwave_output, 'mean_waveforms.npy'), mean_waveforms)
+        try:
+            mean_waveforms = np.load(os.path.join(path_cwave_output, 'mean_waveforms.npy'))
+            clus_table['temp_matching'] = clus_table.apply(lambda x: x.n_spikes == x.ch == 0, axis=1)
+            ids_to_remove = clus_table[clus_table['temp_matching'] == True].index
+            mean_waveforms = np.delete(mean_waveforms, ids_to_remove, axis=0)
+
+            np.save(os.path.join(path_cwave_output, 'mean_waveforms.npy'), mean_waveforms)
+        except:
+            logger.error('Error matching cluster indices in mean_waveforms.npy with cluster_info.tsv file.')
+            continue
 
     return

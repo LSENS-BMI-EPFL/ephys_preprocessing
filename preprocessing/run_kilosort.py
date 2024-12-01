@@ -8,7 +8,7 @@
 import os
 import sys
 import pathlib
-
+from loguru import logger
 from utils import readSGLX
 from utils.ephys_utils import check_if_valid_recording
 
@@ -26,10 +26,9 @@ def main(input_dir, config):
 
     epoch_name = os.listdir(input_dir)[0]
     probe_folders = [f for f in os.listdir(os.path.join(input_dir, epoch_name)) if 'imec' in f]
-    print('Data to spike-sort: ', probe_folders)
+    logger.info('Data to spike-sort: {}'.format(probe_folders))
     n_probes = len(probe_folders)
 
-    print('Running Kilosort...')
     for probe_id in range(n_probes):
 
         # Check if probe recording is valid
@@ -51,10 +50,9 @@ def main(input_dir, config):
         sys.path.append(config['kilosort']['matlab_path'])
         logfile_path = os.path.join(probe_path, 'preprocess_spikesort_log.txt')
         eng = matlab.engine.start_matlab("-logfile " + str(logfile_path))
-        #eng.addpath(eng.genpath(r'C:\Users\bisi\Github\npy-matlab'), nargout=0)
         eng.cd(config['kilosort']['kilosort_path'], nargout=0)
 
-        print('- Running Kilosort for IMEC probe', probe_id)
+        logger.info('Running Kilosort for IMEC probe {}.'.format(probe_id))
         eng.run_main_kilosort(probe_path, fs, config['kilosort']['temp_data_path'], nargout=0)
 
         # Stop MATLAB engine

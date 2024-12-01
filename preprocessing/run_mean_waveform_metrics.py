@@ -12,6 +12,7 @@ from utils import readSGLX
 import numpy as np
 import pathlib
 import pandas as pd
+from loguru import logger
 from utils.waveform_metrics_utils import calculate_waveform_metrics_from_avg
 
 
@@ -47,7 +48,7 @@ def main(input_dir):
         # Load mean waveform data from C_waves
         path_mean_waveforms = os.path.join(path_cwave_output, 'mean_waveforms.npy')
         if not os.path.isfile(path_mean_waveforms):
-            print('Skipping probe. No mean waveforms at', path_mean_waveforms)
+            logger.error('Skipping probe. No mean waveforms at {}.'.format(path_mean_waveforms))
             continue
         mean_waveforms = np.load(path_mean_waveforms)
 

@@ -17,7 +17,7 @@ from collections.abc import Iterable
 #import xarray as xr
 #import quantities as pq
 #from elephant.conversion import BinnedSpikeTrain
-
+from loguru import logger
 # Modules
 sys.path.append(r'C:\Users\bisi\Github\datamanipulation')
 
@@ -34,8 +34,12 @@ def check_if_valid_recording(config, mouse_id, probe_id):
     probe_info_df = pd.read_excel(path_to_probe_insertion_info)
     probe_info = probe_info_df.loc[(probe_info_df['mouse_name'] == mouse_id)
                                       & (probe_info_df['probe_id'] == int(probe_id))]
+    # Check if no entries for that mouse
+    if probe_info.empty:
+        logger.error('No probe insertion info for mouse {} and probe {}. Update probe insertion table.'.format(mouse_id, probe_id))
+        return False
     if probe_info['valid'].values[0] == 0:
-        print('{} probe recording {} not valid. Skipping...'.format(mouse_id, probe_id))
+        logger.warning('Probe insertion for mouse {} and probe {} is not valid. Skipping.'.format(mouse_id, probe_id))
         return False
     return True
 

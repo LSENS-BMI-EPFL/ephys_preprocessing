@@ -12,6 +12,7 @@ import subprocess
 import webbrowser
 import pathlib
 import numpy as np
+from loguru import logger
 
 from utils import readSGLX
 from utils.ephys_utils import flatten_list
@@ -58,7 +59,7 @@ def main(input_dir, config):
         imSampRate = float(ap_meta_dict['imSampRate'])  # probe-specific
 
         try:
-            print('-- IMEC probe {} spike times in seconds'.format(probe_id))
+            logger.info('Converting IMEC probe {} spike times to seconds.'.format(probe_id))
             # Find any folders that contain kilosort in the name
             kilosort_folder = 'kilosort2' # TODO: if other KS version used, generalize this
 
@@ -71,7 +72,7 @@ def main(input_dir, config):
 
         # If no spike times, skip probe
         except FileNotFoundError as e:
-            print('No spike times for IMEC probe {}: either spike sorting missing or bad recording'.format(probe_id))
+            logger.warning('No spike times for IMEC probe {}: either spike sorting missing or invalid recording'.format(probe_id))
 
     # Write TPrime command line
     nidq_stream_idx = 10  # arbitrary index number
@@ -97,7 +98,7 @@ def main(input_dir, config):
 
     # Add edge times & spike times for included each probe
     for probe_id in valid_probes:
-        print('-- IMEC probe {} spike times sync arguments added'.format(probe_id))
+        logger.info('Adding IMEC probe {} spike times sync arguments'.format(probe_id))
 
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
         probe_folder_path = os.path.join(input_dir, probe_folder)
@@ -146,13 +147,12 @@ def main(input_dir, config):
 
     ])
 
-    print('TPrime command line will run:', list(flatten_list(command)))
+    logger.info('TPrime command line will run: {}'.format(list(flatten_list(command))))
 
-
-    print('Running TPrime to align task events and spike times...')
+    logger.info('Running TPrime to align task events and spike times.')
     subprocess.run(list(flatten_list(command)), shell=True, cwd=config['tprime_path'])
 
-    print('Opening log file')
+    logger.info('Opening TPrime log file at: {}'.format(os.path.join(config['tprime_path'], 'Tprime.log')))
     webbrowser.open(os.path.join(config['tprime_path'], 'Tprime.log'))
 
     return

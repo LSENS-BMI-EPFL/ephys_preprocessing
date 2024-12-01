@@ -12,6 +12,7 @@ import subprocess
 from utils.ephys_utils import flatten_list
 import webbrowser
 import yaml
+from loguru import logger
 
 
 def main(input_dir, config, timespans_list):
@@ -28,8 +29,6 @@ def main(input_dir, config, timespans_list):
     probe_folders = [f for f in os.listdir(os.path.join(input_dir, epoch_name)) if 'imec' in f]
     n_probes = len(probe_folders)
 
-    print('Running OverStrike...')
-
     # Check timespans_list is a list of tuples
     try:
         assert isinstance(timespans_list, list)
@@ -37,6 +36,7 @@ def main(input_dir, config, timespans_list):
 
     except AssertionError:
         raise TypeError('Timespans_list must be a list of tuples. Skipping OverStrike...')
+        logger.error('Timespans_list must be a list of tuples. Skipping OverStrike.')
         return
 
     # Check not empty
@@ -44,11 +44,11 @@ def main(input_dir, config, timespans_list):
         assert len(timespans_list) > 0
     except AssertionError:
         raise ValueError('Timespans_list cannot be empty. Skipping OverStrike...')
+        logger.error('Timespans_list cannot be empty. Skipping OverStrike.')
         return
 
 
-    print('Timespans: {}'.format(timespans_list))
-
+    logger.info('Striking timespans: {}'.format(timespans_list))
     for probe_id in range(n_probes):
         probe_folder = '{}_imec{}'.format(epoch_name.replace('catgt_', ''), probe_id)
         probe_path = os.path.join(input_dir, epoch_name, probe_folder)
@@ -63,12 +63,12 @@ def main(input_dir, config, timespans_list):
                        '-file={}'.format(ap_bin_path),
                        '-secs={},{}'.format(timespan[0], timespan[1])
                        ]
-            print('OverStrike command line will run:', list(flatten_list(command)))
+            logger.info('OverStrike command line will run: {}'.format(list(flatten_list(command))))
 
             # Run OverStrike
             subprocess.run(list(flatten_list(command)), shell=True, cwd=config['overstrike_path'])
 
-            print('Opening OverStrike log file')
+            logger.info('Opening OverStrike log file at: {}'.format(os.path.join(config['overstrike_path'], 'OverStrike.log')))
             webbrowser.open(os.path.join(config['overstrike_path'], 'OverStrike.log'))
 
     # Save overstrike information

@@ -11,9 +11,9 @@
 import os
 import shutil
 import subprocess
-
 import numpy as np
 import pathlib
+from loguru import logger
 
 from matplotlib import pyplot as plt
 
@@ -37,11 +37,8 @@ def main(input_dir, config):
     probe_folders = [f for f in os.listdir(os.path.join(input_dir, epoch_name)) if 'imec' in f]
     n_probes = len(probe_folders)
 
-    print('Running artifact correction...')
     for probe_folder in probe_folders:
-    #for probe_id in range(n_probes):
         probe_id = int(probe_folder.split('imec')[-1])
-        #probe_folder = '{}_imec{}'.format(epoch_name.replace('catgt_', ''), probe_id)
         probe_path = os.path.join(input_dir, epoch_name, probe_folder)
 
         # Get ap-band binary data
@@ -76,7 +73,7 @@ def main(input_dir, config):
                                   os.path.join(input_dir, epoch_name, '{}_tcat.nidq.xa_3_0.txt'.format(run_name)),
                                   os.path.join(probe_path, 'whisker_stim_times_to_imec{}.txt'.format(probe_id))),
              ]
-
+        logger.info('TPrime pass to sync whisker artifact times to IMEC probe {} timebase.'.format(probe_id))
         subprocess.run(command, shell=True, cwd=config['tprime']['tprime_path'])
 
         # Read the artifact times, and convert times to indices
@@ -110,6 +107,7 @@ def main(input_dir, config):
         new_file_path = pathlib.Path(probe_path, new_ap_file_name)
 
         #if not os.path.exists(new_file_path):
+        logger.info('Writing a corrected copy of the .ap.bin file.')
         shutil.copyfile(ap_bin_path, new_file_path)
 
         # Open the memmap file in read-write mode
@@ -124,7 +122,7 @@ def main(input_dir, config):
             ids_to_plot_1 = indices[50]
             ids_to_plot_2 = indices[150]
             ids_to_plot_3 = indices[-1]
-            print('Indices to plot:', ids_to_plot_1, ids_to_plot_2)
+            logger.debug('Indices to plot: {}, {}'.format(ids_to_plot_1, ids_to_plot_2))
             for i in range(0,ap_raw_data.shape[0])[::10]:
                 axs[0].plot(ap_raw_data[i, ids_to_plot_0], label='early')
                 axs[1].plot(ap_raw_data[i, ids_to_plot_1], label='late')
@@ -133,10 +131,10 @@ def main(input_dir, config):
 
             plt.show()
 
-
         # Replace data with set of all new values
         data[:, indices] = new_values
 
         # Write data to disk
         data.flush()
+
     return

@@ -12,6 +12,7 @@ import os
 import subprocess
 from utils.ephys_utils import flatten_list
 import webbrowser
+from loguru import logger
 
 def main(input_dir, output_dir, config):
     """
@@ -36,6 +37,7 @@ def main(input_dir, output_dir, config):
                '-t=0,0',
                '-t_miss_ok',
                '-startsecs=0.0',
+               '-maxsecs=5580', # remove and write down for mouse in SLIMS
                '-ni',
                '-lf',
                '-ap',
@@ -53,12 +55,12 @@ def main(input_dir, output_dir, config):
                '-out_prb_fld'
                ]
 
-    print('CatGT command line will run:', list(flatten_list(command)))
+    logger.info('CatGT command line will run: {}'.format(list(flatten_list(command))))
 
-    print('Running CatGT on {}'.format(epoch_name))
-    subprocess.run(list(flatten_list(command)), shell=True, cwd=config['catgt_path'])
+    logger.info('Running CatGT on {}.'.format(epoch_name))
+    #subprocess.run(list(flatten_list(command)), shell=True, cwd=config['catgt_path'])
 
-    print('Opening CatGT log file')
+    logger.info('Opening CatGT log file at: {}'.format(os.path.join(config['catgt_path'], 'CatGT.log')))
     webbrowser.open(os.path.join(config['catgt_path'], 'CatGT.log'))
 
     return

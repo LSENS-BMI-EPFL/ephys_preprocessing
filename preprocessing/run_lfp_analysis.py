@@ -14,12 +14,14 @@ import json
 import numpy as np
 import pandas as pd
 from pathlib import Path
+from loguru import logger
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import scipy as sp
 from scipy.signal import welch
 from scipy.ndimage.filters import gaussian_filter1d
+
 
 # Import modules
 from utils import readSGLX
@@ -404,9 +406,8 @@ def main(input_dir):
 
         # Check that depth estimation using LFP is possible using electrodes in saline
         if insertion_depth > 4000:
-            print('Probe {} insertion depth ({}) is too deep for LFP depth estimation. Skipped.'.format(probe_id, insertion_depth))
+            logger.warning('Probe {} insertion depth ({}) is too deep for LFP depth estimation. Skipped.'.format(probe_id, insertion_depth))
             continue
-
 
         params['saline_range_um'] = [insertion_depth, 4000]
 
@@ -453,7 +454,7 @@ def main(input_dir):
         # Compute surface channel
         # -----------------------
 
-        print('Computing surface channel...')
+        logger.info('Computing surface channel for IMEC probe {}.'.format(probe_id))
         output_lfp = find_surface_channel(lfp_data=lfp_data, ephys_params=ephys_params, params=params, xCoord=xCoord, yCoord=yCoord, shankInd=shankInd)
 
         # Plot  values in spiking range profile, starting from the surface channel
