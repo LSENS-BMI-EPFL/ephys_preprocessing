@@ -1,15 +1,14 @@
 # EphysUtils
-**Work in progress.**
 
-Pipeline to preprocess extracellular electrophysiology Neuropixels data acquired using SpikeGLX. 
+Pipeline to preprocess extracellular electrophysiology Neuropixels data acquired using SpikeGLX. 🐁🔌
 
-### Notes about this pipeline:
+### Notes about this pipeline ♻️
 - Works with the suite of SpikeGLX tools i.e. **CatGT**, **TPrime**, etc. : https://billkarsh.github.io/SpikeGLX/
 - Borrows/adapts some code in the SpikeGLX-adapted fork of the Allen's ecephys pipeline: https://github.com/jenniferColonell/ecephys_spike_sorting (e.g. mean waveform calculation)
 - Written for Kilosort spike sorting (KS2 mostly):  https://github.com/MouseLand/Kilosort?tab=readme-ov-file (this is doc for KS4 / KS2 doc in related paper)
 - Includes semi-automated curation using Bombcell: https://github.com/Julie-Fabre/bombcell
 
-### Overview of the pipeline
+### Overview of the pipeline :bookmark_tabs:	
 ```mermaid
 graph LR
     Step1["1- Event extraction <br/> filtering"] -.-> Step2["2- Coil artifact <br/> correction"]
@@ -21,7 +20,7 @@ graph LR
 ```
 
 
-### Summary of the main steps
+### Summary of the main steps 
 - **Events extraction (CatGT)**: extracts times of TTL pulses acquired with the NI card in the `nidq.bin` output file of SpikeGLX
 - **Filtering (CatGT)**: common median referencing by default
 - **Coil artifact correction (TPrime)**:
@@ -39,8 +38,9 @@ graph LR
 - **Mean waveform metrics**: code that calculates waveform metrics like peak-to-trough duration, etc. (note, bombcell looks at _template_ waveforms for peaks/troughs, but can also get raw mean waveforms and metrics)
 - **LFP analysis**: performs depth estimation on LFP data
 
-
-### Installation
+**Execution time ⏱️:** for a recording of ~1h with 4 probes inserted deep (~3mm) and saving the entire default bank 0, the entire pipeline take about 12 hours on a local machine.
+ 
+### Installation 🖥️
 #### Setting up
 - You must have a GPU for spike sorting
 - You must have installed Kilosort e.g. Kilosort2.0 (with correct MATLAB version e.g. R2021b)
@@ -70,7 +70,7 @@ graph LR
 - This environment is used here to open Phy and save its output .tsv files
 
   
-### Usage
+### Usage ⚡ 
 The pipeline is separated into two main scripts:
 1. `preprocess_spikesort.py`: performs Steps 1-2-3-4 -> specify raw data input folder path in lab server `data/`
 2. optionally, inspect spike sorting and curation results using Phy and Phy's environment
@@ -80,7 +80,13 @@ The pipeline is separated into two main scripts:
 
 The output of this pipeline can then be used to create NWB files using the [NWB_converter](https://github.com/LSENS-BMI-EPFL/NWB_converter) in particular the `ephys_to_nwb.py` converter.
 
-### Possible future improvements (and ideas):
+### How to contribute ✨
+1. Let's discuss changes/fixes
+2. Make a branch, implement changes
+3. Make a pull request and ask a user to review it!
+4. Merge & inform other users 🙂
+
+### Possible future improvements (and ideas) 🗻
 - Adaptation/robustness for Neuropixels 2.0 probes specifications and metadata (although most tools do take care of different metadata files) 
 - Kilosort 4.0 called from python directly (if performance judged satisfactory)
 - Integration of [SpikeInterface](https://github.com/SpikeInterface) tool(s)
