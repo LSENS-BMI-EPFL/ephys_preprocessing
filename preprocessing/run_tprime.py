@@ -72,7 +72,7 @@ def main(input_dir, config):
 
         # If no spike times, skip probe
         except FileNotFoundError as e:
-            logger.warning('No spike times for IMEC probe {}: either spike sorting missing or invalid recording'.format(probe_id))
+            logger.warning('No spike times for IMEC probe {}: either spike sorting missing or invalid recording.'.format(probe_id))
 
     # Write TPrime command line
     nidq_stream_idx = 10  # arbitrary index number

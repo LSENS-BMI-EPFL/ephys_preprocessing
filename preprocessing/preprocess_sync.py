@@ -9,6 +9,7 @@
 # Imports
 import argparse
 import yaml
+import time
 from loguru import logger
 logger.add("log/preprocess_sync_{time}.log", colorize=True,
               format="{name} {message}", level="INFO", rotation="10 MB", retention="1 week")
@@ -32,6 +33,7 @@ def main(input_dir, config_file):
         config = yaml.load(f, Loader=yaml.FullLoader)
 
     logger.info('Preprocessing data from {}.'.format(input_dir))
+    start_time = time.time()
 
     # Run TPrime
     logger.info('Starting Tprime.')
@@ -53,7 +55,7 @@ def main(input_dir, config_file):
     run_lfp_analysis.main(input_dir)
     logger.info('Finished LFP analysis.')
 
-    logger.success('Finished sync preprocessing for {}.'.format(input_dir))
+    logger.success(f'Finished preprocessing in {time.time()-start_time} for {input_dir}.')
 
     return
 
@@ -64,7 +66,7 @@ if __name__ == '__main__':
         parser.add_argument('--config', type=str, nargs='?', required=False)
         args = parser.parse_args()
 
-        args.input = r'M:\\analysis\\Axel_Bisi\\data\AB143\AB143_20241126_115737\Ephys\catgt_AB143_g1'
+        args.input = r'M:\\analysis\\Axel_Bisi\\data\AB141\AB141_20241127_140308\Ephys\catgt_AB141_g1'
         args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
 
         main(args.input, args.config)

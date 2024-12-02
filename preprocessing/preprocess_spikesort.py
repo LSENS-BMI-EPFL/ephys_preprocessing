@@ -30,6 +30,7 @@ def main(input_dir, config_file):
         config = yaml.load(f, Loader=yaml.FullLoader)
 
     logger.info('Preprocessing data from {}.'.format(input_dir))
+    start_time = time.time()
 
     # Get epoch number and run name
     epoch_name = os.listdir(input_dir)[0]
@@ -78,16 +79,16 @@ def main(input_dir, config_file):
 
     # Run Kilosort
     logger.info('Starting Kilosort.')
-    #run_kilosort.main(processed_dir, config)
+    run_kilosort.main(processed_dir, config)
     logger.info("Finished Kilosort.")
 
     # Run quality metrics e.g. bombcell
     logger.info('Starting bombcell quality metrics.')
-    #run_bombcell.main(processed_dir, config)
+    run_bombcell.main(processed_dir, config)
     logger.info('Finished bombcell quality metrics.')
 
     catgt_epoch_name = os.listdir(processed_dir)[0]
-    logger.success(f'Finished preprocessing & spike sorting in: {os.path.join(processed_dir, catgt_epoch_name)}. You '
+    logger.success(f'Finished preprocessing in {time.time()-start_time} & spike sorting in: {os.path.join(processed_dir, catgt_epoch_name)}. \n You '
                    f'can now visually check spike sorting results using Phy, then use this path as input to the '
                    f'script preprocessing_sync.py.')
 
@@ -100,7 +101,7 @@ if __name__ == '__main__':
     parser.add_argument('--config', type=str, nargs='?', required=False)
     args = parser.parse_args()
 
-    args.input = r'M:\data\AB143\Recording\AB143_20241126_115737\Ephys' #until \Ephys
+    args.input = r'M:\data\AB142\Recording\AB142_20241128_113227\Ephys' #until \Ephys
     args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
 
     main(args.input, args.config)

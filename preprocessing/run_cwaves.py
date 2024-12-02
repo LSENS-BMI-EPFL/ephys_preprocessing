@@ -53,7 +53,7 @@ def main(input_dir, config):
             clus_info = pd.read_csv(os.path.join(path_input_files, 'cluster_info.tsv'),  # <- assumes Phy performed
                                     sep='\\t')
         except FileNotFoundError:
-            logger.warning('Skipping probe. No spike sorting at', path_input_files, 'or cluster_info.tsv file missing.')
+            logger.warning(f'Skipping probe. No spike sorting at {path_input_files} or cluster_info.tsv file missing.')
             continue
 
         clus_info.set_index(keys='cluster_id', drop=False, inplace=True)  # set index to cluster_id
