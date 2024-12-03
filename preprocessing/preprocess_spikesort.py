@@ -48,12 +48,12 @@ def main(input_dir, config_file):
     # Run CatGT
     logger.info('Starting CatGT.')
     run_catgt.main(input_dir, processed_dir, config['catgt'])
-    logger.info('Finished CatGT in {}.'.format(time.time()-start_time))
+    logger.info('Finished CatGT in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     # Run TPrime a first time to sync whisker artifact times
     logger.info('Starting artifact correction.')
     run_artifact_correction.main(processed_dir, config)
-    logger.info('Finished artifact correction in {}.'.format(time.time()-start_time))
+    logger.info('Finished artifact correction in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     # Optionally, run OverStrike
     perform_overstrike = False
@@ -75,20 +75,21 @@ def main(input_dir, config_file):
         # Run overstrike on all probes
         logger.info('Starting OverStrike.')
         run_overstrike.main(processed_dir, config['overstrike'], timespans_list=timespans_list)
-        logger.info('Finished OverStrike in {}.'.format(time.time()-start_time))
+        logger.info('Finished OverStrike in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     # Run Kilosort
     logger.info('Starting Kilosort.')
     run_kilosort.main(processed_dir, config)
-    logger.info("Finished Kilosort in {}.".format(time.time()-start_time))
+    logger.info("Finished Kilosort in {}.".format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     # Run quality metrics e.g. bombcell
     logger.info('Starting bombcell quality metrics.')
     run_bombcell.main(processed_dir, config)
-    logger.info('Finished bombcell quality metrics in {}.'.format(time.time()-start_time))
+    logger.info('Finished bombcell quality metrics in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     catgt_epoch_name = os.listdir(processed_dir)[0]
-    logger.success(f'Finished preprocessing in {time.time()-start_time} & spike sorting in: {os.path.join(processed_dir, catgt_epoch_name)}. \n You '
+    exec_time_hhmmss = time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))
+    logger.success(f'Finished preprocessing in {exec_time_hhmmss} & spike sorting in: {os.path.join(processed_dir, catgt_epoch_name)}. \n You '
                    f'can now visually check spike sorting results using Phy, then use this path as input to the '
                    f'script preprocessing_sync.py.')
 
