@@ -48,12 +48,12 @@ def main(input_dir, config_file):
     # Run CatGT
     logger.info('Starting CatGT.')
     run_catgt.main(input_dir, processed_dir, config['catgt'])
-    logger.info('Finished CatGT.')
+    logger.info('Finished CatGT in {}.'.format(time.time()-start_time))
 
     # Run TPrime a first time to sync whisker artifact times
     logger.info('Starting artifact correction.')
     run_artifact_correction.main(processed_dir, config)
-    logger.info('Finished artifact correction.')
+    logger.info('Finished artifact correction in {}.'.format(time.time()-start_time))
 
     # Optionally, run OverStrike
     perform_overstrike = False
@@ -75,17 +75,17 @@ def main(input_dir, config_file):
         # Run overstrike on all probes
         logger.info('Starting OverStrike.')
         run_overstrike.main(processed_dir, config['overstrike'], timespans_list=timespans_list)
-        logger.info('Finished OverStrike.')
+        logger.info('Finished OverStrike in {}.'.format(time.time()-start_time))
 
     # Run Kilosort
     logger.info('Starting Kilosort.')
     run_kilosort.main(processed_dir, config)
-    logger.info("Finished Kilosort.")
+    logger.info("Finished Kilosort in {}.".format(time.time()-start_time))
 
     # Run quality metrics e.g. bombcell
     logger.info('Starting bombcell quality metrics.')
     run_bombcell.main(processed_dir, config)
-    logger.info('Finished bombcell quality metrics.')
+    logger.info('Finished bombcell quality metrics in {}.'.format(time.time()-start_time))
 
     catgt_epoch_name = os.listdir(processed_dir)[0]
     logger.success(f'Finished preprocessing in {time.time()-start_time} & spike sorting in: {os.path.join(processed_dir, catgt_epoch_name)}. \n You '

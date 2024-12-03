@@ -38,22 +38,22 @@ def main(input_dir, config_file):
     # Run TPrime
     logger.info('Starting Tprime.')
     run_tprime.main(input_dir, config['tprime'])
-    logger.info('Finished Tprime.')
+    logger.info('Finished Tprime in {}.'.format(time.time()-start_time))
 
     # Run Cwaves
     logger.info('Starting Cwaves.')
     run_cwaves.main(input_dir, config['cwaves'])
-    logger.info('Finished Cwaves.')
+    logger.info('Finished Cwaves in {}.'.format(time.time()-start_time))
 
     # Run mean waveform metrics
     logger.info('Starting mean waveform metrics.')
     run_mean_waveform_metrics.main(input_dir)
-    logger.info('Finished mean waveform metrics.')
+    logger.info('Finished mean waveform metrics in {}.'.format(time.time()-start_time))
 
     # LFP analysis for depth estimation
     logger.info('Starting LFP analysis.')
     run_lfp_analysis.main(input_dir)
-    logger.info('Finished LFP analysis.')
+    logger.info('Finished LFP analysis in {}.'.format(time.time()-start_time))
 
     logger.success(f'Finished preprocessing in {time.time()-start_time} for {input_dir}.')
 
