@@ -6,7 +6,7 @@ Pipeline to preprocess extracellular electrophysiology Neuropixels data acquired
 - Works with the suite of SpikeGLX tools i.e. **CatGT**, **TPrime**, etc. : https://billkarsh.github.io/SpikeGLX/
 - Borrows/adapts some code in the SpikeGLX-adapted fork of the Allen's ecephys pipeline: https://github.com/jenniferColonell/ecephys_spike_sorting (e.g. mean waveform calculation)
 - Written for Kilosort spike sorting (KS2 mostly):  https://github.com/MouseLand/Kilosort?tab=readme-ov-file (this is doc for KS4 / KS2 doc in related paper)
-- Includes semi-automated curation using Bombcell: https://github.com/Julie-Fabre/bombcell
+- Includes semi-automated curation using Bombcell: https://github.com/Julie-Fabre/bombcell, with KS2-adapted parameters.
 
 ### Overview of the pipeline :bookmark_tabs:	
 ```mermaid
