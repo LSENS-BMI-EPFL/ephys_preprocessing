@@ -38,7 +38,7 @@ graph LR
 - **Mean waveform metrics**: code that calculates waveform metrics like peak-to-trough duration, etc. (note, bombcell looks at _template_ waveforms for peaks/troughs, but can also get raw mean waveforms and metrics)
 - **LFP analysis**: performs depth estimation on LFP data
 
-**Execution time ⏱️:** for a recording of ~1h with 4 probes inserted deep (~3mm) and saving the entire default bank 0, the entire pipeline take about 12 hours on a local machine.
+**Execution time ⏱️:** for a recording of ~1h with 4 probes inserted deep (~3mm) and saving the entire default bank 0, the entire pipeline take about 12-24 hours on a local machine. This is very dependent on the recordings itself. Spike sorting, CatGT and C_waves take the longest time.
  
 ### Installation 🖥️
 #### Setting up
