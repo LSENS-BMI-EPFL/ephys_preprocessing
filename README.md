@@ -67,7 +67,7 @@ graph LR
 4. Copy the file `run_bombcell.m` from this repo in `matlab` to the repo where you have installed `bombcell`, and update in that file:
 - path to bombcell folder
 - path to config files
-**Note**: bombcell's main script has changed, so you need to adapt the script to the new version of bombcell and noting that some bombcell functions are commented in this pipeline.
+- **Note**: bombcell's main script has changed, so you need to adapt the script to the new version of bombcell and noting that some bombcell functions are commented in this pipeline.
 
 4. Install a separate conda environment for **Phy**, `phy2`:
 - Follow the instructions: https://github.com/cortex-lab/phy/
