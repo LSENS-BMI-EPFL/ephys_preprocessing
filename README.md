@@ -43,7 +43,7 @@ graph LR
 ### Installation 🖥️
 #### Setting up
 - You must have a GPU for spike sorting
-- You must have installed Kilosort e.g. Kilosort2.0 (with correct MATLAB version e.g. R2021b)
+- You must have installed Kilosort e.g. Kilosort2.0 (from here: https://github.com/jamesjun/Kilosort2) (with correct MATLAB version e.g. R2021b)
 - You must have installed CatGT, TPrime, C_Waves and OverStrike
 - You must have cloned [npy-matlab](https://github.com/kwikteam/npy-matlab) and [bombcell](https://github.com/Julie-Fabre/bombcell) e.g. in `users/Github/`
 
@@ -59,11 +59,15 @@ graph LR
   - Example for R2021b, run `python -m pip install matlabengine==9.11.21`
   - **Note**: if you can't run the matlab engine to run kilosort, run kilosort separately in MATLAB directly. Then continue with the steps of this pipeline.
 
-3. Copy the file `run_main_kilosort.m` from this repo to the repo where you have installed **Kilosort2**, and update in that file:
+3. Copy the file `run_main_kilosort.m` from this repo in `matlab` to the repo where you have installed **Kilosort2**, and update in that file:
 - path to kilosort folder
 - path to `npy-matlab`
 - path to config files
-  
+
+4. Copy the file `run_bombcell.m` from this repo in `matlab` to the repo where you have installed `bombcell`, and update in that file:
+- path to bombcell folder
+- path to config files
+**Note**: bombcell's main script has changed, so you need to adapt the script to the new version of bombcell and noting that some bombcell functions are commented in this pipeline.
 
 4. Install a separate conda environment for **Phy**, `phy2`:
 - Follow the instructions: https://github.com/cortex-lab/phy/
