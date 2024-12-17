@@ -12,7 +12,7 @@ import sys
 import pyautogui
 import time
 from loguru import logger
-from utils.ephys_utils import check_if_valid_recording
+from ephys_preprocessing.utils.ephys_utils import check_if_valid_recording
 
 os.environ["MATLAB_ENGINE"] = "R2021b"
 import matlab.engine

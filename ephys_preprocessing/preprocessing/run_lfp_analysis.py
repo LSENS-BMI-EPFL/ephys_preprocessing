@@ -24,8 +24,8 @@ from scipy.ndimage.filters import gaussian_filter1d
 
 
 # Import modules
-from utils import readSGLX
-from utils.sglx_meta_to_coords import MetaToCoords
+from ephys_preprocessing.utils import readSGLX
+from ephys_preprocessing.utils.sglx_meta_to_coords import MetaToCoords
 
 
 def find_range(x, a, b, option='within'):

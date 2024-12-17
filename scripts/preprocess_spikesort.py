@@ -13,15 +13,18 @@ import yaml
 import pathlib
 import time
 from loguru import logger
+from pathlib import Path
 logger.add("log/preprocess_spikesort_{time}.log", colorize=True,
            format="{name} {message}", level="INFO", rotation="10 MB", retention="1 week")
 
 # Import submodules
-import run_catgt
-import run_artifact_correction
-import run_overstrike
-import run_kilosort
-import run_bombcell
+from ephys_preprocessing.preprocessing import (
+    run_catgt, 
+    run_artifact_correction,
+    run_overstrike,
+    run_sorter,
+    # run_bombcell,
+)
 
 
 @logger.catch
@@ -39,8 +42,10 @@ def main(input_dir, config_file):
     logger.info('Recording using {} probe(s).'.format(n_probes))
 
     # Create output folder
-    mouse_name = input_dir.split('\\')[2]
-    session_name = input_dir.split('\\')[-2]
+    # mouse_name = input_dir.split('\\')[2]
+    # session_name = input_dir.split('\\')[-2]
+    mouse_name = input_dir.parents[2].name
+    session_name = input_dir.name
     processed_dir = os.path.join(config['output_path'], mouse_name, session_name, 'Ephys')
     logger.info('Processed data will be saved to {}.'.format(processed_dir))
     pathlib.Path(processed_dir).mkdir(parents=True, exist_ok=True)
@@ -79,30 +84,35 @@ def main(input_dir, config_file):
 
     # Run Kilosort
     logger.info('Starting Kilosort.')
-    run_kilosort.main(processed_dir, config)
+    run_sorter.main(processed_dir, config)
     logger.info("Finished Kilosort in {}.".format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
-    # Run quality metrics e.g. bombcell
-    logger.info('Starting bombcell quality metrics.')
-    run_bombcell.main(processed_dir, config)
-    logger.info('Finished bombcell quality metrics in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
+    # # Run quality metrics e.g. bombcell
+    # logger.info('Starting bombcell quality metrics.')
+    # run_bombcell.main(processed_dir, config)
+    # logger.info('Finished bombcell quality metrics in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
-    catgt_epoch_name = os.listdir(processed_dir)[0]
-    exec_time_hhmmss = time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))
-    logger.success(f'Finished preprocessing in {exec_time_hhmmss} & spike sorting in: {os.path.join(processed_dir, catgt_epoch_name)}. \n You '
-                   f'can now visually check spike sorting results using Phy, then use this path as input to the '
-                   f'script preprocessing_sync.py.')
+    # catgt_epoch_name = os.listdir(processed_dir)[0]
+    # exec_time_hhmmss = time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))
+    # logger.success(f'Finished preprocessing in {exec_time_hhmmss} & spike sorting in: {os.path.join(processed_dir, catgt_epoch_name)}. \n You '
+    #                f'can now visually check spike sorting results using Phy, then use this path as input to the '
+    #                f'script preprocessing_sync.py.')
 
     return
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--input', type=str, nargs='?', required=True)
-    parser.add_argument('--config', type=str, nargs='?', required=False)
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('--input', type=str, nargs='?', required=True)
+    # parser.add_argument('--config', type=str, nargs='?', required=False)
+    # args = parser.parse_args()
 
-    args.input = r'M:\data\AB142\Recording\AB142_20241128_113227\Ephys' #until \Ephys
-    args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
+    # args = {}
 
-    main(args.input, args.config)
+    # args.input = Path('/mnt/lsens/data/PB191/Recording/Ephys/PB191_20241210_110601') #until \Ephys
+    # args.config = Path('/home/lebert/code/spikesorting_pipeline/spikeinterface_preprocessing/ephys_preprocessing/ephys_preprocessing/preprocessing/preprocess_config_si.yaml')
+    
+    input = Path('/mnt/lsens/data/PB191/Recording/Ephys/PB191_20241210_110601')
+    config = Path('/home/lebert/code/spikesorting_pipeline/spikeinterface_preprocessing/ephys_preprocessing/ephys_preprocessing/preprocessing/preprocess_config_si.yaml')
+    
+    main(input, config)

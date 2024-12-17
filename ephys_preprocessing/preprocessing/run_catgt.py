@@ -9,8 +9,9 @@
 
 # Imports
 import os
+import sys
 import subprocess
-from utils.ephys_utils import flatten_list
+from ephys_preprocessing.utils.ephys_utils import flatten_list
 import webbrowser
 from loguru import logger
 
@@ -28,7 +29,13 @@ def main(input_dir, output_dir, config):
     run_name = os.listdir(input_dir)[0][0:-3]
 
     # Write CatGT command line
-    command = ['CatGT',
+    if sys.platform.startswith('win'):
+        catGTexe_fullpath = 'CatGT'
+    elif sys.platform.startswith('linux'):
+        catGTexe_fullpath = config['catgt_path']
+        catGTexe_fullpath = catGTexe_fullpath.replace('\\', '/') + "/runit.sh"
+
+    command = [catGTexe_fullpath,
                '-dir={}'.format(input_dir),
                '-run={}'.format(run_name),
                '-prb_fld',
@@ -58,7 +65,10 @@ def main(input_dir, output_dir, config):
     logger.info('CatGT command line will run: {}'.format(list(flatten_list(command))))
 
     logger.info('Running CatGT on {}.'.format(epoch_name))
-    subprocess.run(list(flatten_list(command)), shell=True, cwd=config['catgt_path'])
+    if sys.platform.startswith('win'):
+        subprocess.run(list(flatten_list(command)), shell=True, cwd=config['catgt_path'])
+    elif sys.platform.startswith('linux'):
+        subprocess.run(list(flatten_list(command)), cwd=config['catgt_path'])
 
     logger.info('Opening CatGT log file at: {}'.format(os.path.join(config['catgt_path'], 'CatGT.log')))
     webbrowser.open(os.path.join(config['catgt_path'], 'CatGT.log'))

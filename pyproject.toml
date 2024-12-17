@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "ephys-preprocessing"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+spikeinterface = "^0.101.2"
+loguru = "^0.7.3"
+pyyaml = "^6.0.2"
+pandas = "^2.2.3"
+kilosort = "^4.0.21"
+matplotlib = "^3.10.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

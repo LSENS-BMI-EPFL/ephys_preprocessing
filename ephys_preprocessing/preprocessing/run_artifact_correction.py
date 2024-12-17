@@ -18,7 +18,7 @@ from loguru import logger
 from matplotlib import pyplot as plt
 
 # Import readers
-from utils import readSGLX
+from ephys_preprocessing.utils import readSGLX
 
 
 def main(input_dir, config):
@@ -136,5 +136,7 @@ def main(input_dir, config):
 
         # Write data to disk
         data.flush()
+        os.remove(ap_bin_path)
+        os.remove(pathlib.Path(probe_path, ap_meta_filename))
 
     return

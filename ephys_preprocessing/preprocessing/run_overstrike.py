@@ -9,7 +9,7 @@
 # Imports
 import os
 import subprocess
-from utils.ephys_utils import flatten_list
+from ephys_preprocessing.utils.ephys_utils import flatten_list
 import webbrowser
 import yaml
 from loguru import logger

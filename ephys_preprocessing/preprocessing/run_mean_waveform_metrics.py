@@ -8,12 +8,12 @@
 
 # Imports
 import os
-from utils import readSGLX
+from ephys_preprocessing.utils import readSGLX
 import numpy as np
 import pathlib
 import pandas as pd
 from loguru import logger
-from utils.waveform_metrics_utils import calculate_waveform_metrics_from_avg
+from ephys_preprocessing.utils.waveform_metrics_utils import calculate_waveform_metrics_from_avg
 
 
 def main(input_dir):

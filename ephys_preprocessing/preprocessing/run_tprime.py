@@ -14,8 +14,8 @@ import pathlib
 import numpy as np
 from loguru import logger
 
-from utils import readSGLX
-from utils.ephys_utils import flatten_list
+from ephys_preprocessing.utils import readSGLX
+from ephys_preprocessing.utils.ephys_utils import flatten_list
 
 
 def main(input_dir, config):

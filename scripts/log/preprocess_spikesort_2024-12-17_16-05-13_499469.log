@@ -1,0 +1,16 @@
+__main__ Preprocessing data from /mnt/lsens/data/PB191/Recording/Ephys/PB191_20241210_110601.
+__main__ Recording using 4 probe(s).
+__main__ An error has been caught in function '<module>', process 'MainProcess' (2024569), thread 'MainThread' (139938195978048):
+[33m[1mTraceback (most recent call last):[0m
+
+> File "[32m/home/lebert/code/spikesorting_pipeline/spikeinterface_preprocessing/ephys_preprocessing/scripts/[0m[32m[1mpreprocess_spikesort.py[0m", line [33m116[0m, in [35m<module>[0m
+    [1mmain[0m[1m([0m[1minput[0m[1m,[0m [1mconfig[0m[1m)[0m
+    [36m│    │      └ [0m[36m[1mPosixPath('/home/lebert/code/spikesorting_pipeline/spikeinterface_preprocessing/ephys_preprocessing/ephys_preprocessing/prepr...[0m
+    [36m│    └ [0m[36m[1mPosixPath('/mnt/lsens/data/PB191/Recording/Ephys/PB191_20241210_110601')[0m
+    [36m└ [0m[36m[1m<function main at 0x7f45e546bc40>[0m
+
+  File "[32m/home/lebert/code/spikesorting_pipeline/spikeinterface_preprocessing/ephys_preprocessing/scripts/[0m[32m[1mpreprocess_spikesort.py[0m", line [33m45[0m, in [35mmain[0m
+    [1mmouse_name[0m [35m[1m=[0m [1minput_dir[0m[35m[1m.[0m[1msplit[0m[1m([0m[36m'\\'[0m[1m)[0m[1m[[0m[34m[1m2[0m[1m][0m
+    [36m             └ [0m[36m[1mPosixPath('/mnt/lsens/data/PB191/Recording/Ephys/PB191_20241210_110601')[0m
+
+[31m[1mAttributeError[0m:[1m 'PosixPath' object has no attribute 'split'[0m

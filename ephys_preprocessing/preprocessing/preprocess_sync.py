@@ -15,10 +15,12 @@ logger.add("log/preprocess_sync_{time}.log", colorize=True,
               format="{name} {message}", level="INFO", rotation="10 MB", retention="1 week")
 
 # Import submodules
-import run_tprime
-import run_cwaves
-import run_mean_waveform_metrics
-import run_lfp_analysis
+from ephys_preprocessing.preprocessing import (
+     run_tprime,
+     run_cwaves,
+     run_mean_waveform_metrics,
+     run_lfp_analysis,
+)
 
 
 def main(input_dir, config_file):
