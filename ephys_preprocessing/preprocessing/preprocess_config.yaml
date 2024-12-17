@@ -1,0 +1,32 @@
+---
+raw_data_path: 'M:\\data'
+output_path: 'M:\\analysis\\Axel_Bisi\\data'
+mice_info_path: 'M:\\analysis\\Axel_Bisi\\mice_info'
+overstrike:
+     overstrike_path: 'C:\\Users\\bisi\\OverStrike-win'
+catgt:
+     catgt_path: 'C:\\Users\\bisi\\CatGT-win'
+artifact_correction:
+     window_ms: 3
+kilosort:
+     matlab_path: 'C:\Program Files\MATLAB\R2021b'
+     kilosort_path: 'C:\\Users\\bisi\\Kilosort\\Kilosort-2.0'
+     temp_data_path: 'D:\\Npx_Data'
+     ks_version: 2.0
+     nblocks: 5
+     threshold: [ 10, 4 ]
+     lambda: 10
+     AUC_for_splits: 0.9
+bombcell:
+     bombcell_path: 'C:\\Users\\bisi\\Github\\bombcell'
+     matlab_path: 'C:\Program Files\MATLAB\R2021b'
+tprime:
+     tprime_path: 'C:\\Users\\bisi\\TPrime-win\\'
+     syncperiod: 1
+     default_tostream_probe: 0
+cwaves:
+     cwaves_path:  'C:\\Users\\bisi\\C_Waves-win'
+     samples_per_spike: 82
+     pre_samples: 30
+     num_spikes: 1000
+     snr_radius: 8
