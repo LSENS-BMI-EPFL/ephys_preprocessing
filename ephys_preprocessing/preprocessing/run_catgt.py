@@ -31,9 +31,14 @@ def main(input_dir, output_dir, config):
     # Write CatGT command line
     if sys.platform.startswith('win'):
         catGTexe_fullpath = 'CatGT'
+        shell = True
     elif sys.platform.startswith('linux'):
         catGTexe_fullpath = config['catgt_path']
         catGTexe_fullpath = catGTexe_fullpath.replace('\\', '/') + "/runit.sh"
+        shell = False
+    else:
+        raise NotImplementedError('OS not recognised')
+        
 
     command = [catGTexe_fullpath,
                '-dir={}'.format(input_dir),
@@ -65,10 +70,8 @@ def main(input_dir, output_dir, config):
     logger.info('CatGT command line will run: {}'.format(list(flatten_list(command))))
 
     logger.info('Running CatGT on {}.'.format(epoch_name))
-    if sys.platform.startswith('win'):
-        subprocess.run(list(flatten_list(command)), shell=True, cwd=config['catgt_path'])
-    elif sys.platform.startswith('linux'):
-        subprocess.run(list(flatten_list(command)), cwd=config['catgt_path'])
+    subprocess.run(list(flatten_list(command)), shell=shell, cwd=config['catgt_path'])
+
 
     logger.info('Opening CatGT log file at: {}'.format(os.path.join(config['catgt_path'], 'CatGT.log')))
     webbrowser.open(os.path.join(config['catgt_path'], 'CatGT.log'))

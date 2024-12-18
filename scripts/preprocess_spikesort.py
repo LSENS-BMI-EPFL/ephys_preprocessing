@@ -52,7 +52,7 @@ def main(input_dir, config_file):
 
     # Run CatGT
     logger.info('Starting CatGT.')
-    run_catgt.main(input_dir, processed_dir, config['catgt'])
+    # run_catgt.main(input_dir, processed_dir, config['catgt'])
     logger.info('Finished CatGT in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     # Run TPrime a first time to sync whisker artifact times

@@ -9,6 +9,7 @@
 
 # # Imports
 import os
+import sys
 import shutil
 import subprocess
 import numpy as np
@@ -32,9 +33,22 @@ def main(input_dir, config):
     :return:
     """
 
-    epoch_name = os.listdir(input_dir)[0]
+    # OS specific setup for tprime
+    if sys.platform.startswith('win'):
+        TPrime_fullpath = 'TPrime'
+        shell = True
+    elif sys.platform.startswith('linux'):
+        TPrime_fullpath = config['tprime']['tprime_path']
+        TPrime_fullpath = TPrime_fullpath.replace('\\', '/') + "/runit.sh"
+        shell = False
+    else:
+        raise NotImplementedError('OS not recognised')
+    
+    input_dir = pathlib.Path(input_dir)
+    epoch_name = list(input_dir.glob("catgt*"))[0].name
     run_name = epoch_name[6:]
-    probe_folders = [f for f in os.listdir(os.path.join(input_dir, epoch_name)) if 'imec' in f]
+    probe_folders = (input_dir / epoch_name).glob("*imec*")
+    probe_folders = [str(p) for p in probe_folders]
     n_probes = len(probe_folders)
 
     for probe_folder in probe_folders:
@@ -65,7 +79,7 @@ def main(input_dir, config):
         syncperiod = config['tprime']['syncperiod']
         tostream_probe_edges_file = '{}_tcat.imec{}.ap.xd_{}_6_500.txt'.format(run_name, probe_id, int(ap_meta_dict['nSavedChans'])-1)
 
-        command = ['TPrime',
+        command = [TPrime_fullpath,
                      '-syncperiod={}'.format(syncperiod),
                      '-tostream={}'.format(os.path.join(probe_path, tostream_probe_edges_file)),
                      '-fromstream={},{}'.format(nidq_stream_idx, os.path.join(input_dir, epoch_name, run_name + '_tcat.nidq.xa_0_0.txt')),
@@ -74,7 +88,7 @@ def main(input_dir, config):
                                   os.path.join(probe_path, 'whisker_stim_times_to_imec{}.txt'.format(probe_id))),
              ]
         logger.info('TPrime pass to sync whisker artifact times to IMEC probe {} timebase.'.format(probe_id))
-        subprocess.run(command, shell=True, cwd=config['tprime']['tprime_path'])
+        subprocess.run(command, shell=shell, cwd=config['tprime']['tprime_path'])
 
         # Read the artifact times, and convert times to indices
         artifact_times = np.loadtxt(os.path.join(probe_path, 'whisker_stim_times_to_imec{}.txt'.format(probe_id)))
@@ -109,6 +123,7 @@ def main(input_dir, config):
         #if not os.path.exists(new_file_path):
         logger.info('Writing a corrected copy of the .ap.bin file.')
         shutil.copyfile(ap_bin_path, new_file_path)
+        logger.info('Done copying')
 
         # Open the memmap file in read-write mode
         data = np.memmap(new_file_path, dtype=ap_raw_data.dtype, mode='r+', shape=ap_raw_data.shape, order='F') # 'F' means column-major order (Fortran-like)
@@ -136,7 +151,9 @@ def main(input_dir, config):
 
         # Write data to disk
         data.flush()
-        os.remove(ap_bin_path)
-        os.remove(pathlib.Path(probe_path, ap_meta_filename))
+        
+        # rename original meta file to avoid bug with spikeinterface loader
+        meta_file_path = pathlib.Path(probe_path, ap_meta_filename)
+        os.rename(meta_file_path, meta_file_path.with_suffix('.meta_original'))
 
     return
