@@ -13,7 +13,8 @@ pyyaml = "^6.0.2"
 pandas = "^2.2.3"
 kilosort = "^4.0.21"
 matplotlib = "^3.10.0"
-docker = "^7.1.0"
+cuda-python = "^12.6.2.post1"
+spython = "^0.3.14"
 
 
 [build-system]
