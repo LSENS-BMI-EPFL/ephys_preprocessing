@@ -13,6 +13,7 @@ import yaml
 import pathlib
 import time
 from loguru import logger
+from pathlib import Path
 logger.add("log/preprocess_spikesort_{time}.log", colorize=True,
            format="{name} {message}", level="INFO", rotation="10 MB", retention="1 week")
 
@@ -104,7 +105,7 @@ if __name__ == '__main__':
     parser.add_argument('--config', type=str, nargs='?', required=False)
     args = parser.parse_args()
 
-    args.input = r'M:\data\AB142\Recording\AB142_20241128_113227\Ephys' #until \Ephys
-    args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
+    args.input = Path('/mnt/lsens/data/PB191/Recording/Ephys/PB191_20241210_110601') #until \Ephys
+    args.config = Path('/home/lebert/code/spikesorting_pipeline/spikeinterface_preprocessing/ephys_preprocessing/ephys_preprocessing/preprocessing/preprocess_config_si.yaml')
 
     main(args.input, args.config)

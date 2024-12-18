@@ -26,6 +26,16 @@ def main(input_dir, config):
 
         recording = se.read_spikeglx()
 
+        for sorter in config['sorters']:
+            folder = os.path.join(folder, sorter)
+            sorting = si.run_sorter(
+                sorter_name=sorter,
+                recording=recording,
+                folder=folder,
+                verbose=True,
+                **config[sorter]['sorter_params'],
+                )
+
 if __name__ == "__main__":
     input_dir = Path('/Volumes/Petersen-Lab/analysis/Axel_Bisi/data/PB191/PB191_20241210_110601/Ephys/')
     config_file = '/Users/lebert/home/code/preprocessing_tools/ephys_preprocessing/ephys_preprocessing/preprocessing/preprocess_config_si.yaml'

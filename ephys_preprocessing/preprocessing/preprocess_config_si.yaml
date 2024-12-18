@@ -8,17 +8,21 @@ catgt:
      catgt_path: '/home/lebert/code/spikesorting_pipeline/tools/CatGT-linux'
 artifact_correction:
      window_ms: 3
+sorters:
+     - kilosort2
+     - kilosort4
 kilosort2:
      matlab_path: 'C:\Program Files\MATLAB\R2021b'
      kilosort_path: 'C:\\Users\\bisi\\Kilosort\\Kilosort-2.0'
      temp_data_path: 'D:\\Npx_Data'
-     ks_version: 4.0
      nblocks: 5
-     threshold: [ 10, 4 ]
-     lambda: 10
-     AUC_for_splits: 0.9
+     sorter_params:
+          projection_threshold: [ 10, 4 ]
+          lam: 10
+          AUCsplit: 0.9
 kilosort4:
-     use: true
+     sorter_params:
+          do_CAR: false
 bombcell:
      bombcell_path: 'C:\\Users\\bisi\\Github\\bombcell'
      matlab_path: 'C:\Program Files\MATLAB\R2021b'
