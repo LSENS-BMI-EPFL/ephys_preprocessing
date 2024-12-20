@@ -13,8 +13,8 @@ function [] = run_bombcell(ephys_ks_path, path_to_bin_file, path_to_meta_file, k
 % quality metric thresholds depending on the summary plots (histograms 
 % of the distributions of quality metrics for each unit) and GUI. 
 
-addpath(genpath('C:\Users\bisi\Github\bombcell')) % path to bombcell folder
-
+addpath(genpath('/home/lebert/code/spikesorting_pipeline/tools/bombcell')) % path to bombcell folder
+cd('/home/lebert/code/spikesorting_pipeline/tools/bombcell')
 %% set paths - EDIT THESE 
 ephysKilosortPath = ephys_ks_path;% path to your kilosort output files 
 ephysRawDir = dir(path_to_bin_file); % path to yourraw .bin or .dat data
@@ -38,14 +38,17 @@ if oldMATLAB
 end
 
 %% load data 
-[spikeTimes_samples, spikeTemplates, templateWaveforms, templateAmplitudes, pcFeatures, ...
-    pcFeatureIdx, channelPositions] = bc_loadEphysData(ephysKilosortPath);
+% [spikeTimes_samples, spikeTemplates, templateWaveforms, templateAmplitudes, pcFeatures, ...
+%     pcFeatureIdx, channelPositions] = bc_loadEphysData(ephysKilosortPath);
 
+% new version of bomcell?
+[spikeTimes_samples, spikeTemplates, templateWaveforms, templateAmplitudes, pcFeatures, ...
+    pcFeatureIdx, channelPositions] = bc.load.loadEphysData(ephysKilosortPath, savePath);
 %% detect whether data is compressed, decompress locally if necessary
-rawFile = bc_manageDataCompression(ephysRawDir, decompressDataLocal);
+rawFile = bc.dcomp.manageDataCompression(ephysRawDir, decompressDataLocal);
 
 %% which quality metric parameters to extract and thresholds 
-param = bc_qualityParamValues(ephysMetaDir, rawFile, ephysKilosortPath, gain_to_uV, kilosortVersion); %for unitmatch, run this:
+param = bc.qm.qualityParamValues(ephysMetaDir, rawFile, ephysKilosortPath, gain_to_uV, kilosortVersion); %for unitmatch, run this:
 % param = bc_qualityParamValuesForUnitMatch(ephysMetaDir, rawFile, ephysKilosortPath, gain_to_uV)
 
 param.splitGoodAndMua_NonSomatic = 0; % do not split non-somatic further (todo: check number of clusters)
@@ -54,11 +57,11 @@ rerun = 0;
 qMetricsExist = ~isempty(dir(fullfile(savePath, 'qMetric*.mat'))) || ~isempty(dir(fullfile(savePath, 'templates._bc_qMetrics.parquet')));
 
 if qMetricsExist == 0 || rerun
-    [qMetric, unitType] = bc_runAllQualityMetrics(param, spikeTimes_samples, spikeTemplates, ...
+    [qMetric, unitType] = bc.qm.runAllQualityMetrics(param, spikeTimes_samples, spikeTemplates, ...
         templateWaveforms, templateAmplitudes, pcFeatures, pcFeatureIdx, channelPositions, savePath);
 else
-    [param, qMetric] = bc_loadSavedMetrics(savePath); 
-    unitType = bc_getQualityUnitType(param, qMetric, savePath);
+    [param, qMetric] = bc.load.loadSavedMetrics(savePath); 
+    unitType = bc.qm.getQualityUnitType(param, qMetric, savePath);
 end
 
 param.plotGlobal = 0; % plot metric histograms and thresholds
@@ -66,8 +69,8 @@ param.plotThis = 0; % do not plot individual units
 
 %% view units + quality metrics in GUI 
 % load data for GUI
-loadRawTraces = 0; % default: don't load in raw data (this makes the GUI significantly faster)
-bc_loadMetricsForGUI;
+% loadRawTraces = 0; % default: don't load in raw data (this makes the GUI significantly faster)
+% bc.load.loadMetricsForGUI;
 
 % GUI guide: 
 % left/right arrow: toggle between units 
@@ -79,8 +82,8 @@ bc_loadMetricsForGUI;
 
 % currently this GUI works best with a screen in portrait mode - we are
 % working to get it to handle screens in landscape mode better. 
-unitQualityGuiHandle = bc_unitQualityGUI(memMapData, ephysData, qMetric, forGUI, rawWaveforms, ...
-    param, probeLocation, unitType, loadRawTraces);
+% unitQualityGuiHandle = bc.viz.unitQualityGUI(memMapData, ephysData, qMetric, forGUI, rawWaveforms, ...
+%     param, probeLocation, unitType, loadRawTraces);
 
 
 %% example: get the quality metrics for one unit

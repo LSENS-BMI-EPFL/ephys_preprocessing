@@ -13,7 +13,7 @@ logger.add("log/preprocess_spikesort_{time}.log", colorize=True,
 from ephys_preprocessing.preprocessing import (
     run_catgt, 
     run_sorter,
-    get_artifact_times,
+    run_bombcell,
 )
 
 @logger.catch
@@ -41,13 +41,20 @@ def main(input_dir, config_file):
 
     # Run CatGT
     logger.info('Starting CatGT.')
-    # run_catgt.main(input_dir, processed_dir, config['catgt'])
+    run_catgt.main(input_dir, processed_dir, config['catgt'])
     logger.info('Finished CatGT in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     # Run Kilosort
     logger.info('Starting Kilosort.')
     run_sorter.main(processed_dir, config)
     logger.info("Finished Kilosort in {}.".format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
+
+
+    # Run quality metrics e.g. bombcell
+    logger.info('Starting bombcell quality metrics.')
+    run_bombcell.main(processed_dir, config)
+    logger.info('Finished bombcell quality metrics in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
+
 
 if __name__ == '__main__':
     # parser = argparse.ArgumentParser()
@@ -60,7 +67,16 @@ if __name__ == '__main__':
     # args.input = Path('/mnt/lsens/data/PB191/Recording/Ephys/PB191_20241210_110601') #until \Ephys
     # args.config = Path('/home/lebert/code/spikesorting_pipeline/spikeinterface_preprocessing/ephys_preprocessing/ephys_preprocessing/preprocessing/preprocess_config_si.yaml')
     
-    input = Path('/mnt/lsens/data/PB192/Recording/Ephys/PB192_20241211_113347')
+    data_path = Path('/mnt/lsens/data')
+    input_list = [
+        'PB191/Recording/Ephys/PB191_20241210_110601',
+        'PB192/Recording/Ephys/PB192_20241211_113347',
+        'PB201/Recording/Ephys/PB201_20241212_192123',
+        'PB195/Recording/Ephys/PB195_20241214_114010',
+        'PB196/Recording/Ephys/PB196_20241217_144715',
+    ]
+
     config = Path('/home/lebert/code/spikesorting_pipeline/spikeinterface_preprocessing/ephys_preprocessing/ephys_preprocessing/preprocessing/preprocess_config_si.yaml')
-    
-    main(input, config)
+
+    for input in input_list:
+        main(data_path / input, config)

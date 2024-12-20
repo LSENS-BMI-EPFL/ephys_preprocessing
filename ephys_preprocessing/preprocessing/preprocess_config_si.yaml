@@ -11,15 +11,13 @@ artifact_correction:
      window_ms: 3
 sorters:
      sorter_list:
+          - kilosort2
           - kilosort4
      job_kwargs:
           n_jobs: -1
           chunk_duration: 1s
           progress_bar: true
      kilosort2:
-          matlab_path: 'C:\Program Files\MATLAB\R2021b'
-          kilosort_path: 'C:\\Users\\bisi\\Kilosort\\Kilosort-2.0'
-          temp_data_path: 'D:\\Npx_Data'
           singularity_image: true
           nblocks: 5
           sorter_params:
@@ -30,9 +28,12 @@ sorters:
           singularity_image: false
           sorter_params:
                do_CAR: false
+               delete_recording_dat: false
 bombcell:
-     bombcell_path: 'C:\\Users\\bisi\\Github\\bombcell'
-     matlab_path: 'C:\Program Files\MATLAB\R2021b'
+     bombcell_path: '/home/lebert/code/spikesorting_pipeline/tools/bombcell'
+     run_bombcell_path: '/home/lebert/code/spikesorting_pipeline/spikeinterface_preprocessing/ephys_preprocessing/ephys_preprocessing/matlab'
+     npy_path: '/home/lebert/code/spikesorting_pipeline/tools/npy-matlab'
+     matlab_path: '/usr/local/MATLAB/R2024b/'
 tprime:
      tprime_path: '/home/lebert/code/spikesorting_pipeline/tools/TPrime-linux'
      syncperiod: 1

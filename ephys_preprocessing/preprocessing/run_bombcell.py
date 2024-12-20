@@ -9,13 +9,23 @@
 import os
 import subprocess
 import sys
-import pyautogui
+import pathlib
+import re
+# import pyautogui
 import time
 from loguru import logger
 from ephys_preprocessing.utils.ephys_utils import check_if_valid_recording
 
-os.environ["MATLAB_ENGINE"] = "R2021b"
+# os.environ["MATLAB_ENGINE"] = "R2021b"
 import matlab.engine
+
+def extract_ks_version(s):
+    match = re.search(r'kilosort(\d+(?:\.\d+)?)', s)
+    if match:
+        version_str = match.group(1)
+        return float(version_str) if '.' in version_str else int(version_str)
+    return None
+
 
 def main(input_dir, config):
     """
@@ -46,42 +56,48 @@ def main(input_dir, config):
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
         probe_path = os.path.join(input_dir, probe_folder)
 
-        # Set paths
-        kilosort_folder = 'kilosort2'
-        kilosort_version = 2
+        kilosort_folders = pathlib.Path(probe_path).glob('kilosort*')
+        for kilosort_folder in kilosort_folders:
+            # Set paths
+            ks_name = kilosort_folder.name
+            kilosort_version = extract_ks_version(ks_name)
 
-        kilosort_path = os.path.join(input_dir, probe_folder, kilosort_folder)
-        apbin_fname = '{}_tcat_corrected.imec{}.ap.bin'.format(epoch_name, probe_id)
-        path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
-        meta_fname = '{}_tcat_corrected.imec{}.ap.meta'.format(epoch_name, probe_id)
-        path_to_meta = os.path.join(input_dir, probe_folder, meta_fname)
+            kilosort_path = os.path.join(kilosort_folder, 'sorter_output')
+            # apbin_fname = '{}_tcat_corrected.imec{}.ap.bin'.format(epoch_name, probe_id)
+            apbin_fname = '{}_tcat.imec{}.ap.bin'.format(epoch_name, probe_id)
+            path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
+            # meta_fname = '{}_tcat_corrected.imec{}.ap.meta'.format(epoch_name, probe_id)
+            meta_fname = '{}_tcat.imec{}.ap.meta'.format(epoch_name, probe_id)
+            path_to_meta = os.path.join(input_dir, probe_folder, meta_fname)
 
-        # Start MATLAB engine
-        sys.path.append(config['bombcell']['matlab_path'])
-        logfile_path = os.path.join(probe_path, 'run_bombcell_log.txt')
-        eng = matlab.engine.start_matlab("-logfile " + str(logfile_path))
-        eng.addpath(eng.genpath(r'C:\Users\bisi\Github\npy-matlab'), nargout=0)
-        eng.cd(config['bombcell']['bombcell_path'], nargout=0)
+            # Start MATLAB engine
+            sys.path.append(config['bombcell']['matlab_path'])
+            logfile_path = os.path.join(probe_path, 'run_bombcell_log.txt')
+            eng = matlab.engine.start_matlab("-nodesktop -logfile " + str(logfile_path))
+            eng.addpath(eng.genpath(config['bombcell']['npy_path']), nargout=0)
+            eng.cd(config['bombcell']['run_bombcell_path'], nargout=0)
 
-        logger.info('Running bombcell for IMEC probe {}.'.format(probe_id))
-        eng.run_bombcell(kilosort_path, path_to_apbin, path_to_meta, kilosort_version, nargout=0)
+            logger.info('Running bombcell for IMEC probe {}.'.format(probe_id))
+            eng.run_bombcell(kilosort_path, path_to_apbin, path_to_meta, kilosort_version, nargout=0)
 
-        # Stop MATLAB engine
-        eng.quit()
+            # Stop MATLAB engine
+            eng.quit()
 
-        # Execute Phy to generate cluster_info table
-        logger.info('Opening Phy GUI to generate cluster_info table.')
-        command = 'conda activate phy2 && phy template-gui params.py && conda deactivate'
-        process = subprocess.Popen(command,  shell=True, cwd=os.path.join(probe_path, 'kilosort2'))
-        pyautogui.FAILSAFE = False # disable mouse moving fail-safe
-        time.sleep(30) # wait for GUI to load
-        pyautogui.keyDown('ctrl')
-        pyautogui.press('s')
-        pyautogui.keyUp('ctrl')
-        time.sleep(20) # wait for saving to complete
-        pyautogui.hotkey('ctrl', 'q') # close GUI
-        time.sleep(30)
-        process.terminate() # terminate process
-        logger.info('Phy GUI saved and closed.')
+
+        # TODO: Make a function that creates cluter_info without loading phy?
+        # # Execute Phy to generate cluster_info table
+        # logger.info('Opening Phy GUI to generate cluster_info table.')
+        # command = 'conda activate phy2 && phy template-gui params.py && conda deactivate'
+        # process = subprocess.Popen(command,  shell=True, cwd=os.path.join(probe_path, 'kilosort2'))
+        # pyautogui.FAILSAFE = False # disable mouse moving fail-safe
+        # time.sleep(30) # wait for GUI to load
+        # pyautogui.keyDown('ctrl')
+        # pyautogui.press('s')
+        # pyautogui.keyUp('ctrl')
+        # time.sleep(20) # wait for saving to complete
+        # pyautogui.hotkey('ctrl', 'q') # close GUI
+        # time.sleep(30)
+        # process.terminate() # terminate process
+        # logger.info('Phy GUI saved and closed.')
 
     return
