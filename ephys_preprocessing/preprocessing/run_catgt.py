@@ -38,8 +38,12 @@ def main(input_dir, output_dir, config):
         shell = False
     else:
         raise NotImplementedError('OS not recognised')
-        
 
+    if not config['overwrite'] and len(os.listdir(output_dir)) > 0: 
+        logger.info('Catgt output directory {} already exists. Skipping CatGT...'.format(output_dir))
+        return
+
+    # Run CatGT
     command = [catGTexe_fullpath,
                '-dir={}'.format(input_dir),
                '-run={}'.format(run_name),

@@ -17,6 +17,7 @@ cuda-python = "^12.6.2.post1"
 spython = "^0.3.14"
 pyautogui = "^0.9.54"
 openpyxl = "^3.1.5"
+numba = "^0.60.0"
 
 
 [build-system]

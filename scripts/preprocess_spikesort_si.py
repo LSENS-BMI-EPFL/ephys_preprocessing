@@ -70,10 +70,10 @@ if __name__ == '__main__':
     data_path = Path('/mnt/lsens/data')
     input_list = [
         'PB191/Recording/Ephys/PB191_20241210_110601',
-        'PB192/Recording/Ephys/PB192_20241211_113347',
-        'PB201/Recording/Ephys/PB201_20241212_192123',
-        'PB195/Recording/Ephys/PB195_20241214_114010',
-        'PB196/Recording/Ephys/PB196_20241217_144715',
+        # 'PB192/Recording/Ephys/PB192_20241211_113347',
+        # 'PB201/Recording/Ephys/PB201_20241212_192123',
+        # 'PB195/Recording/Ephys/PB195_20241214_114010',
+        # 'PB196/Recording/Ephys/PB196_20241217_144715',
     ]
 
     config = Path('/home/lebert/code/spikesorting_pipeline/spikeinterface_preprocessing/ephys_preprocessing/ephys_preprocessing/preprocessing/preprocess_config_si.yaml')

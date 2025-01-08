@@ -62,7 +62,7 @@ def main(input_dir, config):
             ks_name = kilosort_folder.name
             kilosort_version = extract_ks_version(ks_name)
 
-            kilosort_path = os.path.join(kilosort_folder, 'sorter_output')
+            kilosort_path = os.path.join(kilosort_folder, 'phy')
             # apbin_fname = '{}_tcat_corrected.imec{}.ap.bin'.format(epoch_name, probe_id)
             apbin_fname = '{}_tcat.imec{}.ap.bin'.format(epoch_name, probe_id)
             path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
