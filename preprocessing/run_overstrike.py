@@ -49,6 +49,9 @@ def main(input_dir, config, timespans_list):
 
     logger.info('Striking timespans: {}'.format(timespans_list))
     for probe_id in range(n_probes):
+        if probe_id != 4:
+            print('Skipping OverStrike of probe {}'.format(probe_id))
+            continue
         probe_folder = '{}_imec{}'.format(epoch_name.replace('catgt_', ''), probe_id)
         probe_path = os.path.join(input_dir, epoch_name, probe_folder)
         ap_bin_file_name = [f for f in os.listdir(probe_path) if 'ap.bin' in f and 'corrected' in f][0]
@@ -60,6 +63,7 @@ def main(input_dir, config, timespans_list):
             # Write OverStrike command line
             command = ['OverStrike',
                        '-file={}'.format(ap_bin_path),
+                       '-chans=0:300',
                        '-secs={},{}'.format(timespan[0], timespan[1])
                        ]
             logger.info('OverStrike command line will run: {}'.format(list(flatten_list(command))))
