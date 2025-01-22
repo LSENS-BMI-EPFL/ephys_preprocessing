@@ -69,10 +69,8 @@ graph LR
 - path to config files
 - **Note**: bombcell's main script has changed, so you need to adapt the script to the new version of bombcell and noting that some bombcell functions are commented in this pipeline.
 
-4. Install a separate conda environment for **Phy**, `phy2`:
+5. Install **Phy**, (optional, for data visualization):
 - Follow the instructions: https://github.com/cortex-lab/phy/
-- This environment is used here to open Phy and save its output .tsv files
-
   
 ### Usage ⚡ 
 The pipeline is separated into two main scripts:
