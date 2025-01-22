@@ -7,10 +7,7 @@
 """
 
 import os
-import subprocess
 import sys
-import pyautogui
-import time
 from loguru import logger
 from utils.ephys_utils import check_if_valid_recording
 from utils.phy_utils import load_phy_model
