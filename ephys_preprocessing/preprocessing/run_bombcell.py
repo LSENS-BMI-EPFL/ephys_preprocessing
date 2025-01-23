@@ -7,14 +7,12 @@
 """
 
 import os
-import subprocess
 import sys
 import pathlib
 import re
-# import pyautogui
-import time
 from loguru import logger
 from ephys_preprocessing.utils.ephys_utils import check_if_valid_recording
+from ephys_preprocessing.utils.phylib_utils import load_phy_model
 
 # os.environ["MATLAB_ENGINE"] = "R2021b"
 import matlab.engine
@@ -62,7 +60,7 @@ def main(input_dir, config):
             ks_name = kilosort_folder.name
             kilosort_version = extract_ks_version(ks_name)
 
-            kilosort_path = os.path.join(kilosort_folder, 'phy')
+            kilosort_path = os.path.join(kilosort_folder, 'sorter_output')
             # apbin_fname = '{}_tcat_corrected.imec{}.ap.bin'.format(epoch_name, probe_id)
             apbin_fname = '{}_tcat.imec{}.ap.bin'.format(epoch_name, probe_id)
             path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
@@ -83,21 +81,10 @@ def main(input_dir, config):
             # Stop MATLAB engine
             eng.quit()
 
-
-        # TODO: Make a function that creates cluter_info without loading phy?
-        # # Execute Phy to generate cluster_info table
-        # logger.info('Opening Phy GUI to generate cluster_info table.')
-        # command = 'conda activate phy2 && phy template-gui params.py && conda deactivate'
-        # process = subprocess.Popen(command,  shell=True, cwd=os.path.join(probe_path, 'kilosort2'))
-        # pyautogui.FAILSAFE = False # disable mouse moving fail-safe
-        # time.sleep(30) # wait for GUI to load
-        # pyautogui.keyDown('ctrl')
-        # pyautogui.press('s')
-        # pyautogui.keyUp('ctrl')
-        # time.sleep(20) # wait for saving to complete
-        # pyautogui.hotkey('ctrl', 'q') # close GUI
-        # time.sleep(30)
-        # process.terminate() # terminate process
-        # logger.info('Phy GUI saved and closed.')
+        # cluster_info table creation
+        logger.info('Creating cluster_info table for IMEC probe {}.'.format(probe_id))
+        phy_model = load_phy_model(os.path.join(kilosort_path, 'params.py'))
+        phy_model.create_metrics_dataframe()
+        phy_model.save_metrics_tsv(os.path.join(kilosort_path, 'cluster_info.tsv'))
 
     return

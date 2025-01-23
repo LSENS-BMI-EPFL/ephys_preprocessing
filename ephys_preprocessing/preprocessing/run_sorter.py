@@ -21,7 +21,10 @@ def main(input_dir, config):
 
     sorter_configs = config['sorters']
 
-    for probe_id in range(n_probes):
+    if 'kilosort2' in sorter_configs['sorter_list']:
+        si.Kilosort2Sorter.set_kilosort2_path(sorter_configs['kilosort2']['sorter_path'])
+
+    for probe_id in range(n_probes):   
         # Check if probe recording is valid
         mouse_id = epoch_name.split('_')[1]
         # if not check_if_valid_recording(config, mouse_id, probe_id):
@@ -31,7 +34,7 @@ def main(input_dir, config):
         probe_path = os.path.join(input_dir, epoch_name, probe_folder)
         preprocessed_path = Path(probe_path) / 'preprocess'
 
-        if preprocessed_path.exists():
+        if preprocessed_path.exists() and any(preprocessed_path.iterdir()):
             recording = si.load_extractor(preprocessed_path)
         else:
             recording = se.read_spikeglx(probe_path, stream_id=f'imec{probe_id}.ap')
@@ -50,11 +53,16 @@ def main(input_dir, config):
             recording = recording.save(
                 folder = preprocessed_path, 
                 format='binary', 
+                overwrite=True,
                 **config['sorters']['job_kwargs'],
             )
 
         for sorter in sorter_configs['sorter_list']:
             folder = Path(probe_path) / sorter
+            # if (folder / 'phy').exists():
+            #     logger.info(f'Sorting already done for {sorter} on IMEC probe {probe_id}')
+            #     continue
+
             logger.info(f'Running {sorter} for IMEC probe {probe_id}')
             sorting = si.run_sorter(
                 sorter_name=sorter,
@@ -65,45 +73,61 @@ def main(input_dir, config):
                 singularity_image=sorter_configs[sorter]["singularity_image"],
                 **sorter_configs[sorter]['sorter_params'],
             )
-            # sorting = si.read_sorter_folder(folder)
-            sorting = si.remove_duplicated_spikes(
-                sorting=sorting, 
-                censored_period_ms=0.3,
-                )
-            logger.info('Done running Kilosort for IMEC probe {}.'.format(probe_id))
 
-            sorting_analyzer = si.create_sorting_analyzer(sorting=sorting, recording=recording, sparse=True)
+            ### The code below gives wrong output in phy, even with the output of Kilosort 
+            ### looking fine, I dont know why. All clusters look like noise and 
+            ### located at the tip of the probe
 
-            _ = sorting_analyzer.compute('random_spikes')
-            _ = sorting_analyzer.compute('waveforms', n_jobs = config['sorters']['job_kwargs']['n_jobs'])
-            _ = sorting_analyzer.compute('templates')
-            _ = sorting_analyzer.compute('noise_levels', n_jobs = config['sorters']['job_kwargs']['n_jobs'])
-            _ = sorting_analyzer.compute('spike_amplitudes', n_jobs = config['sorters']['job_kwargs']['n_jobs'])
-            _ = sorting_analyzer.compute("unit_locations", n_jobs = config['sorters']['job_kwargs']['n_jobs'])
+            # sorting = si.read_kilosort(folder)
+            # # sorting = si.read_sorter_folder(folder)
+            # sorting = si.remove_duplicated_spikes(
+            #     sorting=sorting, 
+            #     censored_period_ms=0.3,
+            #     )
+            # logger.info('Done running Kilosort for IMEC probe {}.'.format(probe_id))
 
-            _ = sorting_analyzer.compute(['correlograms', 'template_similarity', 'quality_metrics'],
-                         extension_params=dict(quality_metrics=dict(metric_names=['snr', 'isi_violation', 'presence_ratio']))
-                         )
+            # sorting_analyzer = si.create_sorting_analyzer(
+            #     sorting=sorting, 
+            #     recording=recording, 
+            #     sparse=True,
+            #     overwrite=True,
+            #     **config['sorters']['job_kwargs'],
+            #     )
+
+            # _ = sorting_analyzer.compute('random_spikes', method="uniform", max_spikes_per_unit=500)
+            # _ = sorting_analyzer.compute('waveforms',  ms_before=1.5,ms_after=2., **config['sorters']['job_kwargs'])
+            # _ = sorting_analyzer.compute('templates', operators=["average", "median", "std"])
+            # _ = sorting_analyzer.compute('noise_levels')
+
+            # # _ = sorting_analyzer.compute('spike_amplitudes', n_jobs = config['sorters']['job_kwargs']['n_jobs'])
+            # # _ = sorting_analyzer.compute("spike_locations", n_jobs = config['sorters']['job_kwargs']['n_jobs'])
+
+            # # _ = sorting_analyzer.compute(['correlograms', 'template_similarity', 'quality_metrics'],
+            # #              extension_params=dict(quality_metrics=dict(metric_names=['snr', 'isi_violation', 'presence_ratio']))
+            # #              )
             
-            sorting_analyzer.save_as(
-                format='zarr', 
-                folder= folder / 'sorting_analyzer.zarr',
-                )
+            # # sorting_analyzer.save_as(
+            # #     format='zarr', 
+            # #     folder= folder / 'sorting_analyzer.zarr',
+            # #     )
             
-            si.export_to_phy(
-                sorting_analyzer=sorting_analyzer, 
-                output_folder=folder / 'phy', 
-                copy_binary=True,
-                use_relative_path=True,
-                **config['sorters']['job_kwargs'],
-                )
-            si.export_report(
-                sorting_analyzer=sorting_analyzer, 
-                output_folder=folder / 'report',
-                **config['sorters']['job_kwargs'],
-                )
+            # si.export_to_phy(
+            #     sorting_analyzer=sorting_analyzer, 
+            #     output_folder=folder / 'phy', 
+            #     compute_pc_features=False,
+            #     remove_if_exists=True,
+            #     copy_binary=False,
+            #     # use_relative_path=True,
+            #     **config['sorters']['job_kwargs'],
+            #     )
+            # si.export_report(
+            #     sorting_analyzer=sorting_analyzer, 
+            #     output_folder=folder / 'report',
+            #     remove_if_exists=True,
+            #     **config['sorters']['job_kwargs'],
+            #     )
             
-        shutil.rmtree(Path(probe_path) / 'preprocess', ignore_errors=True)
+        # shutil.rmtree(Path(probe_path) / 'preprocess', ignore_errors=True)
 
 if __name__ == "__main__":
     input_dir = Path('/Volumes/Petersen-Lab/analysis/Axel_Bisi/data/PB191/PB191_20241210_110601/Ephys/')
