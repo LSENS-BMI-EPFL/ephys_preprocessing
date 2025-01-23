@@ -1,6 +1,0 @@
-__main__ Preprocessing data from /mnt/lsens/data/PB191/Recording/Ephys/PB191_20241210_110601.
-__main__ Recording using 4 probe(s).
-__main__ Processed data will be saved to /mnt/lsens/analysis/Jules_Lebert/data/PB191/PB191_20241210_110601/Ephys.
-__main__ Starting CatGT.
-ephys_preprocessing.preprocessing.run_catgt CatGT command line will run: ['/home/lebert/code/spikesorting_pipeline/tools/CatGT-linux/runit.sh', '-dir=/mnt/lsens/data/PB191/Recording/Ephys/PB191_20241210_110601', '-run=PB191', '-prb_fld', '-prb_miss_ok', '-g=0', '-t=0,0', '-t_miss_ok', '-startsecs=0.0', '-maxsecs=5580', '-ni', '-lf', '-ap', '-prb=0:5', '-xa=0,0,0,1,0,0', '-xa=0,0,1,4,0,0', '-xa=0,0,2,1,1,0', '-xa=0,0,3,1,1,0', '-xa=0,0,4,2,0,0', '-xa=0,0,5,2,0,0', '-xa=0,0,6,2,0,0', '-xa=0,0,7,0.005,0.010,0', '-gblcar', '-dest=/mnt/lsens/analysis/Jules_Lebert/data/PB191/PB191_20241210_110601/Ephys', '-out_prb_fld']
-ephys_preprocessing.preprocessing.run_catgt Running CatGT on PB191_g0.
