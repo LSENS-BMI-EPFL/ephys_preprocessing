@@ -58,3 +58,4 @@ wheels/
 
 'preprocessing/preprocess_config.yaml' 
 '.idea/misc.xml' 
+/preprocessing/log/

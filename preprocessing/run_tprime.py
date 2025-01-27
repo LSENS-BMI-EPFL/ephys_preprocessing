@@ -134,7 +134,13 @@ def main(input_dir, config):
                                   os.path.join(path_dest, 'whisker_stim_times.txt')),
         '-events={},{},{}'.format(nidq_stream_idx,
                                   os.path.join(input_dir, '{}_tcat.nidq.xa_4_0.txt'.format(epoch_name)),
-                                  os.path.join(path_dest, 'valve_times.txt')),
+                                  os.path.join(path_dest, 'valve_times.txt')), #TODO: for AB mice
+        #'-events={},{},{}'.format(nidq_stream_idx,
+        #                          os.path.join(input_dir, '{}_tcat.nidq.xa_4_0.txt'.format(epoch_name)),
+        #                          os.path.join(path_dest, 'context_transition_on.txt')), # TODO: for PB mice
+        #'-events={},{},{}'.format(nidq_stream_idx,
+        #                          os.path.join(input_dir, '{}_tcat.nidq.xia_4_0.txt'.format(epoch_name)),
+        #                          os.path.join(path_dest, 'context_transition_off.txt')),  # TODO: for PB mice
          '-events={},{},{}'.format(nidq_stream_idx,
                                   os.path.join(input_dir, '{}_tcat.nidq.xa_5_0.txt'.format(epoch_name)),
                                   os.path.join(path_dest, 'cam0_frame_times.txt')),
