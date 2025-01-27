@@ -10,8 +10,7 @@ import os
 import sys
 from loguru import logger
 from utils.ephys_utils import check_if_valid_recording
-from utils.phy_utils import load_phy_model
-
+from utils.phylib_utils import load_phy_model
 os.environ["MATLAB_ENGINE"] = "R2021b"
 import matlab.engine
 
