@@ -56,8 +56,6 @@ class ExtendedTemplateModel(TemplateModel):
         df['n_spikes'] = df['cluster_id'].apply(self.get_n_spikes)
         df['fr'] = df['cluster_id'].apply(self.get_mean_firing_rate)
         
-        # TODO: group is always nan in my data but maybe should add the actual functions that leads to this
-        df['group'] = np.nan
 
         # Reorder columns
         df = df.reindex(sorted(df.columns), axis=1)
