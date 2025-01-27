@@ -7,12 +7,10 @@
 """
 
 import os
-import subprocess
 import sys
-import pyautogui
-import time
 from loguru import logger
 from utils.ephys_utils import check_if_valid_recording
+from utils.phy_utils import load_phy_model
 
 os.environ["MATLAB_ENGINE"] = "R2021b"
 import matlab.engine
@@ -69,19 +67,11 @@ def main(input_dir, config):
         # Stop MATLAB engine
         eng.quit()
 
-        # Execute Phy to generate cluster_info table
-        logger.info('Opening Phy GUI to generate cluster_info table.')
-        command = 'conda activate phy2 && phy template-gui params.py && conda deactivate'
-        process = subprocess.Popen(command,  shell=True, cwd=os.path.join(probe_path, 'kilosort2'))
-        pyautogui.FAILSAFE = False # disable mouse moving fail-safe
-        time.sleep(30) # wait for GUI to load
-        pyautogui.keyDown('ctrl')
-        pyautogui.press('s')
-        pyautogui.keyUp('ctrl')
-        time.sleep(20) # wait for saving to complete
-        pyautogui.hotkey('ctrl', 'q') # close GUI
-        time.sleep(30)
-        process.terminate() # terminate process
-        logger.info('Phy GUI saved and closed.')
+        # cluster_info table creation
+        logger.info('Creating cluster_info table for IMEC probe {}.'.format(probe_id))
+        phy_model = load_phy_model(os.path.join(kilosort_path, 'params.py'))
+        phy_model.create_metrics_dataframe()
+        phy_model.save_metrics_tsv(os.path.join(kilosort_path, 'cluster_info.tsv'))
+
 
     return
