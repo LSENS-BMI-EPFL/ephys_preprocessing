@@ -27,14 +27,15 @@ def main(input_dir, config):
     for probe_id in range(n_probes):   
         # Check if probe recording is valid
         mouse_id = epoch_name.split('_')[1]
-        # if not check_if_valid_recording(config, mouse_id, probe_id):
-        #     continue
+        if not check_if_valid_recording(config, mouse_id, probe_id):
+            continue
 
         probe_folder = '{}_imec{}'.format(epoch_name.replace('catgt_', ''), probe_id)
         probe_path = os.path.join(input_dir, epoch_name, probe_folder)
         preprocessed_path = Path(probe_path) / 'preprocess'
+        overwrite_preprocessed = config['sorters']['overwrite_preprocessed']
 
-        if preprocessed_path.exists() and any(preprocessed_path.iterdir()):
+        if preprocessed_path.exists() and any(preprocessed_path.iterdir()) and not overwrite_preprocessed:
             recording = si.load_extractor(preprocessed_path)
         else:
             recording = se.read_spikeglx(probe_path, stream_id=f'imec{probe_id}.ap')
@@ -44,10 +45,19 @@ def main(input_dir, config):
                     probe_id=probe_id,
                     tprime_config=config['tprime']
                 )
-                recording = artifact_correction(
-                    recording=recording,
-                    artifact_times=artifact_times,
-                    window_ms=config['artifact_correction']['window_ms'],
+                # recording = artifact_correction(
+                #     recording=recording,
+                #     artifact_times=artifact_times,
+                #     window_ms=config['artifact_correction']['window_ms'],
+                # )
+
+                artifact_times_frame = artifact_times * recording.sampling_frequency
+                recording = si.remove_artifacts(
+                    recording, 
+                    list_triggers=artifact_times_frame,
+                    ms_before=config['artifact_correction']['ms_before'],
+                    ms_after=config['artifact_correction']['ms_after'],
+                    mode=config['artifact_correction']['mode'],
                 )
 
             recording = recording.save(
