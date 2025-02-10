@@ -24,9 +24,9 @@ def main(input_dir, output_dir, config):
     """
 
     # Get epoch number and run name
-    epoch_name = os.listdir(input_dir)[0]
+    epoch_name = [dir for dir in os.listdir(input_dir) if not dir.startswith('.')][0]
     epoch_number = epoch_name[-1]
-    run_name = os.listdir(input_dir)[0][0:-3]
+    run_name = [dir for dir in os.listdir(input_dir) if not dir.startswith('.')][0][0:-3]
 
     # Write CatGT command line
     if sys.platform.startswith('win'):
@@ -77,7 +77,7 @@ def main(input_dir, output_dir, config):
     subprocess.run(list(flatten_list(command)), shell=shell, cwd=config['catgt_path'])
 
 
-    logger.info('Opening CatGT log file at: {}'.format(os.path.join(config['catgt_path'], 'CatGT.log')))
-    webbrowser.open(os.path.join(config['catgt_path'], 'CatGT.log'))
+    # logger.info('Opening CatGT log file at: {}'.format(os.path.join(config['catgt_path'], 'CatGT.log')))
+    # webbrowser.open(os.path.join(config['catgt_path'], 'CatGT.log'))
 
     return

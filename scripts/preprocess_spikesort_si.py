@@ -12,6 +12,7 @@ logger.add("log/preprocess_spikesort_{time}.log", colorize=True,
 # Import submodules
 from ephys_preprocessing.preprocessing import (
     run_catgt, 
+    run_overstrike,
     run_sorter,
     run_bombcell,
 )
@@ -25,7 +26,7 @@ def main(input_dir, config_file):
     start_time = time.time()
 
     # Get epoch number and run name
-    epoch_name = os.listdir(input_dir)[0]
+    epoch_name = [dir for dir in os.listdir(input_dir) if not dir.startswith('.')][0]
     # Find only directory names with "imec" in it
     n_probes = len([f for f in os.listdir(os.path.join(input_dir, epoch_name)) if 'imec' in f])
     logger.info('Recording using {} probe(s).'.format(n_probes))
@@ -43,6 +44,16 @@ def main(input_dir, config_file):
     logger.info('Starting CatGT.')
     run_catgt.main(input_dir, processed_dir, config['catgt'])
     logger.info('Finished CatGT in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
+
+    # Optionally, run OverStrike
+    timespans_list = None
+    if mouse_name == 'PB191':
+        timespans_list = [(2350, 2373), (2724, 2778)]
+
+    if timespans_list:
+        logger.info('Starting OverStrike.')
+        run_overstrike.main(processed_dir, config['overstrike'], timespans_list=timespans_list)
+        logger.info('Finished OverStrike in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     # Run Kilosort
     logger.info('Starting Kilosort.')
@@ -69,14 +80,14 @@ if __name__ == '__main__':
     
     data_path = Path('/mnt/lsens/data')
     input_list = [
-        'PB191/Recording/Ephys/PB191_20241210_110601',
+        # 'PB191/Recording/Ephys/PB191_20241210_110601',
         'PB192/Recording/Ephys/PB192_20241211_113347',
         'PB201/Recording/Ephys/PB201_20241212_192123',
         'PB195/Recording/Ephys/PB195_20241214_114010',
         'PB196/Recording/Ephys/PB196_20241217_144715',
     ]
 
-    config = Path('/home/lebert/code/spikesorting_pipeline/spikeinterface_preprocessing/ephys_preprocessing/ephys_preprocessing/preprocessing/preprocess_config_si.yaml')
+    config = Path('/home/lebert/code/spikesorting_pipeline/spikeinterface_preprocessing/ephys_preprocessing/scripts/preprocess_config_si.yaml')
 
     for input in input_list:
         main(data_path / input, config)

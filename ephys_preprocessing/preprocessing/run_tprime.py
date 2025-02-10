@@ -8,6 +8,7 @@
 
 # Imports
 import os
+import sys
 import subprocess
 import webbrowser
 import pathlib
@@ -53,26 +54,27 @@ def main(input_dir, config):
     valid_probes = []
     for probe_id in range(n_probes):
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
-        metafile_name = '{}_tcat_corrected.imec{}.ap.meta'.format(epoch_name, probe_id)
+        metafile_name = '{}_tcat.imec{}.ap.meta'.format(epoch_name, probe_id)
         apbin_metafile_path = os.path.join(input_dir, probe_folder, metafile_name)
         ap_meta_dict = readSGLX.readMeta(pathlib.Path(apbin_metafile_path))
         imSampRate = float(ap_meta_dict['imSampRate'])  # probe-specific
 
-        try:
-            logger.info('Converting IMEC probe {} spike times to seconds.'.format(probe_id))
-            # Find any folders that contain kilosort in the name
-            kilosort_folder = 'kilosort2' # TODO: if other KS version used, generalize this
+        kilosort_folders = (pathlib.Path(input_dir) / probe_folder).glob('kilosort*')
+        for kilosort_folder in kilosort_folders:
 
-            # Load spike times and convert in seconds
-            spike_times = np.load(os.path.join(input_dir, probe_folder, kilosort_folder, 'spike_times.npy'))
-            spike_times_sec = spike_times / imSampRate
-            path_to_spikes = os.path.join(input_dir, probe_folder, kilosort_folder, 'spike_times_sec.npy')
-            np.save(path_to_spikes, spike_times_sec)
-            valid_probes.append(probe_id)
+            try:
+                logger.info('Converting IMEC probe {} spike times to seconds for {}.'.format(probe_id, kilosort_folder.name))
 
-        # If no spike times, skip probe
-        except FileNotFoundError as e:
-            logger.warning('No spike times for IMEC probe {}: either spike sorting missing or invalid recording.'.format(probe_id))
+                # Load spike times and convert in seconds
+                spike_times = np.load(kilosort_folder / 'sorter_output' / 'spike_times.npy')
+                spike_times_sec = spike_times / imSampRate
+                path_to_spikes = kilosort_folder / 'sorter_output' / 'spike_times_sec.npy'
+                np.save(path_to_spikes, spike_times_sec)
+                valid_probes.append(probe_id)
+
+            # If no spike times, skip probe
+            except FileNotFoundError as e:
+                logger.warning('No spike times for IMEC probe {} for {}: either spike sorting missing or invalid recording.'.format(probe_id, kilosort_folder.name))
 
     # Write TPrime command line
     nidq_stream_idx = 10  # arbitrary index number
@@ -89,12 +91,23 @@ def main(input_dir, config):
                                                                       default_tostream_probe,
                                                                       int(ap_meta_dict['nSavedChans']) - 1)
     # Set reference streams
-    command = ['Tprime',
+    if sys.platform.startswith('win'):
+        Tprime_fullpath = 'Tprime'
+        shell = True
+    elif sys.platform.startswith('linux'):
+        Tprime_fullpath = config['tprime_path']
+        Tprime_fullpath = Tprime_fullpath.replace('\\', '/') + "/runit.sh"
+        shell = False
+    else:
+        raise NotImplementedError('OS not recognised')
+
+    command = [Tprime_fullpath,
                '-syncperiod={}'.format(syncperiod),                                         # arg: reference data stream edge times (IMEC 0)
                '-tostream={}'.format(os.path.join(path_ref_probe, ref_probe_edges_file)),   # arg: stream index, sync pulse edge times
                '-fromstream={},{}'.format(nidq_stream_idx,
                                           os.path.join(input_dir, epoch_name + '_tcat.nidq.xa_0_0.txt'))
                ]
+
 
     # Add edge times & spike times for included each probe
     for probe_id in valid_probes:
@@ -110,16 +123,20 @@ def main(input_dir, config):
                                                                probe_edgetime_files[
                                                                    0])))  # stream index, edge times (probe)
 
-        command.append('-events={},{},{}'.format(probe_id,
-                                                 os.path.join(probe_folder_path, kilosort_folder, 'spike_times_sec.npy'),
+        kilosort_folders = [ks.name for ks in pathlib.Path(probe_folder_path).glob('kilosort*')]
+        for kilosort_folder in kilosort_folders:
+            command.append('-events={},{},{}'.format(probe_id,
+                                                 os.path.join(probe_folder_path, kilosort_folder, 'sorter_output', 'spike_times_sec.npy'),
                                                  os.path.join(probe_folder_path,  # save in original imec folder
-                                                              '{}_imec{}_spike_times_sec_sync.npy'.format(epoch_name,
-                                                                                                          probe_id))))  # stream index, spike times
-        command.append('-events={},{},{}'.format(probe_id,
-                                                 os.path.join(probe_folder_path, kilosort_folder, 'spike_times_sec.npy'),
+                                                              '{}_imec{}_{}_spike_times_sec_sync.npy'.format(epoch_name,
+                                                                                                          probe_id,
+                                                                                                          kilosort_folder))))  # stream index, spike times
+            command.append('-events={},{},{}'.format(probe_id,
+                                                 os.path.join(probe_folder_path, kilosort_folder, 'sorter_output', 'spike_times_sec.npy'),
                                                  os.path.join(path_dest,  # save AGAIN along other aligned event times
-                                                              '{}_imec{}_spike_times_sec_sync.npy'.format(epoch_name,
-                                                                                                          probe_id))))
+                                                              '{}_imec{}_{}_spike_times_sec_sync.npy'.format(epoch_name,
+                                                                                                          probe_id,
+                                                                                                          kilosort_folder))))
 
 # Add behaviour and video frame times
     command.append([
@@ -150,10 +167,10 @@ def main(input_dir, config):
     logger.info('TPrime command line will run: {}'.format(list(flatten_list(command))))
 
     logger.info('Running TPrime to align task events and spike times.')
-    subprocess.run(list(flatten_list(command)), shell=True, cwd=config['tprime_path'])
+    subprocess.run(list(flatten_list(command)), shell=shell, cwd=config['tprime_path'])
 
-    logger.info('Opening TPrime log file at: {}'.format(os.path.join(config['tprime_path'], 'Tprime.log')))
-    webbrowser.open(os.path.join(config['tprime_path'], 'Tprime.log'))
+    # logger.info('Opening TPrime log file at: {}'.format(os.path.join(config['tprime_path'], 'Tprime.log')))
+    # webbrowser.open(os.path.join(config['tprime_path'], 'Tprime.log'))
 
     return
 

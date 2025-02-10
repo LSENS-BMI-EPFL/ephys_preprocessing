@@ -35,52 +35,53 @@ def main(input_dir):
     for probe_id in probe_ids:
 
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
+        kilosort_folders = (pathlib.Path(input_dir) / probe_folder).glob('kilosort*')
+        for kilosort_folder in kilosort_folders:
+            # Get output folder
+            path_cwave_output = kilosort_folder / 'sorter_output' / 'cwaves'
 
-        # Get output folder
-        path_cwave_output = os.path.join(input_dir, probe_folder, 'kilosort2', 'cwaves')
+            # Get sampling rate
+            metafile_name = '{}_tcat.imec{}.ap.meta'.format(epoch_name, probe_id)
+            apbin_metafile_path = os.path.join(input_dir, probe_folder, metafile_name)
+            ap_meta_dict = readSGLX.readMeta(pathlib.Path(apbin_metafile_path))
+            imSampRate = float(ap_meta_dict['imSampRate'])  # probe-specific
 
-        # Get sampling rate
-        metafile_name = '{}_tcat.imec{}.ap.meta'.format(epoch_name, probe_id)
-        apbin_metafile_path = os.path.join(input_dir, probe_folder, metafile_name)
-        ap_meta_dict = readSGLX.readMeta(pathlib.Path(apbin_metafile_path))
-        imSampRate = float(ap_meta_dict['imSampRate'])  # probe-specific
+            # Load mean waveform data from C_waves
+            path_mean_waveforms = os.path.join(path_cwave_output, 'mean_waveforms.npy')
+            if not os.path.isfile(path_mean_waveforms):
+                logger.error('Skipping probe. No mean waveforms at {}.'.format(path_mean_waveforms))
+                continue
+            mean_waveforms = np.load(path_mean_waveforms)
 
-        # Load mean waveform data from C_waves
-        path_mean_waveforms = os.path.join(path_cwave_output, 'mean_waveforms.npy')
-        if not os.path.isfile(path_mean_waveforms):
-            logger.error('Skipping probe. No mean waveforms at {}.'.format(path_mean_waveforms))
-            continue
-        mean_waveforms = np.load(path_mean_waveforms)
+            # Get peak channels information
+            #kilosort_folder = [f for f in os.listdir(os.path.join(input_dir, probe_folder)) if 'kilosort' in f][0]
+            clus_info = pd.read_csv(kilosort_folder / 'sorter_output' / 'cluster_info.tsv', sep='\\t')
 
-        # Get peak channels information
-        #kilosort_folder = [f for f in os.listdir(os.path.join(input_dir, probe_folder)) if 'kilosort' in f][0]
-        clus_info = pd.read_csv(os.path.join(input_dir, probe_folder, 'kilosort2', 'cluster_info.tsv'), sep='\\t')
+            peak_channels = clus_info['ch'].values
 
-        peak_channels = clus_info['ch'].values
+            # Iterate over all clusters
+            waveform_metrics_df = []
+            for cluster_id in range(mean_waveforms.shape[0]):
+                peak_chan = peak_channels[cluster_id]
 
-        # Iterate over all clusters
-        waveform_metrics_df = []
-        for cluster_id in range(mean_waveforms.shape[0]):
-            peak_chan = peak_channels[cluster_id]
+                # Metrics for a single cluster waveform
+                metrics_df, trough_idx, peak_idx = calculate_waveform_metrics_from_avg(
+                    avg_waveform=np.array(mean_waveforms[cluster_id, peak_chan, :]),
+                    cluster_id=cluster_id,
+                    peak_channel=peak_chan,
+                    sample_rate=imSampRate,
+                    upsampling_factor=250)
+                metrics_df['peak_channel'] = peak_chan
+                metrics_df['trough_idx'] = trough_idx #index of waveform trough
+                metrics_df['peak_idx'] = peak_idx #index of waveform peak
 
-            # Metrics for a single cluster waveform
-            metrics_df, trough_idx, peak_idx = calculate_waveform_metrics_from_avg(
-                avg_waveform=np.array(mean_waveforms[cluster_id, peak_chan, :]),
-                cluster_id=cluster_id,
-                peak_channel=peak_chan,
-                sample_rate=imSampRate,
-                upsampling_factor=250)
-            metrics_df['peak_channel'] = peak_chan
-            metrics_df['trough_idx'] = trough_idx #index of waveform trough
-            metrics_df['peak_idx'] = peak_idx #index of waveform peak
+                waveform_metrics_df.append(metrics_df)
 
-            waveform_metrics_df.append(metrics_df)
+            # Concatenate all cluster metrics into a single dataframe
+            waveform_metrics_df = pd.concat(waveform_metrics_df)
 
-        # Concatenate all cluster metrics into a single dataframe
-        waveform_metrics_df = pd.concat(waveform_metrics_df)
-
-        # Save dataframe
-        waveform_metrics_df.to_csv(os.path.join(path_cwave_output, 'waveform_metrics.csv'), index=False)
+            # Save dataframe
+            waveform_metrics_df.to_csv(os.path.join(path_cwave_output, 'waveform_metrics.csv'), index=False)
 
     return
 

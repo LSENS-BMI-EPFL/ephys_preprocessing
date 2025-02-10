@@ -46,6 +46,13 @@ class ExtendedTemplateModel(TemplateModel):
         cluster_ids = self.cluster_ids
         
         df = pd.DataFrame.from_dict(self.metadata)
+        
+        # Remove all nan-only rows (ContamPct==100) that come from kilosort removing some clusters at the end
+        cols_to_keep = [c for c in df.columns if c not in ['Amplitude', 'ContamPct', 'KSLabel']]
+        df_to_drop = df[cols_to_keep]
+        nan_row_indices = df_to_drop.index[df_to_drop.isnull().all(1)].tolist()
+        df = df.drop(nan_row_indices)
+
         df['cluster_id'] = cluster_ids
         
         # Calculate all metrics

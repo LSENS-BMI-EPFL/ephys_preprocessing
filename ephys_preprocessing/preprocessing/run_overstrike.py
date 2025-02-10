@@ -12,6 +12,7 @@ import subprocess
 from ephys_preprocessing.utils.ephys_utils import flatten_list
 import webbrowser
 import yaml
+import sys
 from loguru import logger
 
 
@@ -47,28 +48,39 @@ def main(input_dir, config, timespans_list):
         logger.error('Timespans_list cannot be empty. Skipping OverStrike.')
         return
 
+    # Write OverStrike command line
+    if sys.platform.startswith('win'):
+        overstrike_fullpath = 'OverStrike'
+        shell = True
+    elif sys.platform.startswith('linux'):
+        overstrike_fullpath = config['overstrike_path']
+        overstrike_fullpath = overstrike_fullpath.replace('\\', '/') + "/runit.sh"
+        shell = False
+    else:
+        raise NotImplementedError('OS not recognised')
+
     logger.info('Striking timespans: {}'.format(timespans_list))
     for probe_id in range(n_probes):
         probe_folder = '{}_imec{}'.format(epoch_name.replace('catgt_', ''), probe_id)
         probe_path = os.path.join(input_dir, epoch_name, probe_folder)
-        ap_bin_file_name = [f for f in os.listdir(probe_path) if 'ap.bin' in f and 'corrected' in f][0]
+        ap_bin_file_name = [f for f in os.listdir(probe_path) if 'ap.bin' in f][0]
         ap_bin_path = os.path.join(probe_path, ap_bin_file_name)
 
         # Iterate over timespans to zero-out
         for timespan in timespans_list:
 
             # Write OverStrike command line
-            command = ['OverStrike',
+            command = [overstrike_fullpath,
                        '-file={}'.format(ap_bin_path),
                        '-secs={},{}'.format(timespan[0], timespan[1])
                        ]
             logger.info('OverStrike command line will run: {}'.format(list(flatten_list(command))))
 
             # Run OverStrike
-            subprocess.run(list(flatten_list(command)), shell=True, cwd=config['overstrike_path'])
+            subprocess.run(list(flatten_list(command)), shell=shell, cwd=config['overstrike_path'])
 
-            logger.info('Opening OverStrike log file at: {}'.format(os.path.join(config['overstrike_path'], 'OverStrike.log')))
-            webbrowser.open(os.path.join(config['overstrike_path'], 'OverStrike.log'))
+            # logger.info('Opening OverStrike log file at: {}'.format(os.path.join(config['overstrike_path'], 'OverStrike.log')))
+            # webbrowser.open(os.path.join(config['overstrike_path'], 'OverStrike.log'))
 
     # Save overstrike information
     overstrike_info = {'timespans_list': timespans_list}
