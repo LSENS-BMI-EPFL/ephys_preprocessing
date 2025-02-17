@@ -89,7 +89,8 @@ def run_tprime_alignment(
         f'-tostream={probe_path / tostream_probe_edges_file}',
         f'-fromstream={nidq_stream_idx},{epoch_dir / f"{run_name}_tcat.nidq.xa_0_0.txt"}',
         f'-events={nidq_stream_idx},'
-        f'{epoch_dir / f"{run_name}_tcat.nidq.xa_3_0.txt"},'
+        # f'{epoch_dir / f"{run_name}_tcat.nidq.xa_3_0.txt"},'
+        f'{epoch_dir / f"{run_name}_tcat.nidq.xa_2_0.txt"},' # for Myriam's setup
         f'{output_file}'
     ]
     

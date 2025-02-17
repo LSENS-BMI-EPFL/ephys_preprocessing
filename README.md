@@ -5,7 +5,7 @@ Pipeline to preprocess extracellular electrophysiology Neuropixels data acquired
 ### Notes about this pipeline ♻️
 - Works with the suite of SpikeGLX tools i.e. **CatGT**, **TPrime**, etc. : https://billkarsh.github.io/SpikeGLX/
 - Borrows/adapts some code in the SpikeGLX-adapted fork of the Allen's ecephys pipeline: https://github.com/jenniferColonell/ecephys_spike_sorting (e.g. mean waveform calculation)
-- Written for Kilosort spike sorting (KS2 mostly):  https://github.com/MouseLand/Kilosort?tab=readme-ov-file (this is doc for KS4 / KS2 doc in related paper)
+- Uses spikeinterface, and should be compatible with every spikeinterface-compatible spike sorters https://spikeinterface.readthedocs.io/.
 - Includes semi-automated curation using Bombcell: https://github.com/Julie-Fabre/bombcell, with KS2-adapted parameters.
 
 ### Overview of the pipeline :bookmark_tabs:	
@@ -43,26 +43,23 @@ graph LR
 ### Installation 🖥️
 #### Setting up
 - You must have a GPU for spike sorting
-- You must have installed Kilosort e.g. Kilosort2.0 (from here: https://github.com/jamesjun/Kilosort2) (with correct MATLAB version e.g. R2021b)
+- You must have installed the version of Kilosort you want to use (https://github.com/MouseLand/Kilosort), and the corresponding Matlab version if using a kilosort version older than 4.0
 - You must have installed CatGT, TPrime, C_Waves and OverStrike
 - You must have cloned [npy-matlab](https://github.com/kwikteam/npy-matlab) and [bombcell](https://github.com/Julie-Fabre/bombcell) e.g. in `users/Github/`
 
 #### Environments
-1. Install the provided `ephys_utils` **conda environment**:
-- `conda env create -f environment.yml` or `conda create --name ephys_utils --file requirements.txt`
+1. Install the package in a specific environment:
+  - With poetry (preferred): `poetry install`
+  - With pip in a virtual environment: `pip install -e .`
   
-2. Install **MATLAB** e.g. R2021b - specify the MATLAB version to use when calling the **MATLAB engine** in Python:
-  - In MATLAB command window, type `matlabroot` to get root path
-  - In terminal, go to `<matlabroot>\extern\engines\pyton`, then type `python setup.py install`
-  - If the previous did not work, try: https://ch.mathworks.com/matlabcentral/answers/1998578-invalid-version-r2021-when-installing-for-python-3-7-3-9.
-    That is, first run: `python -m pip install --upgrade setuptools`
-  - Example for R2021b, run `python -m pip install matlabengine==9.11.21`
-  - **Note**: if you can't run the matlab engine to run kilosort, run kilosort separately in MATLAB directly. Then continue with the steps of this pipeline.
+##### For Matlab based kilosort (<4.0)
+2. Make sure the corresponding Matlab version is installed (compatible with kilosort version and your CUDA version)
 
 3. Copy the file `run_main_kilosort.m` from this repo in `matlab` to the repo where you have installed **Kilosort2**, and update in that file:
 - path to kilosort folder
 - path to `npy-matlab`
 - path to config files
+
 
 4. Copy the file `run_bombcell.m` from this repo in `matlab` to the repo where you have installed `bombcell`, and update in that file:
 - path to bombcell folder

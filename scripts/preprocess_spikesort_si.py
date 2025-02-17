@@ -36,6 +36,8 @@ def main(input_dir, config_file):
     # session_name = input_dir.split('\\')[-2]
     mouse_name = input_dir.parents[2].name
     session_name = input_dir.name
+    if session_name == 'Ephys':
+        session_name = input_dir.parents[0].name
     processed_dir = os.path.join(config['output_path'], mouse_name, session_name, 'Ephys')
     logger.info('Processed data will be saved to {}.'.format(processed_dir))
     pathlib.Path(processed_dir).mkdir(parents=True, exist_ok=True)
@@ -81,10 +83,11 @@ if __name__ == '__main__':
     data_path = Path('/mnt/lsens/data')
     input_list = [
         # 'PB191/Recording/Ephys/PB191_20241210_110601',
-        'PB192/Recording/Ephys/PB192_20241211_113347',
-        'PB201/Recording/Ephys/PB201_20241212_192123',
-        'PB195/Recording/Ephys/PB195_20241214_114010',
-        'PB196/Recording/Ephys/PB196_20241217_144715',
+        # 'PB192/Recording/Ephys/PB192_20241211_113347',
+        # 'PB201/Recording/Ephys/PB201_20241212_192123',
+        # 'PB195/Recording/Ephys/PB195_20241214_114010',
+        # 'PB196/Recording/Ephys/PB196_20241217_144715',
+        'RD076/Recording/RD076_20250214_125235/Ephys'
     ]
 
     config = Path('/home/lebert/code/spikesorting_pipeline/spikeinterface_preprocessing/ephys_preprocessing/scripts/preprocess_config_si.yaml')
