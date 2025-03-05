@@ -35,17 +35,15 @@ def main(input_dir, config, timespans_list):
         assert all(isinstance(timespan, tuple) for timespan in timespans_list)
 
     except AssertionError:
-        raise TypeError('Timespans_list must be a list of tuples. Skipping OverStrike...')
         logger.error('Timespans_list must be a list of tuples. Skipping OverStrike.')
-        return
+        raise TypeError('Timespans_list must be a list of tuples. Skipping OverStrike...')
 
     # Check not empty
     try:
         assert len(timespans_list) > 0
     except AssertionError:
-        raise ValueError('Timespans_list cannot be empty. Skipping OverStrike...')
         logger.error('Timespans_list cannot be empty. Skipping OverStrike.')
-        return
+        raise ValueError('Timespans_list cannot be empty. Skipping OverStrike...')
 
     logger.info('Striking timespans: {}'.format(timespans_list))
     for probe_id in range(n_probes):
@@ -63,7 +61,7 @@ def main(input_dir, config, timespans_list):
             # Write OverStrike command line
             command = ['OverStrike',
                        '-file={}'.format(ap_bin_path),
-                       '-chans=0:300',
+                       #'-chans=0:300', #optionally specify channels here, default all
                        '-secs={},{}'.format(timespan[0], timespan[1])
                        ]
             logger.info('OverStrike command line will run: {}'.format(list(flatten_list(command))))

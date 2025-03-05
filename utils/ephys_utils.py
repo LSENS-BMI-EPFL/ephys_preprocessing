@@ -13,13 +13,8 @@ import os
 import pandas as pd
 import numpy as np
 from collections.abc import Iterable
-#import neo
-#import xarray as xr
-#import quantities as pq
-#from elephant.conversion import BinnedSpikeTrain
 from loguru import logger
-# Modules
-sys.path.append(r'C:\Users\bisi\Github\datamanipulation')
+
 
 def check_if_valid_recording(config, mouse_id, probe_id):
     """
@@ -43,8 +38,6 @@ def check_if_valid_recording(config, mouse_id, probe_id):
         return False
     return True
 
-
-
     # Check if there are clusters
     #if cluster_info_df.empty:
     #    return False
@@ -63,7 +56,7 @@ def check_if_valid_recording(config, mouse_id, probe_id):
 
 def convert_stereo_coords(azimuth, elevation):
     """
-    Change stereotaxic coordinates reference for insertion angles.
+    Change stereotaxic coordinates reference for insertion angles (for Axel's setup only, AI3209 setup #1)
     Source: https://github.com/petersaj/neuropixels_trajectory_explorer/wiki/General-use
     :param azimuth: (int) azimuth angle as read on L&N setup
     :param elevation: (int) azimuth angle as read on L&N setup
@@ -130,8 +123,6 @@ def make_binned_trial_xarray(spike_trains_cont_bin, trial_outcomes, trial_start_
 
     return st_bin_trial_xarr
 
-
-
 def flatten_list(l):
     """ Flatten a list of list.
     :param l: A list containing lists.
@@ -142,56 +133,3 @@ def flatten_list(l):
             yield from flatten_list(el)
         else:
             yield el
-
-def replace_coil_artefact(spike_array, bin_size, artefact_bins):
-    # TODO: to test
-
-    n_neurons = spike_array.shape[0]
-    firing_rates = np.nanmean(spike_array / bin_size, axis=1)
-    lambdas = firing_rates * bin_size
-
-    poisson_spikes = np.random.poisson(lambdas, size=(n_neurons, len(artefact_bins)))
-    spike_array[:, artefact_bins] = poisson_spikes
-
-    return spike_array
-
-def correct_coil_artefact(dataloader, spike_train_array): #TODO: to remove
-    """
-    Around whisker stimulus time, correct coil artefact by replacing spikes by Poisson spikes.
-    :param dataloader: Mouse instance of DataLoader.
-    :param spike_train_array: Array of spike trains.
-    :return: Corrected spike data array.
-    """
-
-    # Define correction window around stimulus time (ms), and baseline window
-    stim_time_ms = 1000
-    win_pre_ms = 5
-    win_post_ms = 6
-    correction_start = stim_time_ms - win_pre_ms
-    correction_end = stim_time_ms + win_post_ms
-    base_fr_start = 0
-    base_fr_end = stim_time_ms + win_post_ms
-
-    # Get spike data array, and trial types
-
-    cr_trials = dataloader.get_trial_type_indices(trial_type='CR')
-    try:
-        whisker_stim_trials = dataloader.datachunk_times[dataloader.datachunk_times['Wh_NoWh'] == 1].index.values
-    except KeyError:
-        whisker_stim_trials = dataloader.datachunk_times[
-            dataloader.datachunk_times['Whisker/NoWhisker'] == 1].index.values
-
-    # Calculate baseline trial-avg. firing rates for each neuron
-    spks_for_lambda = np.nanmean(spike_train_array[:, cr_trials, base_fr_start:base_fr_end], axis=1)
-
-    # Generate random Poisson spikes
-    rng = np.random.default_rng(seed=None)  # no seed for variability
-    poisson_spks = [rng.poisson(lam=spks_for_lambda, size=spks_for_lambda.shape)
-                    for i in range(len(whisker_stim_trials))]
-    poisson_spks = np.array(poisson_spks).swapaxes(0, 1)
-
-    # Replace spike data in window
-    spike_train_array[:, whisker_stim_trials, correction_start:correction_end] = poisson_spks[:, :,
-                                                                                 correction_start:correction_end]
-
-    return spike_train_array

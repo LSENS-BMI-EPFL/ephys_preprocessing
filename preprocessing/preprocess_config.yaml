@@ -7,7 +7,7 @@ overstrike:
 catgt:
      catgt_path: 'C:\\Users\\bisi\\CatGT-win'
 artifact_correction:
-     window_ms: 3
+     window_ms: 4
 kilosort:
      matlab_path: 'C:\Program Files\MATLAB\R2021b'
      kilosort_path: 'C:\\Users\\bisi\\Kilosort\\Kilosort-2.0'
@@ -20,6 +20,7 @@ kilosort:
 bombcell:
      bombcell_path: 'C:\\Users\\bisi\\Github\\bombcell'
      matlab_path: 'C:\Program Files\MATLAB\R2021b'
+     npy_matlab: 'C:\Users\bisi\Github\npy-matlab'
 tprime:
      tprime_path: 'C:\\Users\\bisi\\TPrime-win\\'
      syncperiod: 1

@@ -225,22 +225,18 @@ def plot_results(lfp_data_chunk,power,in_range,values,nchannels,chan_y,surface_y
     axs[0].imshow(np.flipud((lfp_data_chunk).T), aspect='auto')
     chunk_order = np.argsort(chan_y) # sort chunks by y position
     lfp_data_chunk[:, :] = lfp_data_chunk[:, chunk_order]
-    # axs[0].imshow((chunk).T, aspect='auto',vmin=-1000,vmax=1000)
     axs[0].set_title('Raw voltage')
     axs[0].set_xlabel('Time (s)')
     axs[0].set_ylabel('Channel number')
     axs[0].set_yticks(ticks=[384,0], labels=[1, 384])
-    #axs[0].axhline(y=int((surface_y+175)/20), color='white', linestyle=':')
 
     # Plot the log(power) from lass pass as image
     axs[1].imshow(np.flipud(np.log10(power[in_range, :]).T), aspect='auto')
     power[:, :] = power[:, chunk_order] # sort chunks by y position
-    # axs[1].imshow(np.log10(power[in_range,:]).T, aspect='auto')
     axs[1].set_title('Log10 power')
     axs[1].set_xlabel('Frequency (Hz)')
     axs[1].set_ylabel('Channel number')
     axs[1].set_yticks(ticks=[384,0], labels=[1, 384])
-    #axs[1].axhline(y=int((surface_y+175)/20), color='white', linestyle=':')
 
     # Save figure
     fig.tight_layout()
@@ -254,7 +250,6 @@ def plot_results(lfp_data_chunk,power,in_range,values,nchannels,chan_y,surface_y
     y_sorted = chan_y[chunk_order]
     axs[0].plot(values[chunk_order], y_sorted)
     axs[0].plot([power_thresh, power_thresh], [chan_y[0], chan_y[nchannels - 1]], ls='--', c='k', label = 'power thresh.')
-    #axs[0].axvline(x=surface_y, color='r', linestyle='--')
     axs[0].set_title('Mean power over input range')
     axs[0].set_ylabel(r'y-position from tip ($\mu$m)')
     axs[0].set_xlabel('Log10 power')
@@ -268,8 +263,6 @@ def plot_results(lfp_data_chunk,power,in_range,values,nchannels,chan_y,surface_y
     axs[0].legend(frameon=False, loc='upper right')
 
     # Plot power derivative in threshold calculation vs. y-position
-
-    #axs[1].plot(np.diff(values[chunk_order]), y_sorted[0:nchannels - 1])
     axs[1].plot(np.diff(values[chunk_order]), y_sorted[0:nchannels - 1]) # smoothed for visualization only
     axs[1].plot([diff_thresh, diff_thresh], [chan_y[0], chan_y[nchannels - 2]], ls='--', c='k', label = 'diff. thresh.')
     axs[1].plot([-0.2, diff_thresh], [surface_y, surface_y], ls='--', c='r', label = 'surface')
@@ -322,7 +315,7 @@ def calculate_average_power(lfp_data, sampling_rate, freq_band):
     return average_power
 
 
-def get_lfp_profile(lfp_data, ephys_params, params): #todo: not used, delete at some point?
+def get_lfp_profile(lfp_data, ephys_params, params): #TODO: not used, delete at some point?
 
     # Remove reference channels
     #lfp_data = np.delete(lfp_data, ephys_params['reference_channels'], axis=1)
@@ -355,10 +348,11 @@ def get_lfp_profile(lfp_data, ephys_params, params): #todo: not used, delete at 
     return
 
 
-def main(input_dir):
+def main(input_dir, config):
     """
     Analyze local field potential data to estimate probe depth and localization.
     :param input_dir: path to CatGT preprocessed data
+    :param config: config dict
     :return:
 
     """
@@ -391,7 +385,7 @@ def main(input_dir):
     probe_ids = [f[-1] for f in probe_folders]
 
     # Path to probe insertion info
-    probe_info_path = r'M:\analysis\Axel_Bisi\mice_info\probe_insertion_info.xlsx'
+    probe_info_path = os.path.join(config['mice_info_path'], 'probe_insertion_info.xlsx')
     probe_info_df = pd.read_excel(probe_info_path)
 
     # Perform computations for each probe separately
@@ -458,32 +452,20 @@ def main(input_dir):
         output_lfp = find_surface_channel(lfp_data=lfp_data, ephys_params=ephys_params, params=params, xCoord=xCoord, yCoord=yCoord, shankInd=shankInd)
 
         # Plot  values in spiking range profile, starting from the surface channel
-        #print('Plotting LFP profile...')
         lfp_values = np.array(output_lfp['values_spiking'])
-        #lfp_values_to_plot = lfp_values[int(output_lfp['surface_y']/20):-1]
         surface_y = output_lfp['surface_y']
-        #print(lfp_values.shape, surface_y)
         fig, ax = plt.subplots(1,1, figsize=(5,10), dpi=300)
-        x_range = np.arange(min(lfp_values), max(lfp_values), lfp_values.shape)
         x_range = np.linspace(min(lfp_values), max(lfp_values), lfp_values.shape[0])
-        #print(x_range.shape, lfp_values[int(surface_y/20):-1].shape)
-        #ax.plot(lfp_values[int(surface_y/20):-1], x_range, lw=2, c='k')
         ax.plot(lfp_values, x_range, lw=2, c='k')
         ax.axhline(y=surface_y/20, color='r', linestyle='--')
         ax.set_title('imec{}'.format(probe_id))
         ax.set_xlabel('Mean log10(power)')
         ax.set_ylabel('Channel number')
-        #plt.show()
 
         # -------------------
-        # Compute LFP profile
+        # Compute LFP profile #Note: not implemented
         # -------------------
         #print('Computing LFP profile...')
         #lfp_profile = get_lfp_profile(lfp_data=lfp_data, ephys_params=ephys_params, params=params)
 
-
-
-
-
-
-    return
+        return

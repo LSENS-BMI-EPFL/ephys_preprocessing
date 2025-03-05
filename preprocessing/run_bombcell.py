@@ -57,7 +57,7 @@ def main(input_dir, config):
         sys.path.append(config['bombcell']['matlab_path'])
         logfile_path = os.path.join(probe_path, 'run_bombcell_log.txt')
         eng = matlab.engine.start_matlab("-logfile " + str(logfile_path))
-        eng.addpath(eng.genpath(r'C:\Users\bisi\Github\npy-matlab'), nargout=0)
+        eng.addpath(eng.genpath(config['bombcell']['npy_matlab']), nargout=0)
         eng.cd(config['bombcell']['bombcell_path'], nargout=0)
 
         logger.info('Running bombcell for IMEC probe {}.'.format(probe_id))
