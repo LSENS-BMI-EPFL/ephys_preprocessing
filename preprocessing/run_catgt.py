@@ -23,9 +23,9 @@ def main(input_dir, output_dir, config):
     """
 
     # Get epoch number and run name
-    epoch_name = os.listdir(input_dir)[0]
+    epoch_name = [f for f in os.listdir(input_dir) if '_g' in f][0]
     epoch_number = epoch_name[-1]
-    run_name = os.listdir(input_dir)[0][0:-3]
+    run_name = epoch_name[0:-3]
 
     # Write CatGT command line
     command = ['CatGT',
@@ -37,6 +37,8 @@ def main(input_dir, output_dir, config):
                '-t=0,0',
                '-t_miss_ok',
                '-startsecs=0.0',
+               #'-maxsecs=2998.0',    # TODO: remove (for supercat)
+               #'-pass1_force_ni_ob_bin',# TODO: remove (for supercat)
                '-ni',
                '-lf',
                '-ap',
@@ -45,9 +47,9 @@ def main(input_dir, output_dir, config):
                '-xa=0,0,1,4,0,0',               # Trial start
                '-xa=0,0,2,1,1,0',               # Auditory stimulus (does not work)
                '-xa=0,0,3,1,1,0',               # Whisker stimulus
-               '-xa=0,0,4,2,0,0',               # Valve opening #TODO: for AB mice
-               #'-xa=0,0,4,2,0,0',               # Context transition TTL epoch start #TODO: PB mice
-               #'-xia=0,0,4,2,0,0',               # Context transition TTL epoch end#TODO: PB mice
+               #'-xa=0,0,4,2,0,0',               # Valve opening #TODO: for AB mice
+               '-xa=0,0,4,2,0,0',               # Context transition TTL epoch start #TODO: PB mice
+               '-xia=0,0,4,2,0,0',               # Context transition TTL epoch end#TODO: PB mice
                '-xa=0,0,5,2,0,0',               # Behaviour camera 0 frame times
                '-xa=0,0,6,2,0,0',               # Behaviour camera 1 frame times
                '-xa=0,0,7,0.005,0.010,0',       # Piezo lick sensor
