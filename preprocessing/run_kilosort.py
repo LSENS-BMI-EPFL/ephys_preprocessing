@@ -24,9 +24,9 @@ def main(input_dir, config):
     :return:
     """
 
-    epoch_name = os.listdir(input_dir)[0]
+    epoch_name = [f for f in os.listdir(input_dir) if '_g' in f][0]
     probe_folders = [f for f in os.listdir(os.path.join(input_dir, epoch_name)) if 'imec' in f]
-    logger.info('Data to spike-sort: {}'.format(probe_folders))
+    logger.info('Data to spike-sort: {}'.format(sorted(probe_folders)))
     n_probes = len(probe_folders)
 
     for probe_id in range(n_probes):

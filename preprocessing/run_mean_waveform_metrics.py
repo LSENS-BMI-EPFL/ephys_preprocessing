@@ -29,7 +29,7 @@ def main(input_dir):
     epoch_name = catgt_epoch_name.lstrip('catgt_')
 
     probe_folders = [f for f in os.listdir(input_dir) if 'imec' in f]
-    probe_ids = [f[-1] for f in probe_folders]
+    probe_ids = sorted([f[-1] for f in probe_folders])
 
     # Perform computations for each probe separately
     for probe_id in probe_ids:

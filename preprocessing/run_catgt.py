@@ -47,9 +47,9 @@ def main(input_dir, output_dir, config):
                '-xa=0,0,1,4,0,0',               # Trial start
                '-xa=0,0,2,1,1,0',               # Auditory stimulus (does not work)
                '-xa=0,0,3,1,1,0',               # Whisker stimulus
-               #'-xa=0,0,4,2,0,0',               # Valve opening #TODO: for AB mice
-               '-xa=0,0,4,2,0,0',               # Context transition TTL epoch start #TODO: PB mice
-               '-xia=0,0,4,2,0,0',               # Context transition TTL epoch end#TODO: PB mice
+               '-xa=0,0,4,2,0,0',               # Valve opening #TODO: for AB mice
+               #'-xa=0,0,4,2,0,0',               # Context transition TTL epoch start #TODO: PB mice
+               #'-xia=0,0,4,2,0,0',               # Context transition TTL epoch end#TODO: PB mice
                '-xa=0,0,5,2,0,0',               # Behaviour camera 0 frame times
                '-xa=0,0,6,2,0,0',               # Behaviour camera 1 frame times
                '-xa=0,0,7,0.005,0.010,0',       # Piezo lick sensor

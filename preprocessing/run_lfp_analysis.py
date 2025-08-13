@@ -463,7 +463,7 @@ def main(input_dir, config):
         ax.set_ylabel('Channel number')
 
         # -------------------
-        # Compute LFP profile #Note: not implemented
+        # Compute LFP profile #Note: TODO: not implemented yet
         # -------------------
         #print('Computing LFP profile...')
         #lfp_profile = get_lfp_profile(lfp_data=lfp_data, ephys_params=ephys_params, params=params)
