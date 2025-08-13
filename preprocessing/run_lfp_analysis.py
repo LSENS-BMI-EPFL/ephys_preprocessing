@@ -400,7 +400,7 @@ def main(input_dir, config):
 
         # Check that depth estimation using LFP is possible using electrodes in saline
         if insertion_depth > 4000:
-            logger.warning('Probe {} insertion depth ({}) is too deep for LFP depth estimation. Skipped.'.format(probe_id, insertion_depth))
+            logger.warning('Probe {} insertion depth ({}) is too deep for this method of LFP depth estimation. Skipping.'.format(probe_id, insertion_depth))
             continue
 
         params['saline_range_um'] = [insertion_depth, 4000]
