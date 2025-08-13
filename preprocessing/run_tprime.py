@@ -132,9 +132,9 @@ def main(input_dir, config):
         '-events={},{},{}'.format(nidq_stream_idx,
                                   os.path.join(input_dir, '{}_tcat.nidq.xa_3_0.txt'.format(epoch_name)),
                                   os.path.join(path_dest, 'whisker_stim_times.txt')),
-        '-events={},{},{}'.format(nidq_stream_idx,
-                                  os.path.join(input_dir, '{}_tcat.nidq.xa_4_0.txt'.format(epoch_name)),
-                                  os.path.join(path_dest, 'valve_times.txt')), #TODO: for AB mice
+        #'-events={},{},{}'.format(nidq_stream_idx,
+        #                          os.path.join(input_dir, '{}_tcat.nidq.xa_4_0.txt'.format(epoch_name)),
+        #                          os.path.join(path_dest, 'valve_times.txt')), #TODO: for AB mice
         #'-events={},{},{}'.format(nidq_stream_idx,
         #                          os.path.join(input_dir, '{}_tcat.nidq.xa_4_0.txt'.format(epoch_name)),
         #                          os.path.join(path_dest, 'context_transition_on.txt')), # TODO: for PB mice
@@ -148,10 +148,23 @@ def main(input_dir, config):
                                   os.path.join(input_dir, '{}_tcat.nidq.xa_6_0.txt'.format(epoch_name)),
                                   os.path.join(path_dest, 'cam1_frame_times.txt')),
          '-events={},{},{}'.format(nidq_stream_idx,
-                                  os.path.join(input_dir, '{}_tcat.nidq.xa_7_0.txt'.format(epoch_name)),
+                                  os.path.join(input_dir, '{}_tcat.nidq.xa_7_0.txt'.format(epoch_name)), # Note: this works weirdly
                                   os.path.join(path_dest, 'piezo_licks.txt'))
 
     ])
+    if epoch_name.startswith('AB'):
+        command.append(['-events={},{},{}'.format(nidq_stream_idx,
+                                  os.path.join(input_dir, '{}_tcat.nidq.xa_4_0.txt'.format(epoch_name)),
+                                  os.path.join(path_dest, 'valve_times.txt'))
+                        ])
+    elif epoch_name.startswith('PB'):
+        command.append(['-events={},{},{}'.format(nidq_stream_idx,
+                                  os.path.join(input_dir, '{}_tcat.nidq.xa_4_0.txt'.format(epoch_name)),
+                                  os.path.join(path_dest, 'context_transition_on.txt')),
+                        '-events={},{},{}'.format(nidq_stream_idx,
+                                  os.path.join(input_dir, '{}_tcat.nidq.xia_4_0.txt'.format(epoch_name)),
+                                  os.path.join(path_dest, 'context_transition_off.txt'))
+                        ])
 
     logger.info('TPrime command line will run: {}'.format(list(flatten_list(command))))
 
