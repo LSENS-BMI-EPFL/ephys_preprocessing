@@ -10,7 +10,7 @@
 # Imports
 import numpy as np
 import pandas as pd
-
+from loguru import logger
 from scipy.stats import linregress
 from scipy.signal import resample
 
@@ -63,7 +63,11 @@ def calculate_waveform_metrics_from_avg(avg_waveform,
     timestamps = np.linspace(0, num_samples / sample_rate, new_sample_count)
 
     # Calculate metrics
-    duration, trough_idx, peak_idx = calculate_waveform_duration(avg_waveform, timestamps) #trough-to-peak
+    try:
+        duration, trough_idx, peak_idx = calculate_waveform_duration(avg_waveform, timestamps) #trough-to-peak
+    except ValueError as err:
+        logger.error('Error in waveform metrics calculation:', err, avg_waveform, timestamps)
+
     halfwidth = calculate_waveform_halfwidth(avg_waveform, timestamps)
     pt_ratio = calculate_waveform_PT_ratio(avg_waveform)
     repolarization_slope = calculate_waveform_repolarization_slope(
@@ -163,7 +167,6 @@ def calculate_waveform_halfwidth(waveform, timestamps):
         halfwidth = (timestamps[thresh_crossing_2] - timestamps[thresh_crossing_1])
 
     except ValueError as err:
-        print(err)
         halfwidth = np.nan
 
     return halfwidth * 1e3
