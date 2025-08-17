@@ -48,6 +48,7 @@ def main(input_dir, config):
 
         # Format electrophysiology data
         # -----------------------------
+        logger.info('- Ephys spike-sorting and output data...')
         # Path to Kilosort output
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
         ks_path = Path(os.path.join(input_dir, probe_folder, 'kilosort2'))
@@ -68,11 +69,12 @@ def main(input_dir, config):
 
         # Format anatomical data from Brainreg track tracing
         # --------------------------------------------------
+        logger.info('- Probe track tracing data...')
         if not os.path.exists(anat_data_folder):
             logger.warning(f'Probe track tracing folder not found at {anat_data_folder}. Skipping data formatting.')
             continue
 
-        atlas = AllenAtlas(10) #10 microns resolution, like for registration
+        atlas = AllenAtlas(res_um=10) #10 microns resolution, like for registration
 
         brainreg_path = Path(anat_data_folder, f'imec{probe_id}.npy')
         if not brainreg_path.exists():
