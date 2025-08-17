@@ -47,7 +47,7 @@ def main(input_dir, output_dir, config):
                '-xa=0,0,1,4,0,0',               # Trial start
                '-xa=0,0,2,1,1,0',               # Auditory stimulus (does not work)
                '-xa=0,0,3,1,1,0',               # Whisker stimulus
-               '-xa=0,0,4,2,0,0',               # Valve opening #TODO: for AB mice
+               #'-xa=0,0,4,2,0,0',               # Valve opening #TODO: for AB mice
                #'-xa=0,0,4,2,0,0',               # Context transition TTL epoch start #TODO: PB mice
                #'-xia=0,0,4,2,0,0',               # Context transition TTL epoch end#TODO: PB mice
                '-xa=0,0,5,2,0,0',               # Behaviour camera 0 frame times
@@ -57,6 +57,13 @@ def main(input_dir, output_dir, config):
                '-dest={}'.format(output_dir),
                '-out_prb_fld'
                ]
+    if epoch_name.startswith('AB'):
+        command.append(['-xa=0,0,4,2,0,0']) # valve opening times
+    elif epoch_name.startswith('PB'):
+        command.append(['-xa=0,0,4,2,0,0',  # context transition TTL epoch start
+                        '-xia=0,0,4,2,0,0']) # context transition TTL epoch end
+
+
 
     logger.info('CatGT command line will run: {}'.format(list(flatten_list(command))))
 
