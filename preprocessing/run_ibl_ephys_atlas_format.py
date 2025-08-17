@@ -16,6 +16,7 @@ from pathlib import Path
 
 from utils.ephys_utils import check_if_valid_recording
 from atlaselectrophysiology.extract_files import extract_data
+#from iblapps.atlaselectrophysiology.extract_files import extract_data
 from iblatlas.atlas import AllenAtlas
 
 def main(input_dir, config):
@@ -30,7 +31,7 @@ def main(input_dir, config):
     epoch_name = catgt_epoch_name.lstrip('catgt_')
 
     mouse_id = epoch_name.split('_')[0]
-    anat_data_folder = os.path.join(config['anat_data_path'], mouse_id, 'fused',
+    anat_data_folder = os.path.join(config['anatomy']['anat_data_path'], mouse_id, 'fused',
                                     'registered', 'segmentation', 'atlas_space', 'tracks')
 
     probe_folders = [f for f in os.listdir(input_dir) if 'imec' in f]
@@ -39,24 +40,29 @@ def main(input_dir, config):
     # Perform computations for each probe separately
     for probe_id in probe_ids:
 
-        probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
+        if probe_id != '2':
+            continue
+
         if not check_if_valid_recording(config, mouse_id, probe_id):
             continue
 
         # Format electrophysiology data
         # -----------------------------
         # Path to Kilosort output
-        ks_path = Path(os.path.join(probe_folder, 'kilosort2'))
+        probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
+        ks_path = Path(os.path.join(input_dir, probe_folder, 'kilosort2'))
         if not ks_path.exists():
             logger.error(f"Kilosort output not found at {ks_path}. Please run Kilosort first.")
 
         # Path to raw ephys data
-        ephys_path = Path(probe_folder)
+        ephys_path = Path(input_dir, probe_folder)
         if not ephys_path.exists():
             logger.error(f"Ephys data not found at {ephys_path}. Please check the path.")
 
         # Save path
-        out_path = Path(os.path.join(probe_folder, 'ibl_format'))
+        out_path = Path(os.path.join(input_dir, probe_folder, 'ibl_format'))
+        if not out_path.exists():
+            out_path.mkdir(parents=True, exist_ok=True)
 
         extract_data(ks_path, ephys_path, out_path)
 

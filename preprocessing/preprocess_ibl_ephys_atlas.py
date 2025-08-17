@@ -10,6 +10,7 @@
 import argparse
 import yaml
 import time
+import subprocess
 from loguru import logger
 logger.add("log/preprocess_ibl_ephys_atllas_{time}.log", colorize=True,
               format="{name} {message}", level="INFO", rotation="10 MB", retention="1 week")
@@ -25,6 +26,8 @@ def main(input_dir, config_file):
     :param config_file: path to config file
     :return:
     """
+    subprocess.run('conda activate iblenv', shell=True)
+
 
     with open(config_file, 'r') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
@@ -34,7 +37,24 @@ def main(input_dir, config_file):
 
     # Run IBL ephys-atlas formatting
     logger.info('Starting IBL ephys-atlas data formatting.')
-    run_ibl_ephys_atlas_format.main(input_dir, config['anatomy'])
+    run_ibl_ephys_atlas_format.main(input_dir, config)
     logger.info('Finished IBL ephys-atlas formatting in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
+    # Open GUI
+    logger.info('Opening ephys-atlas GUI.')
+    path_to_gui = config['anatomy']['gui_path']
+    command = f'python {path_to_gui} -o True'
+    subprocess.run(command, shell=True)
+
     return
+
+if __name__ == '__main__':
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--input', type=str, nargs='?', required=True)
+        parser.add_argument('--config', type=str, nargs='?', required=False)
+        args = parser.parse_args()
+
+        args.input = r'M:\analysis\Axel_Bisi\data\AB164\AB164_20250422_115457\Ephys\catgt_AB164_g0'
+        args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
+
+        main(args.input, args.config)
