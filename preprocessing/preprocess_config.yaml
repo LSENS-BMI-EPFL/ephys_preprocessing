@@ -31,3 +31,6 @@ cwaves:
      pre_samples: 30
      num_spikes: 1000
      snr_radius: 8
+anatomy:
+     anat_data_path: 'M:\\analysis\\Axel_Bisi\\ImagedBrains\\Axel_Bisi'
+
