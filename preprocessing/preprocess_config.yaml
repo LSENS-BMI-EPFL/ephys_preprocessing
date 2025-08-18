@@ -33,5 +33,5 @@ cwaves:
      snr_radius: 8
 anatomy:
      anat_data_path: 'M:\\analysis\\Axel_Bisi\\ImagedBrains\\Axel_Bisi'
-     path_to_gui: 'C:\Users\bisi\Github\int-brain-lab\iblapps\atlaselectrophysiology\ephys_gui_setup.py'
+     path_to_gui: 'C:\\Users\\bisi\\Github\\int-brain-lab\\iblapps\\atlaselectrophysiology'
 
