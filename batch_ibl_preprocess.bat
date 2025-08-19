@@ -1,17 +1,17 @@
 @echo on
 REM ==========================================
 REM batch_preprocess_parallel_test.bat
-REM Verbose test run: process only the first 3 "catgt*" folders
+REM Verbose test run: process all "catgt*" folders
 REM ==========================================
 
 REM --- CONFIGURATION ---
 set "BASE_DIR=M:\analysis\Axel_Bisi\data"
-set "SCRIPT_PATH=C:\Users\bisi\ephys_utils\preprocess_ibl_ephys_atlas.py"
+set "SCRIPT_PATH=C:\Users\bisi\ephys_utils\preprocessing\preprocess_ibl_ephys_atlas.py"
 set "CONFIG_FILE=C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml"
 set "CONDA_ENV=iblenv"
 
 REM List of AB folders you want to process
-set INPUTS=AB123 AB164 AB163
+set INPUTS=AB116 AB117
 
 echo Base directory  : %BASE_DIR%
 echo Script path     : %SCRIPT_PATH%
@@ -20,7 +20,7 @@ echo Conda env       : %CONDA_ENV%
 echo Inputs          : %INPUTS%
 echo.
 
-REM --- Loop over each AB input ---
+REM --- Enable delayed expansion for variables inside loops ---
 setlocal enabledelayedexpansion
 set COUNT=0
 
@@ -29,15 +29,13 @@ for %%A in (%INPUTS%) do (
     echo Processing input %%A
     echo -----------------------------------------
 
-    REM --- Find the session folder containing Ephys ---
+    REM --- Find the first session folder containing Ephys ---
     set "SESSION_FOUND="
     for /D %%S in ("%BASE_DIR%\%%A\*") do (
         if exist "%%S\Ephys" (
             set "SESSION_FOUND=%%S"
-            goto :FOUND_SESSION
         )
     )
-    :FOUND_SESSION
 
     if defined SESSION_FOUND (
         echo Found session folder: !SESSION_FOUND!
@@ -49,7 +47,7 @@ for %%A in (%INPUTS%) do (
 
             REM Launch Python script in parallel using conda run
             START "job!COUNT!" cmd /c ^
-            ""C:\Users\bisi\AppData\Local\anaconda3\condabin\conda.bat" run -n %CONDA_ENV% python "%SCRIPT_PATH%" --input "!INPUT_DIR!" --config "%CONFIG_FILE%""
+            ""C:\Users\bisi\AppData\Local\anaconda3\condabin\conda.bat" run -n %CONDA_ENV% python "%SCRIPT_PATH%" --input "!INPUT_DIR!" --config "%CONFIG_FILE%" > "log_%%A_!COUNT!.txt" 2>&1"
 
             set /a COUNT+=1
         )
