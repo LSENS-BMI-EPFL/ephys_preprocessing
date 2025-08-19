@@ -14,9 +14,11 @@ import json
 from loguru import logger
 from pathlib import Path
 
+import sys
+#sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(__file__))
 from utils.ephys_utils import check_if_valid_recording
 from atlaselectrophysiology.extract_files import extract_data
-#from iblapps.atlaselectrophysiology.extract_files import extract_data
 from iblatlas.atlas import AllenAtlas
 
 def main(input_dir, config):
@@ -40,8 +42,6 @@ def main(input_dir, config):
     # Perform computations for each probe separately
     for probe_id in probe_ids:
 
-        if probe_id != '2':
-            continue
 
         if not check_if_valid_recording(config, mouse_id, probe_id):
             continue
@@ -74,7 +74,7 @@ def main(input_dir, config):
             logger.warning(f'Probe track tracing folder not found at {anat_data_folder}. Skipping data formatting.')
             continue
 
-        atlas = AllenAtlas(res_um=10) #10 microns resolution, like for registration
+        atlas = AllenAtlas(res_um=25) # bregma estimate done in 25 micron resolution
 
         brainreg_path = Path(anat_data_folder, f'imec{probe_id}.npy')
         if not brainreg_path.exists():

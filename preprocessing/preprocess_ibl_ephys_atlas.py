@@ -17,6 +17,7 @@ logger.add("log/preprocess_ibl_ephys_atllas_{time}.log", colorize=True,
 
 # Import submodules
 import run_ibl_ephys_atlas_format
+from utils.ephys_utils import flatten_list
 
 @logger.catch
 def main(input_dir, config_file):
@@ -42,9 +43,9 @@ def main(input_dir, config_file):
 
     # Open GUI
     logger.info('Opening ephys-atlas GUI.')
-    path_to_gui = config['anatomy']['gui_path']
-    command = f'python {path_to_gui} -o True'
-    subprocess.run(command, shell=True)
+    command = ['python', 'ephys_atlas_gui.py', '-o', 'True']
+    #subprocess.run(list(flatten_list(command)), shell=True, cwd=config['anatomy']['path_to_gui'])
+
 
     return
 
@@ -54,7 +55,7 @@ if __name__ == '__main__':
         parser.add_argument('--config', type=str, nargs='?', required=False)
         args = parser.parse_args()
 
-        args.input = r'M:\analysis\Axel_Bisi\data\AB164\AB164_20250422_115457\Ephys\catgt_AB164_g0'
+        #args.input = r'M:\analysis\Axel_Bisi\data\AB124\AB124_20240815_111810\Ephys\catgt_AB124_g0'
         args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
 
         main(args.input, args.config)
