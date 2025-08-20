@@ -18,12 +18,12 @@ BASE_DIR = Path(r"M:\analysis\Axel_Bisi\data")
 SCRIPT_PATH = Path(r"C:\Users\bisi\ephys_utils\preprocessing\preprocess_ibl_ephys_atlas.py")
 CONFIG_FILE = Path(r"C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml")
 CONDA_ENV = "iblenv"
-MAX_WORKERS = 3   # max jobs in parallel if --parallel is used
+MAX_WORKERS = 6   # max jobs in parallel if --parallel is used
 LOG_DIR = Path("logs")
 LOG_DIR.mkdir(exist_ok=True)
 
 # List of mouse_id inputs you want to process
-INPUTS = ["AB116", "AB120"]
+INPUTS = ["AB116", "AB120", "AB121", "AB122", "AB123", "AB124", "AB125", "AB126"]
 # -----------------------------------------
 
 
@@ -46,7 +46,7 @@ def find_sessions(mouse_id: str):
 
 def run_job(mouse_id: str, catgt_path: Path, count: int):
     """Run one preprocessing job via conda run, logging output."""
-    log_file = LOG_DIR / f"batchdriver_{mouse_id}_{count}.txt"
+    log_file = LOG_DIR / f"{mouse_id}_{count}.txt"
 
     # Command for conda run
     cmd = [
