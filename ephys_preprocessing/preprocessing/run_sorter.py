@@ -43,7 +43,8 @@ def main(input_dir, config):
                 artifact_times = run_tprime_alignment(
                     input_dir=input_dir,
                     probe_id=probe_id,
-                    tprime_config=config['tprime']
+                    force_rerun=True,
+                    tprime_config=config['tprime'],
                 )
                 # recording = artifact_correction(
                 #     recording=recording,

@@ -138,31 +138,61 @@ def main(input_dir, config):
                                                                                                           probe_id,
                                                                                                           kilosort_folder))))
 
-# Add behaviour and video frame times
-    command.append([
-        '-events={},{},{}'.format(nidq_stream_idx,
-                                  os.path.join(input_dir, '{}_tcat.nidq.xa_1_0.txt'.format(epoch_name)),
-                                  os.path.join(path_dest, 'trial_start_times.txt')),
-        '-events={},{},{}'.format(nidq_stream_idx,
-                                  os.path.join(input_dir, '{}_tcat.nidq.xa_2_0.txt'.format(epoch_name)),
-                                  os.path.join(path_dest, 'auditory_stim_times.txt')),
-        '-events={},{},{}'.format(nidq_stream_idx,
-                                  os.path.join(input_dir, '{}_tcat.nidq.xa_3_0.txt'.format(epoch_name)),
-                                  os.path.join(path_dest, 'whisker_stim_times.txt')),
-        '-events={},{},{}'.format(nidq_stream_idx,
-                                  os.path.join(input_dir, '{}_tcat.nidq.xa_4_0.txt'.format(epoch_name)),
-                                  os.path.join(path_dest, 'valve_times.txt')),
-         '-events={},{},{}'.format(nidq_stream_idx,
-                                  os.path.join(input_dir, '{}_tcat.nidq.xa_5_0.txt'.format(epoch_name)),
-                                  os.path.join(path_dest, 'cam0_frame_times.txt')),
-         '-events={},{},{}'.format(nidq_stream_idx,
-                                  os.path.join(input_dir, '{}_tcat.nidq.xa_6_0.txt'.format(epoch_name)),
-                                  os.path.join(path_dest, 'cam1_frame_times.txt')),
-         '-events={},{},{}'.format(nidq_stream_idx,
-                                  os.path.join(input_dir, '{}_tcat.nidq.xa_7_0.txt'.format(epoch_name)),
-                                  os.path.join(path_dest, 'piezo_licks.txt'))
+    # Define channel mappings for different setups
+    SETUP_CONFIGS = {
+        543: {  # Myri's setup
+            'name': 'Myri setup',
+            'channels': {
+                'trial_start_times': 1,
+                'whisker_stim_times': 2,
+                'piezo_licks': 3,
+                # 'valve_times': 4,
+                'context_transition_on': 4,
+                'context_transition_off': 4,  # Using xia_4_0
+                'cam0_frame_times': 5,
+                'cam1_frame_times': 6,
+                'auditory_stim_times': 7
+            }
+        },
+        'default': {  # Axel's setup
+            'name': 'Axel setup',
+            'channels': {
+                'trial_start_times': 1,
+                'auditory_stim_times': 2,
+                'whisker_stim_times': 3,
+                # 'valve_times': 4,
+                'context_transition_on': 4,
+                'context_transition_off': 4,  # Using xia_4_0
+                'cam0_frame_times': 5,
+                'cam1_frame_times': 6,
+                'piezo_licks': 7
+            }
+        }
+    }
 
-    ])
+    # Get setup configuration
+    setup_sn = float(ap_meta_dict['imDatBsc_sn'])
+    setup_config = SETUP_CONFIGS.get(setup_sn, SETUP_CONFIGS['default'])
+    print(f"{setup_config['name']}")
+
+    # Build event commands
+    event_commands = []
+    for event_name, channel in setup_config['channels'].items():
+        # Special handling for context transition off which uses xia instead of xa
+        if event_name == 'context_transition_off':
+            channel_file = f'{epoch_name}_tcat.nidq.xia_{channel}_0.txt'
+        else:
+            channel_file = f'{epoch_name}_tcat.nidq.xa_{channel}_0.txt'
+            
+        event_commands.append(
+            '-events={},{},{}'.format(
+                nidq_stream_idx,
+                os.path.join(input_dir, channel_file),
+                os.path.join(path_dest, f'{event_name}.txt')
+            )
+        )
+
+    command.extend(event_commands)
 
     logger.info('TPrime command line will run: {}'.format(list(flatten_list(command))))
 

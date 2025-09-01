@@ -85,9 +85,26 @@ if __name__ == '__main__':
         # 'PB191/Recording/Ephys/PB191_20241210_110601',
         # 'PB192/Recording/Ephys/PB192_20241211_113347',
         # 'PB201/Recording/Ephys/PB201_20241212_192123',
+        # 'PB193/Recording/Ephys/PB193_20241218_135125',
+        # 'PB194/Recording/Ephys/PB194_20241218_161235',
         # 'PB195/Recording/Ephys/PB195_20241214_114010',
         # 'PB196/Recording/Ephys/PB196_20241217_144715',
-        'RD076/Recording/RD076_20250214_125235/Ephys'
+        # 'PB197/Recording/Ephys/PB197_20241216_155436',
+        # 'PB198/Recording/Ephys/PB198_20241213_142448',
+        # 'PB200/Recording/Ephys/PB200_20241216_112934',
+        # 'RD076/Recording/RD076_20250214_125235/Ephys'
+        # 'RD077/Recording/RD077_20250219_183425/Ephys',
+        # 'RD077/Recording/RD077_20250221_102024/Ephys',
+        # 'RD072/Recording/RD072_20250305_131521/Ephys',
+        # 'JL002/Recording/JL002_20250507_135553/Ephys',
+        # 'JL005/Recording/JL005_20250520_142542/Ephys/',
+        # 'JL002/Recording/JL002_20250522_111333/Ephys/',
+        # 'JL002/Recording/JL002_20250523_101907/Ephys/',
+        # 'JL007/Recording/JL007_20250523_144849/Ephys/',
+        # 'JL006/Recording/JL006_20250601_104051/Ephys/',
+        # 'JL006/Recording/JL006_20250602_122916/Ephys/',
+        'JL007/Recording/JL007_20250603_150143/Ephys/',
+        'JL007/Recording/JL007_20250605_145217/Ephys/'
     ]
 
     config = Path('/home/lebert/code/spikesorting_pipeline/spikeinterface_preprocessing/ephys_preprocessing/scripts/preprocess_config_si.yaml')

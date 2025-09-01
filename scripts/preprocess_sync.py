@@ -77,11 +77,30 @@ if __name__ == '__main__':
 
         data_path = Path('/mnt/lsens/analysis/Jules_Lebert/data')
         input_list = [
-            'PB191/PB191_20241210_110601/Ephys/catgt_PB191_g0',
+            # 'PB191/PB191_20241210_110601/Ephys/catgt_PB191_g0',
             # 'PB192/PB192_20241211_113347/Ephys/catgt_PB192_g2',
-            'PB201/PB201_20241212_192123/Ephys/catgt_PB201_g0',
+            # 'PB201/PB201_20241212_192123/Ephys/catgt_PB201_g0',
             # 'PB195/PB195_20241214_114010/Ephys/catgt_PB195_g0',
-            'PB196/PB196_20241217_144715/Ephys/catgt_PB196_g0',
+            # 'PB196/PB196_20241217_144715/Ephys/catgt_PB196_g0',
+            # 'RD076/RD076_20250214_125235/Ephys/catgt_RD076_g1',
+            # 'RD077/RD077_20250219_183425/Ephys/catgt_RD077_g0',
+            # 'RD077/RD077_20250221_102024/Ephys/catgt_RD077_g0',
+            # 'RD072/RD072_20250305_131521/Ephys/catgt_RD072_g0',
+            # 'JL002/JL002_20250507_135553/Ephys/catgt_JL002_20250507_g0',
+            # 'PB193/PB193_20241218_135125/Ephys/catgt_PB193_g0',
+            # 'PB194/PB194_20241218_161235/Ephys/catgt_PB194_g0',
+            # 'PB197/PB197_20241216_155436/Ephys/catgt_PB197_g0',
+            # 'PB198/PB198_20241213_142448/Ephys/catgt_PB198_g2',
+            # 'PB200/PB200_20241216_112934/Ephys/catgt_PB200_g0',
+            # TODO: Check paths below if correct
+            'JL005/JL005_20250520_142542/Ephys/catgt_JL005_20250520_g0',
+            'JL002/JL002_20250522_111333/Ephys/catgt_JL002_20250522_2_g0',
+            'JL002/JL002_20250523_101907/Ephys/catgt_JL002_20250523_g0',
+            'JL007/JL007_20250523_144849/Ephys/catgt_JL007_20250523_g0',
+            'JL006/JL006_20250601_104051/Ephys/catgt_JL006_20250601_g0',
+            'JL006/JL006_20250602_122916/Ephys/catgt_JL006_20250602_g0',
+            'JL007/JL007_20250603_150143/Ephys/catgt_JL007_20250603_2_g0',
+            'JL007/JL007_20250605_145217/Ephys/catgt_JL007_20250605_2_g0'
         ]
 
         config = Path('/home/lebert/code/spikesorting_pipeline/spikeinterface_preprocessing/ephys_preprocessing/scripts/preprocess_config_si.yaml')

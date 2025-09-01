@@ -1,0 +1,55 @@
+---
+raw_data_path: '/mnt/lsens/data'
+output_path: '/mnt/lsens/analysis/Jules_Lebert/data'
+mice_info_path: '/mnt/lsens/analysis/Jules_Lebert/mice_info'
+overstrike:
+     overstrike_path: '/home/lebert/code/spikesorting_pipeline/tools/OverStrike-linux'
+catgt:
+     catgt_path: '/home/lebert/code/spikesorting_pipeline/tools/CatGT-linux'
+     overwrite: false
+artifact_correction:
+     do: true
+     window_ms: 3
+     ms_before: 0.2
+     ms_after: 3.7
+     mode: 'linear'
+sorters:
+     overwrite_preprocessed: true
+     sorter_list:
+          # - kilosort2
+          - kilosort4
+     job_kwargs:
+          n_jobs: 12
+          chunk_duration: 3s
+          progress_bar: true
+     kilosort2:
+          sorter_path: '/home/lebert/code/spikesorting_pipeline/tools/Kilosort'
+          singularity_image: false
+          nblocks: 5
+          sorter_params:
+               projection_threshold: [ 10, 4 ]
+               lam: 10
+               AUCsplit: 0.9
+               car: false
+               delete_recording_dat: true
+     kilosort4:
+          singularity_image: false
+          sorter_params:
+               do_CAR: false
+               delete_recording_dat: false
+               save_preprocessed_copy: true
+bombcell:
+     bombcell_path: '/home/lebert/code/spikesorting_pipeline/tools/bombcell'
+     run_bombcell_path: '/home/lebert/code/spikesorting_pipeline/spikeinterface_preprocessing/ephys_preprocessing/ephys_preprocessing/matlab'
+     npy_path: '/home/lebert/code/spikesorting_pipeline/tools/npy-matlab'
+     matlab_path: '/usr/local/MATLAB/R2024b/'
+tprime:
+     tprime_path: '/home/lebert/code/spikesorting_pipeline/tools/TPrime-linux'
+     syncperiod: 1
+     default_tostream_probe: 0
+cwaves:
+     cwaves_path:  '/home/lebert/code/spikesorting_pipeline/tools/C_Waves-linux'
+     samples_per_spike: 82
+     pre_samples: 30
+     num_spikes: 1000
+     snr_radius: 8

@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Union, Optional
 from loguru import logger
 
+from ephys_preprocessing.utils import readSGLX
+
 def run_tprime_alignment(
     input_dir: Union[str, Path],
     probe_id: int,
@@ -82,6 +84,12 @@ def run_tprime_alignment(
     tostream_probe_edges_file = f'{run_name}_tcat.imec{probe_id}.ap.xd_{n_channels-1}_6_500.txt'
     nidq_stream_idx = 10 # arbitrary index number
 
+    ap_meta_dict = readSGLX.readMeta(meta_files[0])
+    if float(ap_meta_dict['imDatBsc_sn']) == 543: # Myri's setup
+        whisker_stim_channel = f'{epoch_dir / f"{run_name}_tcat.nidq.xa_2_0.txt"}'
+    else: # Axel's setup
+        whisker_stim_channel = f'{epoch_dir / f"{run_name}_tcat.nidq.xa_3_0.txt"}'
+
     # Build and run TPrime command
     command = [
         tprime_exe,
@@ -89,8 +97,7 @@ def run_tprime_alignment(
         f'-tostream={probe_path / tostream_probe_edges_file}',
         f'-fromstream={nidq_stream_idx},{epoch_dir / f"{run_name}_tcat.nidq.xa_0_0.txt"}',
         f'-events={nidq_stream_idx},'
-        # f'{epoch_dir / f"{run_name}_tcat.nidq.xa_3_0.txt"},'
-        f'{epoch_dir / f"{run_name}_tcat.nidq.xa_2_0.txt"},' # for Myriam's setup
+        f'{whisker_stim_channel},'
         f'{output_file}'
     ]
     
