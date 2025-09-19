@@ -15,8 +15,9 @@ from loguru import logger
 from pathlib import Path
 
 import sys
-#sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.dirname(__file__))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils.ephys_utils import check_if_valid_recording
 from atlaselectrophysiology.extract_files import extract_data
 from iblatlas.atlas import AllenAtlas
@@ -28,8 +29,7 @@ def main(input_dir, config):
     :param config:  config dict
     :return:
     """
-
-    day_index = 0       # day of recordings
+    day_index = 0       # day of recordings, iterate
     catgt_epoch_name = os.path.basename(input_dir)
     session_date = input_dir.split('\\')[5]
     epoch_name = catgt_epoch_name.lstrip('catgt_')
@@ -45,7 +45,6 @@ def main(input_dir, config):
 
     # Perform computations for each probe separately
     for probe_id in probe_ids:
-
 
         if not check_if_valid_recording(config, mouse_id, probe_id, day_id=day_index):
             continue
