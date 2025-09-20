@@ -86,7 +86,10 @@ def main(input_dir, config):
         if mouse_id.startswith('AB'):
             brainreg_path = Path(anat_data_folder, f'imec{probe_id}.npy')
         elif mouse_id.startswith('MH'):
-            brainreg_path = Path(anat_data_folder, session_date, f'imec{probe_id}.npy')
+            if int(mouse_id[-3:]) < 20:
+                brainreg_path = Path(anat_data_folder, f'imec{probe_id}.npy')
+            else:
+                brainreg_path = Path(anat_data_folder, session_date, f'imec{probe_id}.npy')
         if not brainreg_path.exists():
             logger.warning(f'Brainreg-segment track file not found for IMEC {probe_id}. Check folder.')
             continue
