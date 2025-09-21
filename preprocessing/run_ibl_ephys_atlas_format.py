@@ -67,7 +67,7 @@ def main(input_dir, config):
         if mouse_id.startswith('AB'):
             out_path = Path(os.path.join(input_dir, probe_folder, 'ibl_format'))
         elif mouse_id.startswith('MH'):
-            out_path = Path(os.path.join(output_path, mouse_id, session_date, catgt_epoch_name, probe_folder, 'ibl_format'))
+            out_path = Path(os.path.join(output_path, mouse_id, session_date, 'Ephys', catgt_epoch_name, probe_folder, 'ibl_format'))
         if not out_path.exists():
             out_path.mkdir(parents=True, exist_ok=True)
 
