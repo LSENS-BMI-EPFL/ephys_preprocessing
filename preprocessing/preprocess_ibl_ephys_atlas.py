@@ -55,7 +55,10 @@ if __name__ == '__main__':
         parser.add_argument('--config', type=str, nargs='?', required=False)
         args = parser.parse_args()
 
-        #args.input = r'M:\analysis\Axel_Bisi\data\AB124\AB124_20240815_111810\Ephys\catgt_AB124_g0'
-        args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
+        #args.input = r'M:\analysis\Myriam_Hamon\data\MH007\MH007_20250202_165003\Ephys\catgt_MH007_g0'
+        #args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config_myriam_to_axel.yaml'
+
+        #args.input = r'M:\analysis\Axel_Bisi\data\AB162\AB162_20250421_140550\Ephys\catgt_AB162_g0'
+        #args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
 
         main(args.input, args.config)
