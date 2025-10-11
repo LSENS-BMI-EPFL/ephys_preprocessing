@@ -14,6 +14,7 @@ import subprocess
 import numpy as np
 import pathlib
 from loguru import logger
+from utils.ephys_utils import check_if_valid_recording
 
 from matplotlib import pyplot as plt
 
@@ -38,6 +39,11 @@ def main(input_dir, config):
 
     for probe_folder in probe_folders:
         probe_id = int(probe_folder.split('imec')[-1])
+
+        # Check if probe recording is valid
+        mouse_id = epoch_name.split('_')[1]
+        if not check_if_valid_recording(config, mouse_id, probe_id):
+            continue
 
         probe_path = os.path.join(input_dir, epoch_name, probe_folder)
 
