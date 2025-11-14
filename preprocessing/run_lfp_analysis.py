@@ -400,7 +400,7 @@ def main(input_dir, config):
 
         # Check that depth estimation using LFP is possible using electrodes in saline
         if insertion_depth > 4000:
-            logger.warning('Probe {} insertion depth ({}) is too deep for LFP depth estimation. Skipped.'.format(probe_id, insertion_depth))
+            logger.warning('Probe {} insertion depth ({}) is too deep for this method of LFP depth estimation. Skipping.'.format(probe_id, insertion_depth))
             continue
 
         params['saline_range_um'] = [insertion_depth, 4000]
@@ -463,7 +463,7 @@ def main(input_dir, config):
         ax.set_ylabel('Channel number')
 
         # -------------------
-        # Compute LFP profile #Note: not implemented
+        # Compute LFP profile #Note: TODO: not implemented yet
         # -------------------
         #print('Computing LFP profile...')
         #lfp_profile = get_lfp_profile(lfp_data=lfp_data, ephys_params=ephys_params, params=params)

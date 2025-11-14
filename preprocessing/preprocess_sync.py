@@ -22,6 +22,7 @@ import run_mean_waveform_metrics
 import run_lfp_analysis
 
 
+@logger.catch
 def main(input_dir, config_file):
     """
     Run TPrime and Cwaves on preprocessed spike data.
@@ -38,7 +39,7 @@ def main(input_dir, config_file):
 
     # Run TPrime
     logger.info('Starting Tprime.')
-    run_tprime.main(input_dir, config['tprime'])
+    #run_tprime.main(input_dir, config['tprime'])
     logger.info('Finished Tprime in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     # Run Cwaves
@@ -53,7 +54,7 @@ def main(input_dir, config_file):
 
     # LFP analysis for depth estimation
     logger.info('Starting LFP analysis.')
-    run_lfp_analysis.main(input_dir)
+    run_lfp_analysis.main(input_dir, config)
     logger.info('Finished LFP analysis in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     exec_time_hhmmss = time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))

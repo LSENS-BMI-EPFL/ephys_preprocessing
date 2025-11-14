@@ -16,19 +16,28 @@ from collections.abc import Iterable
 from loguru import logger
 
 
-def check_if_valid_recording(config, mouse_id, probe_id):
+def check_if_valid_recording(config, mouse_id, probe_id, day_id=0):
     """
     Check if recording is valid.
     :param config: (dict) config dict.
     :param mouse_id: (str) mouse name.
     :param probe_id: (int) probe id.
+    :param day_index: (int) day index of recordings (naive, expert).
     :return:
     """
+    if mouse_id.startswith('AB'):
+        path_to_probe_insertion_info = os.path.join(config['mice_info_path'], 'probe_insertion_info_setup.xlsx')
+    else:
+        path_to_probe_insertion_info = os.path.join(config['mice_info_path'], 'probe_insertion_info.xlsx')
 
-    path_to_probe_insertion_info = os.path.join(config['mice_info_path'], 'probe_insertion_info.xlsx')
     probe_info_df = pd.read_excel(path_to_probe_insertion_info)
+    if 'day_of_recording' not in probe_info_df.columns:
+        logger.error('No day_of_recording column in probe insertion info table. Specify to select correct insertion')
+
     probe_info = probe_info_df.loc[(probe_info_df['mouse_name'] == mouse_id)
-                                      & (probe_info_df['probe_id'] == int(probe_id))]
+                                      & (probe_info_df['probe_id'] == int(probe_id))
+                                      & (probe_info_df['day_of_recording'] == int(day_id))]
+
     # Check if no entries for that mouse
     if probe_info.empty:
         logger.error('No probe insertion info for mouse {} and probe {}. Update probe insertion table.'.format(mouse_id, probe_id))

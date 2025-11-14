@@ -30,7 +30,7 @@ def main(input_dir, config):
     epoch_name = catgt_epoch_name.lstrip('catgt_')
 
     probe_folders = [f for f in os.listdir(input_dir) if 'imec' in f]
-    probe_ids = [f[-1] for f in probe_folders]
+    probe_ids = sorted([f[-1] for f in probe_folders])
 
     # Run C_Waves for each probe
     for probe_id in probe_ids:
@@ -50,7 +50,7 @@ def main(input_dir, config):
 
         # Create cluster table: incl. peak channel id. Need table row number <-> cluster_id equivalence (hence reindexing below).
         try:
-            clus_info = pd.read_csv(os.path.join(path_input_files, 'cluster_info.tsv'),  # <- assumes Phy performed
+            clus_info = pd.read_csv(os.path.join(path_input_files, 'cluster_info.tsv'),  # <- requires Phy-based cluster table
                                     sep='\\t')
         except FileNotFoundError:
             logger.warning(f'Skipping probe. No spike sorting at {path_input_files} or cluster_info.tsv file missing.')

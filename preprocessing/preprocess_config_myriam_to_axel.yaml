@@ -1,7 +1,7 @@
 ---
 raw_data_path: 'M:\\data'
 output_path: 'M:\\analysis\\Axel_Bisi\\data'
-mice_info_path: 'M:\\analysis\\Axel_Bisi\\mice_info'
+mice_info_path: 'M:\\analysis\\Myriam_Hamon\\mice_info'
 overstrike:
      overstrike_path: 'C:\\Users\\bisi\\OverStrike-win'
 catgt:
@@ -32,6 +32,6 @@ cwaves:
      num_spikes: 1000
      snr_radius: 8
 anatomy:
-     anat_data_path: 'M:\\analysis\\Axel_Bisi\\ImagedBrains\\Axel_Bisi'
+     anat_data_path: 'M:\\analysis\\Myriam_Hamon\\ImagedBrains\\Myriam_Hamon'
      path_to_gui: 'C:\\Users\\bisi\\Github\\int-brain-lab\\iblapps\\atlaselectrophysiology'
 
