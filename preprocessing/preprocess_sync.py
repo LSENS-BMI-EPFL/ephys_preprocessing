@@ -11,6 +11,7 @@ import argparse
 import yaml
 import time
 from loguru import logger
+import platform
 logger.add("log/preprocess_sync_{time}.log", colorize=True,
               format="{name} {message}", level="INFO", rotation="10 MB", retention="1 week")
 
@@ -67,7 +68,17 @@ if __name__ == '__main__':
         parser.add_argument('--config', type=str, nargs='?', required=False)
         args = parser.parse_args()
 
-        args.input = r'M:\\analysis\\Axel_Bisi\\data\AB141\AB141_20241127_140308\Ephys\catgt_AB141_g1'
-        args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
+        experimenter = 'Axel_Bisi'
+
+        args.input = r'M:\analysis\Axel_Bisi\data\AB105\AB105_20240314_115206\Ephys\catgt_AB105_g2'
+
+        if experimenter == 'Axel_Bisi':
+            machine = platform.node()
+            if machine == 'SV-07-014':
+                args.config = r'C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_config.yaml'
+            elif machine == 'SV-07-081':
+                args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
+        else:
+            args.config = r'C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_config.yaml'
 
         main(args.input, args.config)
