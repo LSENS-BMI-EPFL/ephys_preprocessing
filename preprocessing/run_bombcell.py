@@ -66,6 +66,17 @@ def main(input_dir, config):
         # Stop MATLAB engine
         eng.quit()
 
+        # Execute Phy to generate cluster_info table #Note: keep in case we need to revert
+        #logger.info('Opening Phy GUI to generate cluster_info table.')
+        #command = 'conda activate phy2 && phy template-gui params.py && conda deactivate'
+        #process = subprocess.Popen(command, shell=True, cwd=os.path.join(probe_path, 'kilosort2'))
+        #pyautogui.FAILSAFE = False  # disable mouse moving fail-safe
+        #pyautogui.hotkey('ctrl', 'q')  # close GUI
+        #time.sleep(30)
+        #process.terminate()  # terminate process
+        #logger.info('Phy GUI saved and closed.')
+
+
         # cluster_info table creation
         logger.info('Creating cluster_info table for IMEC probe {}.'.format(probe_id))
         phy_model = load_phy_model(os.path.join(kilosort_path, 'params.py'))
