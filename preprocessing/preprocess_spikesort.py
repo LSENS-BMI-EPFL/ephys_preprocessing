@@ -13,6 +13,7 @@ import yaml
 import pathlib
 import time
 from loguru import logger
+import platform
 logger.add("log/preprocess_spikesort_{time}.log", colorize=True,
            format="{name} {message}", level="INFO", rotation="10 MB", retention="1 week")
 
@@ -47,12 +48,12 @@ def main(input_dir, config_file):
 
     # Run CatGT
     logger.info('Starting CatGT.')
-    run_catgt.main(input_dir, processed_dir, config['catgt'])
+    #run_catgt.main(input_dir, processed_dir, config['catgt'])
     logger.info('Finished CatGT in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     # Run TPrime a first time to sync whisker artifact times
     logger.info('Starting artifact correction.')
-    run_artifact_correction.main(processed_dir, config)
+    #run_artifact_correction.main(processed_dir, config)
     logger.info('Finished artifact correction in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     # Optionally, run OverStrike
@@ -79,7 +80,7 @@ def main(input_dir, config_file):
 
     # Run Kilosort
     logger.info('Starting Kilosort.')
-    run_kilosort.main(processed_dir, config)
+    #run_kilosort.main(processed_dir, config)
     logger.info("Finished Kilosort in {}.".format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     # Run quality metrics e.g. bombcell
@@ -102,7 +103,18 @@ if __name__ == '__main__':
     parser.add_argument('--config', type=str, nargs='?', required=False)
     args = parser.parse_args()
 
-    args.input = r'M:\data\AB142\Recording\AB142_20241128_113227\Ephys' #until \Ephys
-    args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
+    experimenter = 'Axel_Bisi'
+
+    #args.input = r'M:\data\AB142\Recording\AB142_20241128_113227\Ephys' #until \Ephys
+    args.input = r'M:\data\AB164\Recording\AB164_20250422_115457\Ephys' #until \Ephys
+
+    if experimenter == 'Axel_Bisi':
+        machine = platform.node()
+        if machine == 'SV-07-014':
+            args.config = r'C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_config.yaml'
+        elif machine == 'SV-07-081':
+            args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
+    else:
+        args.config = r'C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_config.yaml'
 
     main(args.input, args.config)
