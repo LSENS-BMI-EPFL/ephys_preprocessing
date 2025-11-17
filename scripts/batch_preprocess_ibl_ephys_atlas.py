@@ -45,6 +45,13 @@ def find_sessions(mouse_id: str):
 
 
 def run_job(mouse_id: str, catgt_path: Path, count: int):
+    """
+    Run one preprocessing job, logging output.
+    :param mouse_id: mouse name
+    :param catgt_path: path to catgt_* folder i.e. preprocessed data folder
+    :param count: run count for log file naming
+    :return:
+    """
     """Run one preprocessing job via conda run, logging output."""
     log_file = LOG_DIR / f"{mouse_id}_{count}.txt"
 
@@ -124,7 +131,7 @@ def main(parallel: bool):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Batch preprocess ephys data")
+    parser = argparse.ArgumentParser(description="Batch preprocess IBL formatting")
     parser.add_argument("--parallel", action="store_true",
                         help="Run jobs in parallel (default: sequential)")
     args = parser.parse_args()

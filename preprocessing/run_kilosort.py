@@ -7,9 +7,13 @@
 """
 import os
 import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(__file__))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pathlib
 from loguru import logger
 from utils import readSGLX
+
 from utils.ephys_utils import check_if_valid_recording
 
 os.environ["MATLAB_ENGINE"] = "R2021b"

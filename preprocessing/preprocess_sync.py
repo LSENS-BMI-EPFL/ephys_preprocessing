@@ -30,6 +30,7 @@ def main(input_dir, config_file):
     :param config_file: path to config file
     :return:
     """
+    logger.info('--- PREPROCESS/SYNC MODULE ---')
 
     with open(config_file, 'r') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
@@ -54,7 +55,7 @@ def main(input_dir, config_file):
 
     # LFP analysis for depth estimation
     logger.info('Starting LFP analysis.')
-    run_lfp_analysis.main(input_dir, config)
+    #run_lfp_analysis.main(input_dir, config)
     logger.info('Finished LFP analysis in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     exec_time_hhmmss = time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))
@@ -71,15 +72,17 @@ if __name__ == '__main__':
 
         experimenter = 'Axel_Bisi'
 
-        args.input = r'M:\analysis\Axel_Bisi\data\AB105\AB105_20240314_115206\Ephys\catgt_AB105_g2'
+        args.input = r'M:\\analysis\\Axel_Bisi\\data\AB164\AB164_20250422_115457\Ephys\catgt_AB164_g0'
 
         if experimenter == 'Axel_Bisi':
+            pass
             machine = platform.node()
             if machine == 'SV-07-014':
                 args.config = r'C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_config.yaml'
             elif machine == 'SV-07-081':
                 args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
         else:
+            pass
             args.config = r'C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_config.yaml'
 
         main(args.input, args.config)

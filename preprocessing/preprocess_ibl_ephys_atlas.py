@@ -11,6 +11,7 @@ import argparse
 import yaml
 import time
 import subprocess
+import platform
 from loguru import logger
 logger.add("log/preprocess_ibl_ephys_atllas_{time}.log", colorize=True,
               format="{name} {message}", level="INFO", rotation="10 MB", retention="1 week")
@@ -27,8 +28,9 @@ def main(input_dir, config_file):
     :param config_file: path to config file
     :return:
     """
-    subprocess.run('conda activate iblenv', shell=True)
+    logger.info('--- PREPROCESS/IBL-FORMAT MODULE ---')
 
+    subprocess.run('conda activate iblenv', shell=True)
 
     with open(config_file, 'r') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
@@ -55,10 +57,23 @@ if __name__ == '__main__':
         parser.add_argument('--config', type=str, nargs='?', required=False)
         args = parser.parse_args()
 
+        experimenter = 'Axel_Bisi'
+
         #args.input = r'M:\analysis\Myriam_Hamon\data\MH007\MH007_20250202_165003\Ephys\catgt_MH007_g0'
         #args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config_myriam_to_axel.yaml'
 
         #args.input = r'M:\analysis\Axel_Bisi\data\AB162\AB162_20250421_140550\Ephys\catgt_AB162_g0'
         #args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
+
+        if experimenter == 'Axel_Bisi':
+            pass
+            machine = platform.node()
+            if machine == 'SV-07-014':
+                args.config = r'C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_config.yaml'
+            elif machine == 'SV-07-081':
+                args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
+        else:
+            pass
+            args.config = r'C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_config.yaml'
 
         main(args.input, args.config)

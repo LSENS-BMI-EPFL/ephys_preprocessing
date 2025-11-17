@@ -7,6 +7,8 @@
 """
 
 # Imports
+import sys
+sys.path
 import argparse
 import os
 import yaml
@@ -27,6 +29,9 @@ import run_bombcell
 
 @logger.catch
 def main(input_dir, config_file):
+
+    logger.info('--- PREPROCESS/SPIKESORT MODULE ---')
+
     with open(config_file, 'r') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
 
@@ -35,6 +40,7 @@ def main(input_dir, config_file):
 
     # Get epoch number and run name
     epoch_name = [f for f in os.listdir(input_dir) if '_g' in f][0]
+    logger.info('Processing epoch {}.'.format(epoch_name))
     # Find only directory names with "imec" in it
     n_probes = len([f for f in os.listdir(os.path.join(input_dir, epoch_name)) if 'imec' in f])
     logger.info('Recording using {} probe(s).'.format(n_probes))
@@ -89,7 +95,7 @@ def main(input_dir, config_file):
 
     # Run Kilosort
     logger.info('Starting Kilosort.')
-    run_kilosort.main(processed_dir, config)
+    #run_kilosort.main(processed_dir, config)
     logger.info("Finished Kilosort in {}.".format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     # Run quality metrics e.g. bombcell
@@ -97,7 +103,7 @@ def main(input_dir, config_file):
     run_bombcell.main(processed_dir, config)
     logger.info('Finished bombcell quality metrics in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
-    catgt_epoch_name = [f for f in os.listdir(input_dir) if '_g' in f and 'cat' in f][0]
+    catgt_epoch_name = [f for f in os.listdir(processed_dir) if '_g' in f and 'cat' in f][0]
     exec_time_hhmmss = time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))
     logger.success(f'Finished preprocessing in {exec_time_hhmmss} & spike sorting in: \n {os.path.join(processed_dir, catgt_epoch_name)}. \n You '
                    f'can now visually check spike sorting results using Phy, then use this path as input to the '
@@ -115,15 +121,17 @@ if __name__ == '__main__':
     experimenter = 'Axel_Bisi'
 
     #args.input = r'M:\data\AB142\Recording\AB142_20241128_113227\Ephys' #until \Ephys
-    args.input = r'M:\data\AB164\Recording\AB164_20250422_115457\Ephys' #until \Ephys
+    #args.input = r'M:\data\AB164\Recording\AB164_20250422_115457\Ephys' #until \Ephys
 
     if experimenter == 'Axel_Bisi':
+        pass # ignore inputs if batch processing
         machine = platform.node()
         if machine == 'SV-07-014':
             args.config = r'C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_config.yaml'
         elif machine == 'SV-07-081':
             args.config = r'C:\Users\bisi\ephys_utils\preprocessing\preprocess_config.yaml'
     else:
+        pass
         args.config = r'C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_config.yaml'
 
     main(args.input, args.config)

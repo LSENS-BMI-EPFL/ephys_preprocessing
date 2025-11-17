@@ -8,7 +8,11 @@
 
 import os
 import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(__file__))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from loguru import logger
+
 from utils.ephys_utils import check_if_valid_recording
 from utils.phylib_utils import load_phy_model
 os.environ["MATLAB_ENGINE"] = "R2021b"
@@ -62,7 +66,7 @@ def main(input_dir, config):
         eng.cd(config['bombcell']['bombcell_path'], nargout=0)
 
         logger.info('Running bombcell for IMEC probe {}.'.format(probe_id))
-        eng.run_bombcell(kilosort_path, path_to_apbin, path_to_meta, kilosort_version, nargout=0)
+        #eng.run_bombcell(kilosort_path, path_to_apbin, path_to_meta, kilosort_version, nargout=0)
 
         # Stop MATLAB engine
         eng.quit()
