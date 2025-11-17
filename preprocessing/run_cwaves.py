@@ -48,7 +48,7 @@ def main(input_dir, config):
         # Prepare spike data for C_Waves
         path_input_files = os.path.join(input_dir, probe_folder, 'kilosort2')
 
-        # Create cluster table: incl. peak channel id. Need table row number <-> cluster_id equivalence (hence reindexing below).
+        # 1. Create cluster table: incl. peak channel id. Need table row number <-> cluster_id equivalence (hence reindexing below).
         try:
             clus_info = pd.read_csv(os.path.join(path_input_files, 'cluster_info.tsv'),  # <- requires Phy-based cluster table
                                     sep='\\t')
@@ -60,11 +60,12 @@ def main(input_dir, config):
         clus_table = clus_info.reindex(range(np.max(clus_info.cluster_id) + 1),
                                        fill_value=0,
                                        copy=True)  # reindex with missing cluster ids
+
         clus_table = clus_table[['n_spikes', 'ch']]
         path_clus_table = os.path.join(path_input_files, 'clus_table.npy')
         np.save(path_clus_table, np.array(clus_table.values, dtype=np.uint32))
 
-        # Cluster time: spike timestamp (in samples) for each spikes
+        # 2. Cluster time: spike timestamp (in samples) for each spikes
         spk_times = np.load(os.path.join(path_input_files, 'spike_times.npy'))
         spk_times_df = pd.DataFrame(spk_times, columns=['ts'])  # timestamps col
 
@@ -76,7 +77,7 @@ def main(input_dir, config):
         clus_time_array = np.array(spk_times_df['ts'].values).astype(dtype=np.uint64)       # older syntax to convert negative int into unsigned
         np.save(path_clus_time, clus_time_array)
 
-        # Cluster label: Cluster id for each spike event
+        # 3. Cluster label: Cluster id for each spike event
         spk_clusters = np.load(os.path.join(path_input_files, 'spike_clusters.npy'))
         spk_clusters_df = pd.DataFrame(spk_clusters, columns=['cluster'])
         path_clus_lbl = os.path.join(path_input_files, 'clus_lbl.npy')
@@ -97,7 +98,7 @@ def main(input_dir, config):
         logger.info('C_waves command line will run: {}'.format(command))
 
         logger.info('Running C_waves for IMEC probe {}.'.format(probe_id))
-        subprocess.run(command, shell=True, cwd=config['cwaves_path'])
+        #subprocess.run(command, shell=True, cwd=config['cwaves_path'])
 
         logger.info('Opening C_Waves log file at {}'.format(os.path.join(config['cwaves_path'], 'C_Waves.log')))
         webbrowser.open(os.path.join(config['cwaves_path'], 'C_Waves.log'))
@@ -105,11 +106,19 @@ def main(input_dir, config):
         # Remove useless mean_waveform rows (necessary for C_Waves to run), then resave (to match index size)
         try:
             mean_waveforms = np.load(os.path.join(path_cwave_output, 'mean_waveforms.npy'))
+            # Make a copy of waveform array before modifying it
+            np.save(os.path.join(path_cwave_output, 'mean_waveforms_full.npy'), mean_waveforms.copy())
+
+            # Find empty/null waveforms (bad clusters)
             clus_table['temp_matching'] = clus_table.apply(lambda x: x.n_spikes == x.ch == 0, axis=1)
             ids_to_remove = clus_table[clus_table['temp_matching'] == True].index
             mean_waveforms = np.delete(mean_waveforms, ids_to_remove, axis=0)
+            # Assert that the number of clusters in mean_waveforms matches cluster_info.tsv
+            if mean_waveforms.shape[0] != clus_info.shape[0]:
+                logger.error('Number of clusters in mean_waveforms.npy does not match cluster_info.tsv after cleaning. Check.')
 
             np.save(os.path.join(path_cwave_output, 'mean_waveforms.npy'), mean_waveforms)
+
         except:
             logger.error('Error matching cluster indices in mean_waveforms.npy with cluster_info.tsv file.')
             continue
