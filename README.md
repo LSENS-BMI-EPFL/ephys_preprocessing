@@ -17,6 +17,7 @@ graph LR
     Step4 -.-> Step5["5- Data stream <br/> synchronization"]
     Step5 -.-> Step6["6- Mean waveform <br/> & metrics"]
     Step6 -.-> Step7["7- LFP <br/> analysis"]
+    Step7 -.-> Step8["8- IBL <br/> formatting"]
 ```
 
 
@@ -37,6 +38,7 @@ graph LR
 - **Mean waveform estimation (C_Waves)**: efficient parsing of raw recordings to extract single spike waveforms to compute mean waveforms for each cluster
 - **Mean waveform metrics**: code that calculates waveform metrics like peak-to-trough duration, etc. (note, bombcell looks at _template_ waveforms for peaks/troughs, but can also get raw mean waveforms and metrics)
 - **LFP analysis**: performs depth estimation on LFP data
+- **IBL-data formatting**: performs additional formatting of data for IBL apps
 
 **Execution time ⏱️:** for a recording of ~1h with 4 probes inserted deep (~3mm) and saving the entire default bank 0, the entire pipeline take about 12-24 hours on a local machine. This is very dependent on the recordings itself. Spike sorting, CatGT and C_waves take the longest time.
  
@@ -71,14 +73,34 @@ graph LR
 
 5. Install **Phy**, (optional, for data visualization):
 - Follow the instructions: https://github.com/cortex-lab/phy/
+
+
+6. Install **iblenv** and ibl apps
+- Follow the isntructions: https://github.com/int-brain-lab/iblapps/wiki
   
 ### Usage ⚡ 
-The pipeline is separated into two main scripts:
+#### Single-mouse processing
+The pipeline is separated into three main scripts:
 1. `preprocess_spikesort.py`: performs Steps 1-2-3-4 -> specify raw data input folder path in lab server `data/`
 2. optionally, inspect spike sorting and curation results using Phy and Phy's environment
     - `conda activate phy2`
-    - `phy template-gui params.py` in the Kilosort output folder (**note**: edit `params.py` to point to the .ap.bin file if you want to see TraceView or single waveforms)
-4. `preprocess_sync.py`: performs Steps 5-6-7 -> specify processed data input folder path in lab server `analysis/FirstName_LastName/data`
+    - `phy template-gui params.py` in the Kilosort output folder (**Note**: edit `params.py` to point to the .ap.bin file if you want to see TraceView or single waveforms)
+4. `preprocess_sync.py`: performs Steps 5-6 -> specify processed data input folder path in lab server `analysis/FirstName_LastName/data`
+5. `preprocess_ibl_ephys_atlas.py`: performs Step 7 formatting of the ephys SpikeGLX/KS data into IBL-comptabile format, to be used by the [atlaselectrophysiology IBL app](https://github.com/int-brain-lab/iblapps/tree/master/atlaselectrophysiology) for alignment of ephys features with histology.
+
+#### Batch processing
+Batch processing is possible using the `batch_preprocess_ephys.py` file, calling the separate main scripts in sequence. This assumes standard folder paths within the lab server.
+- Edit the paths to your code and paths to your config for yourself and machine.
+- Edit which scripts to be run in the `SCRIPTS` dict.
+Then run:
+
+`python batch_preprocess_ephys.py --parallel`
+
+where the `parallel` flag makes it parallelized across mice, or sequential without it.
+
+**Note**: spike-sorting (GPU-based) is not parallelized so at present batch processing is mostly useful in case you want to re-run some parts of the pipeline across mice.
+
+#### Output
 
 The output of this pipeline can then be used to create NWB files using the [NWB_converter](https://github.com/LSENS-BMI-EPFL/NWB_converter) in particular the `ephys_to_nwb.py` converter.
 
