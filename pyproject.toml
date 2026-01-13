@@ -1,29 +1,21 @@
-[tool.poetry]
+[project]
 name = "ephys-preprocessing"
 version = "0.1.0"
-description = ""
-authors = ["Your Name <you@example.com>"]
-readme = "README.md"
-
-[tool.poetry.dependencies]
-python = ">=3.11,<3.13"
-spikeinterface = "^0.101.2"
-loguru = "^0.7.3"
-pyyaml = "^6.0.2"
-pandas = "^2.2.3"
-kilosort = "^4.0.21"
-matplotlib = "^3.10.0"
-cuda-python = "^12.6.2.post1"
-spython = "^0.3.14"
-pyautogui = "^0.9.54"
-openpyxl = "^3.1.5"
-numba = "^0.60.0"
-phylib = "^2.6.0"
-
-
-[tool.poetry.group.dev.dependencies]
-ipykernel = "^6.29.5"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+description = "Add your description here"
+requires-python = ">=3.11"
+dependencies = [
+    "bombcell>=0.72",
+    "click>=8.3.1",
+    "cuda-python>=13.1.0",
+    "kilosort>=4.1.2",
+    "loguru>=0.7.3",
+    "matplotlib>=3.10.7",
+    "numba>=0.62.1",
+    "openpyxl>=3.1.5",
+    "pandas>=2.3.3",
+    "phylib>=2.6.3",
+    "pyautogui>=0.9.54",
+    "pyyaml>=6.0.3",
+    "spikeinterface>=0.103.2",
+    "spython>=0.3.14",
+]

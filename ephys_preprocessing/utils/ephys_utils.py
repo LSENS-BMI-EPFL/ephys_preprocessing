@@ -37,7 +37,8 @@ def check_if_valid_recording(config, mouse_id, probe_id, day_id=0):
 
     probe_info = probe_info_df.loc[(probe_info_df['mouse_name'] == mouse_id)
                                       & (probe_info_df['probe_id'] == int(probe_id))
-                                      & (probe_info_df['day_of_recording'] == int(day_id))]
+                                    #   & (probe_info_df['day_of_recording'] == int(day_id))
+                                      ]
 
     # Check if no entries for that mouse
     if probe_info.empty:
