@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 
 class ExtendedTemplateModel(TemplateModel):
+
+
     def get_template_amplitude(self, cluster_id):
         """Return the maximum amplitude of a template's waveforms across all channels."""
         waveforms = self.get_template(cluster_id).template
@@ -46,25 +48,26 @@ class ExtendedTemplateModel(TemplateModel):
         cluster_ids = self.cluster_ids
         
         df = pd.DataFrame.from_dict(self.metadata)
-        
+
         # Remove all nan-only rows (ContamPct==100) that come from kilosort removing some clusters at the end
         cols_to_keep = [c for c in df.columns if c not in ['Amplitude', 'ContamPct', 'KSLabel']]
         df_to_drop = df[cols_to_keep]
         nan_row_indices = df_to_drop.index[df_to_drop.isnull().all(1)].tolist()
         df = df.drop(nan_row_indices)
 
+
         df['cluster_id'] = cluster_ids
         
         # Calculate all metrics
         df['amp'] = df['cluster_id'].apply(self.get_template_amplitude)
+        self.channel_mapping = self._load_channel_map()
         df['ch'] = df['cluster_id'].apply(self.get_best_channel)
+        df['ch'] = df['ch'].apply(lambda x: self.channel_mapping[x]) #Important: the regular Model already does this but for some reason here we need to do it manually
         df['sh'] = df['cluster_id'].apply(self.get_channel_shank)
         df['depth'] = df['cluster_id'].apply(self.get_probe_depth)
         df['n_spikes'] = df['cluster_id'].apply(self.get_n_spikes)
         df['fr'] = df['cluster_id'].apply(self.get_mean_firing_rate)
         
-        # TODO: group is always nan in my data but maybe should add the actual functions that leads to this
-        df['group'] = np.nan
 
         # Reorder columns
         df = df.reindex(sorted(df.columns), axis=1)
