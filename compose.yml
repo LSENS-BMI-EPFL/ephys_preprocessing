@@ -1,0 +1,145 @@
+services:
+  # ============================================================================
+  # Service 1: Spike sorting pipeline (requires GPU)
+  # ============================================================================
+  ephys-spikesort:
+    image: ephys-pipeline:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    # GPU configuration (required for Kilosort)
+    runtime: nvidia
+
+    # Environment variables
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - CUDA_VISIBLE_DEVICES=0
+      - EPHYS_LOG_DIR=/opt/ephys/log
+
+    # Volume mounts
+    volumes:
+      # Input data (read-only)
+      - /home/lebert/lsens_srv/data:/home/lebert/lsens_srv/data:ro
+
+      # Output data (read-write)
+      - /home/lebert/lsens_srv/analysis/Jules_Lebert/data:/home/lebert/lsens_srv/analysis/Jules_Lebert/data
+
+      # Mice info (read-only)
+      - /home/lebert/lsens_srv/analysis/Jules_Lebert/mice_info:/home/lebert/lsens_srv/analysis/Jules_Lebert/mice_info:ro
+
+      # Config files (read-only)
+      - ./config:/mnt/config:ro
+
+      # Logs (read-write)
+      - ./logs:/opt/ephys/log
+
+    # Entrypoint for spike sorting
+    entrypoint: ["python3.11", "/opt/ephys/scripts/preprocess_spikesort_si.py"]
+
+    # Command line arguments
+    # Override when running: docker-compose run ephys-spikesort --input-list /other/path
+    command: >
+      --input-list /mnt/config/inputs.txt
+      --config /mnt/config/preprocess_config_si_docker.yaml
+
+    # Resource limits (optional, adjust based on your system)
+    # mem_limit: 64g
+    # cpus: 16
+
+    # Keep container running for interactive debugging (uncomment if needed)
+    # stdin_open: true
+    # tty: true
+
+  # ============================================================================
+  # Service 2: Sync processing pipeline (CPU only, no GPU needed)
+  # ============================================================================
+  ephys-sync:
+    image: ephys-pipeline:latest
+
+    # NO GPU configuration - can run on CPU-only machines
+
+    # Environment variables
+    environment:
+      - EPHYS_LOG_DIR=/opt/ephys/log
+
+    # Volume mounts (same as spikesort)
+    volumes:
+      # Input data (read-only)
+      - /home/lebert/lsens_srv/data:/home/lebert/lsens_srv/data:ro
+
+      # Output data (read-write)
+      - /home/lebert/lsens_srv/analysis/Jules_Lebert/data:/home/lebert/lsens_srv/analysis/Jules_Lebert/data
+
+      # Mice info (read-only)
+      - /home/lebert/lsens_srv/analysis/Jules_Lebert/mice_info:/home/lebert/lsens_srv/analysis/Jules_Lebert/mice_info:ro
+
+      # Config files (read-only)
+      - ./config:/mnt/config:ro
+
+      # Logs (read-write)
+      - ./logs:/opt/ephys/log
+
+    # Entrypoint for sync processing
+    entrypoint: ["python3.11", "/opt/ephys/scripts/preprocess_sync.py"]
+
+    # Command line arguments
+    # Note: You'll need to adapt preprocess_sync.py to accept these arguments
+    # Override when running: docker-compose run ephys-sync --input /other/path
+    command: >
+      --input /path/to/processed
+      --config /mnt/config/preprocess_config_si_docker.yaml
+
+    # Resource limits (optional, adjust based on your system)
+    # mem_limit: 32g
+    # cpus: 8
+
+    # Keep container running for interactive debugging (uncomment if needed)
+    # stdin_open: true
+    # tty: true
+
+# ============================================================================
+# Usage instructions:
+# ============================================================================
+#
+# Build the image:
+#   docker compose build
+#
+# Run spike sorting (GPU):
+#   docker compose run --rm ephys-spikesort
+#
+# Run sync processing (CPU):
+#   docker compose run --rm ephys-sync
+#
+# Run in detached mode:
+#   docker compose up -d
+#
+# Override command:
+#   docker compose run ephys-spikesort --input-list /other/path/inputs.txt --config /other/config.yaml
+#
+# Interactive shell for debugging:
+#   docker compose run ephys-spikesort /bin/bash
+#
+# View logs:
+#   docker compose logs -f
+#
+# Stop and remove:
+#   docker compose down
+#
+# ============================================================================
+# Notes:
+# ============================================================================
+#
+# 1. Two services available:
+#    - ephys-spikesort: Spike sorting pipeline (requires GPU)
+#    - ephys-sync: Sync processing pipeline (CPU only)
+#
+# 2. GPU Support: Uses runtime: nvidia for GPU access
+#
+# 3. Paths: Update volume mount paths if your data is located elsewhere
+#
+# 4. Before first run, ensure:
+#    - ./config/ directory exists with inputs.txt and config.yaml
+#    - Data paths are accessible
+#
+# 5. For production use on HPC, convert to Singularity instead
