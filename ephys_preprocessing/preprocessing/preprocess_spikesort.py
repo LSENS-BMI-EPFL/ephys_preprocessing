@@ -23,7 +23,7 @@ from ephys_preprocessing.preprocessing import (
     run_artifact_correction,
     run_overstrike,
     run_kilosort,
-    run_bombcell,
+    run_py_bombcell,
 )
 
 
@@ -86,8 +86,9 @@ def main(input_dir, config_file):
     logger.info("Finished Kilosort in {}.".format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     # Run quality metrics e.g. bombcell
+    # TODO: Add option to run MATLAB bombcell
     logger.info('Starting bombcell quality metrics.')
-    run_bombcell.main(processed_dir, config)
+    run_py_bombcell.main(processed_dir, config)
     logger.info('Finished bombcell quality metrics in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     catgt_epoch_name = os.listdir(processed_dir)[0]
