@@ -61,6 +61,17 @@ def main(input_dir, config):
                     mode=config['artifact_correction']['mode'],
                 )
 
+            # Drift correction before sorting to avoid problem on the clusters
+            # where drift correction hangs forever (kilosort4)
+            if config['drift_correction']['do']:
+                logger.info('Correcting drift before sorting')
+                recording = si.correct_motion(
+                    recording=recording,
+                    preset=config['drift_correction']['preset'],
+                    **config['sorters']['job_kwargs']
+                )
+
+            logger.info('Saving preprocessed recording')
             recording = recording.save(
                 folder = preprocessed_path, 
                 format='binary', 

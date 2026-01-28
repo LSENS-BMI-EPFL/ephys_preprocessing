@@ -65,7 +65,7 @@ def main(input_dir, config_file):
 
     # Run quality metrics e.g. bombcell
     logger.info('Starting bombcell quality metrics.')
-    run_bombcell.main(processed_dir, config)
+    run_py_bombcell.main(processed_dir, config)
     logger.info('Finished bombcell quality metrics in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
 
