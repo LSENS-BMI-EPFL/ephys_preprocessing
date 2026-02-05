@@ -81,13 +81,12 @@ services:
       - ./logs:/opt/ephys/log
 
     # Entrypoint for sync processing
-    entrypoint: ["python3.11", "/opt/ephys/scripts/preprocess_sync.py"]
+    entrypoint: ["python3.11", "/opt/ephys/scripts/preprocess_sync_si.py"]
 
-    # Command line arguments
-    # Note: You'll need to adapt preprocess_sync.py to accept these arguments
-    # Override when running: docker-compose run ephys-sync --input /other/path
+    # Command line arguments (uses same inputs.txt as spikesort, transforms paths automatically)
+    # Override when running: docker compose run ephys-sync --input-list /other/inputs.txt
     command: >
-      --input /path/to/processed
+      --input-list /mnt/config/inputs.txt
       --config /mnt/config/preprocess_config_si_docker.yaml
 
     # Resource limits (optional, adjust based on your system)
