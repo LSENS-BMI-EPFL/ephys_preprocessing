@@ -1,0 +1,81 @@
+# Git and version control
+.git/
+.gitignore
+.gitattributes
+
+# Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs and temp files
+log/
+logs/
+*.log
+TPrime.log
+*.tmp
+*.temp
+
+# Test files
+test_scripts/
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Old Singularity image (we'll build fresh)
+scripts/kilosort2-compiled-base.sif
+*.sif
+
+# UV lock file (we install from pyproject.toml)
+uv.lock
+
+# Documentation (not needed in container)
+*.md
+docs/
+
+# Data directories (mounted at runtime, not copied)
+data/
+output/
+analysis/
+
+# Environment files
+.env
+.env.local
+*.env
+
+# Mac files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Backup files
+*.bak
+*.backup
+*~

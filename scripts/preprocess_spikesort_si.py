@@ -43,9 +43,10 @@ def main(input_dir, config_file):
     pathlib.Path(processed_dir).mkdir(parents=True, exist_ok=True)
 
     # Run CatGT
-    logger.info('Starting CatGT.')
-    run_catgt.main(input_dir, processed_dir, config['catgt'])
-    logger.info('Finished CatGT in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
+    if config['catgt']['do']:
+        logger.info('Starting CatGT.')
+        run_catgt.main(input_dir, processed_dir, config['catgt'])
+        logger.info('Finished CatGT in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     # Optionally, run OverStrike
     timespans_list = None
@@ -57,16 +58,18 @@ def main(input_dir, config_file):
         run_overstrike.main(processed_dir, config['overstrike'], timespans_list=timespans_list)
         logger.info('Finished OverStrike in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
-    # Run Kilosort
-    logger.info('Starting Kilosort.')
-    run_sorter.main(processed_dir, config)
-    logger.info("Finished Kilosort in {}.".format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
+    # # Run Kilosort
+    if config['sorters']['do']:
+        logger.info('Starting Kilosort.')
+        run_sorter.main(processed_dir, config)
+        logger.info("Finished Kilosort in {}.".format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
 
-    # Run quality metrics e.g. bombcell
-    logger.info('Starting bombcell quality metrics.')
-    run_py_bombcell.main(processed_dir, config)
-    logger.info('Finished bombcell quality metrics in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
+    # # Run quality metrics e.g. bombcell
+    if config['bombcell']['do']:
+        logger.info('Starting bombcell quality metrics.')
+        run_py_bombcell.main(processed_dir, config)
+        logger.info('Finished bombcell quality metrics in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
 
 @click.command()
