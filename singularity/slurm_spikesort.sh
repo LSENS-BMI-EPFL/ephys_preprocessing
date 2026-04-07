@@ -3,7 +3,7 @@
 #SBATCH --output=logs/spikesort_%j.out
 #SBATCH --error=logs/spikesort_%j.err
 #SBATCH --time=24:00:00
-#SBATCH --partition=gpu          # Adjust to your cluster's GPU partition name
+#SBATCH --partition=h100          # Adjust to your cluster's GPU partition name
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=64G
@@ -24,12 +24,12 @@ export CUDA_VISIBLE_DEVICES=0
 SIF_IMAGE="singularity/ephys-pipeline.sif"
 CONFIG_DIR="config"
 LOG_DIR="logs"
-CODE_DIR="/path/to/ephys_preprocessing"   # adjust to HPC clone location
+CODE_DIR="/home/lebert/code/ephys_preprocessing"   # adjust to HPC clone location
 
 # Singularity bind paths
-BIND_DATA="/home/lebert/lsens_srv/data:/home/lebert/lsens_srv/data:ro"
-BIND_OUTPUT="/home/lebert/lsens_srv/analysis/Jules_Lebert/data:/home/lebert/lsens_srv/analysis/Jules_Lebert/data"
-BIND_MICE="/home/lebert/lsens_srv/analysis/Jules_Lebert/mice_info:/home/lebert/lsens_srv/analysis/Jules_Lebert/mice_info:ro"
+BIND_DATA="/scratch/lebert/ephys_data:/scratch/lebert/ephys_data:ro"
+BIND_OUTPUT="/scratch/lebert/ephys_output:/scratch/lebert/ephys_output"
+BIND_MICE="/scratch/lebert/mice_info:/scratch/lebert/mice_info:ro"
 BIND_CONFIG="${CONFIG_DIR}:/mnt/config:ro"
 BIND_LOGS="${LOG_DIR}:/opt/ephys/log"
 BIND_CODE="${CODE_DIR}/ephys_preprocessing:/opt/ephys/ephys_preprocessing,${CODE_DIR}/scripts:/opt/ephys/scripts"
@@ -57,7 +57,7 @@ singularity exec \
   ${SIF_IMAGE} \
   python3.11 /opt/ephys/scripts/preprocess_spikesort_si.py \
     --input-list /mnt/config/inputs.txt \
-    --config /mnt/config/preprocess_config_si_docker.yaml
+    --config /mnt/config/preprocess_config_si_hpc.yaml
 
 # Print completion info
 echo "=================================="
