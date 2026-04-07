@@ -77,7 +77,9 @@ def main(input_dir, output_dir, config):
     logger.info('CatGT command line will run: {}'.format(list(flatten_list(command))))
 
     logger.info('Running CatGT on {}.'.format(epoch_name))
-    subprocess.run(list(flatten_list(command)), shell=shell, cwd=config['catgt_path'])
+    result = subprocess.run(list(flatten_list(command)), shell=shell, cwd=output_dir)
+    if result.returncode != 0:
+        logger.error('CatGT exited with return code {}'.format(result.returncode))
 
 
     # logger.info('Opening CatGT log file at: {}'.format(os.path.join(config['catgt_path'], 'CatGT.log')))

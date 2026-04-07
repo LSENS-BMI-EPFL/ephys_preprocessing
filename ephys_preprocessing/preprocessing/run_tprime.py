@@ -138,7 +138,16 @@ def main(input_dir, config):
                                                                                                           probe_id,
                                                                                                           kilosort_folder))))
 
+    # Extract mouse name from input_dir
+    mouse_name = pathlib.Path(input_dir).parents[2].name
+
+    # Determine which event name to use for channel 4: context_transition or valve_times
+    use_context_transition = mouse_name.startswith(('JL', 'PB'))
+    event_name_ch4_on = 'context_transition_on' if use_context_transition else 'valve_times'
+    event_name_ch4_off = 'context_transition_off' if use_context_transition else None  # xia only for context transitions
+
     # Define channel mappings for different setups
+    # TODO make it dynamic for different tasks (context/learning)
     SETUP_CONFIGS = {
         543: {  # Myri's setup
             'name': 'Myri setup',
@@ -146,9 +155,7 @@ def main(input_dir, config):
                 'trial_start_times': 1,
                 'whisker_stim_times': 2,
                 'piezo_licks': 3,
-                # 'valve_times': 4,
-                'context_transition_on': 4,
-                'context_transition_off': 4,  # Using xia_4_0
+                event_name_ch4_on: 4,
                 'cam0_frame_times': 5,
                 'cam1_frame_times': 6,
                 'auditory_stim_times': 7
@@ -160,15 +167,18 @@ def main(input_dir, config):
                 'trial_start_times': 1,
                 'auditory_stim_times': 2,
                 'whisker_stim_times': 3,
-                # 'valve_times': 4,
-                'context_transition_on': 4,
-                'context_transition_off': 4,  # Using xia_4_0
+                event_name_ch4_on: 4,
                 'cam0_frame_times': 5,
                 'cam1_frame_times': 6,
                 'piezo_licks': 7
             }
         }
     }
+
+    # Add context_transition_off if using context transitions
+    if use_context_transition:
+        SETUP_CONFIGS[543]['channels']['context_transition_off'] = 4  # Using xia_4_0
+        SETUP_CONFIGS['default']['channels']['context_transition_off'] = 4  # Using xia_4_0
 
     # Get setup configuration
     setup_sn = float(ap_meta_dict['imDatBsc_sn'])

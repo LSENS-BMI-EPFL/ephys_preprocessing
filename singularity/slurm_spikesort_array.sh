@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=ephys-array
-#SBATCH --array=1-30%8            # 30 tasks, max 8 concurrent (2 H100 nodes)
+#SBATCH --array=1-40%10            # 40 tasks, max 8 concurrent (2 H100 nodes)
 #SBATCH --output=logs/spikesort_%A_%a.out  # %A=job ID, %a=array task ID
 #SBATCH --error=logs/spikesort_%A_%a.err
 #SBATCH --time=05:00:00
@@ -33,7 +33,7 @@ SIF_IMAGE="singularity/ephys-pipeline.sif"
 CONFIG_DIR="config"
 LOG_DIR="logs"
 INPUT_FILE="${CONFIG_DIR}/inputs.txt"
-CODE_DIR="/path/to/ephys_preprocessing"   # adjust to HPC clone location
+CODE_DIR="/home/lebert/code/ephys_preprocessing"   # adjust to HPC clone location
 
 # Singularity bind paths
 BIND_DATA="/scratch/lebert/ephys_data:/scratch/lebert/ephys_data:ro"
