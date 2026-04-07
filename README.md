@@ -46,25 +46,27 @@ graph LR
 ### Installation 🖥️
 #### Setting up
 - You must have a GPU for spike sorting
-- You must have installed the version of Kilosort you want to use (https://github.com/MouseLand/Kilosort), and the corresponding Matlab version if using a kilosort version older than 4.0
 - You must have installed CatGT, TPrime, C_Waves and OverStrike (these are bundled in the Docker image — no manual install needed if running containerized)
 
 #### Environments
 1. Install the package in a specific environment:
   - With uv (preferred): `uv sync`
   - With pip in a virtual environment: `pip install -e .`
-  
+
+This includes **Kilosort4** as a dependency (pure Python, no MATLAB needed).
+
+##### For other Python-based sorters
+For instructions on installing other SpikeInterface-compatible sorters, see: https://spikeinterface.readthedocs.io/en/stable/get_started/install_sorters.html
+
 ##### For Matlab based kilosort (<4.0)
-**Note**: MATLAB-based sorters (KS1/2/2.5/3) have not been thoroughly tested on this branch but should work with some setup.
+**Note**: MATLAB-based sorters (KS2/2.5/3) have not been thoroughly tested on this branch but should work. SpikeInterface handles all I/O so `npy-matlab` is not required. MATLAB itself must be installed (compatible with kilosort version and your CUDA version), unless running containerized (SpikeInterface's containerized sorters can run MATLAB-based sorters without a MATLAB license).
 
-2. Make sure the corresponding Matlab version is installed (compatible with kilosort version and your CUDA version)
+2. Clone the Kilosort version you want to use (https://github.com/MouseLand/Kilosort) and set the path via SpikeInterface:
+```python
+si.KilosortSorter.set_kilosort_path('/path/to/Kilosort')
+```
 
-3. Copy the file `run_main_kilosort.m` from this repo in `matlab` to the repo where you have installed **Kilosort2**, and update in that file:
-- path to kilosort folder
-- path to `npy-matlab`
-- path to config files
-
-4. Install **Phy**, (optional, for data visualization):
+3. Install **Phy**, (optional, for data visualization):
 - Follow the instructions: https://github.com/cortex-lab/phy/
   
 ### Usage ⚡ 
