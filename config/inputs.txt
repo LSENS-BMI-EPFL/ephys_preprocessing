@@ -1,0 +1,15 @@
+# Example input list for ephys preprocessing pipeline
+# Format: one path per line, relative to data root (/mnt/lsens/data)
+# Lines starting with # are comments and will be ignored
+# Blank lines are also ignored
+
+# Example sessions (uncomment to use):
+# JL007/Recording/JL007_20250603_150143/Ephys/
+# JL007/Recording/JL007_20250605_145217/Ephys/
+# PB191/Recording/Ephys/PB191_20241210_110601
+# RD077/Recording/RD077_20250219_183425/Ephys
+
+# Add your input paths below (one per line):
+JL011/Recording/JL011_20251104_143442/Ephys/
+JL011/Recording/JL011_20251105_142145/Ephys/
+JL011/Recording/JL011_20251106_141209/Ephys/

@@ -1,0 +1,66 @@
+---
+# Docker/Singularity configuration for ephys preprocessing pipeline
+# Tool paths point to container locations (/opt/tools/*)
+# Data paths are mount points (configured at runtime)
+
+raw_data_path: '/home/lebert/lsens_srv/data'
+output_path: '/home/lebert/lsens_srv/analysis/Jules_Lebert/data'
+mice_info_path: '/home/lebert/lsens_srv/analysis/Jules_Lebert/mice_info'
+
+overstrike:
+     overstrike_path: '/opt/tools/OverStrike-linux'
+
+catgt:
+     catgt_path: '/opt/tools/CatGT-linux'
+     overwrite: false
+
+artifact_correction:
+     do: true
+     window_ms: 3
+     ms_before: 0.2
+     ms_after: 3.7
+     mode: 'linear'
+
+sorters:
+     overwrite_preprocessed: true
+     sorter_list:
+          - kilosort4
+     job_kwargs:
+          n_jobs: 12
+          chunk_duration: 3s
+          progress_bar: true
+     kilosort2:
+          sorter_path: '/opt/tools/Kilosort'
+          singularity_image: false
+          nblocks: 5
+          sorter_params:
+               projection_threshold: [ 10, 4 ]
+               lam: 10
+               AUCsplit: 0.9
+               car: false
+               delete_recording_dat: true
+     kilosort4:
+          singularity_image: false
+          sorter_params:
+               do_CAR: false
+               delete_recording_dat: false
+               save_preprocessed_copy: true
+
+bombcell:
+     # Python-only bombcell (no MATLAB required in container)
+     bombcell_path: '/opt/tools/bombcell'
+     run_bombcell_path: '/opt/ephys/ephys_preprocessing/matlab'
+     npy_path: '/opt/tools/npy-matlab'
+     matlab_path: ''  # Not used for Python-only bombcell
+
+tprime:
+     tprime_path: '/opt/tools/TPrime-linux'
+     syncperiod: 1
+     default_tostream_probe: 0
+
+cwaves:
+     cwaves_path: '/opt/tools/C_Waves-linux'
+     samples_per_spike: 82
+     pre_samples: 30
+     num_spikes: 1000
+     snr_radius: 8

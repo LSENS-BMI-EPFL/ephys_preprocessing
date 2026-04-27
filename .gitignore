@@ -54,7 +54,8 @@ wheels/
 .ipynb_checkpoints/
 *ipynb
 /.ipynb_checkpoints/
-
+log/
+scripts/log/
 
 'preprocessing/preprocess_config.yaml' 
 '.idea/misc.xml' 

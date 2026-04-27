@@ -1,0 +1,21 @@
+[project]
+name = "ephys-preprocessing"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.11"
+dependencies = [
+    "bombcell>=0.72",
+    "click>=8.3.1",
+    "cuda-python>=13.1.0",
+    "kilosort>=4.1.3",
+    "loguru>=0.7.3",
+    "matplotlib>=3.10.7",
+    "numba>=0.62.1",
+    "openpyxl>=3.1.5",
+    "pandas>=2.3.3",
+    "phylib>=2.6.3",
+    "pyautogui>=0.9.54",
+    "pyyaml>=6.0.3",
+    "spikeinterface>=0.103.2",
+    "spython>=0.3.14",
+]
