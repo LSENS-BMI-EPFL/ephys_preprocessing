@@ -38,7 +38,7 @@ log = logging.getLogger(__name__)
 # Lower this further (n_jobs=2) if you still see crashes.
 # ---------------------------------------------------------------------------
 JOB_KWARGS = dict(
-    n_jobs=12,
+    n_jobs=24,
     chunk_duration="1s",
     progress_bar=True,
 )

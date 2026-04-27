@@ -47,8 +47,6 @@ def main(input_dir, config):
 
         bin_file_name = [f for f in os.listdir(probe_path) if 'ap.bin' in f][0]
         bin_path = pathlib.Path(os.path.join(probe_path, bin_file_name))
-        print(bin_file_name, bin_path)
-        #meta_file_name = [f for f in os.listdir(probe_path) if 'ap.meta' in f][0]
 
         # Run DREDge pipeline
         logger.info('Running DREDge pipeline on probe {}.'.format(probe_id))
