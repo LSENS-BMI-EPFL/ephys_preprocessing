@@ -25,7 +25,7 @@ import run_artifact_correction
 import run_overstrike
 import run_kilosort
 import run_bombcell
-
+import run_dredge
 
 @logger.catch
 def main(input_dir, config_file):
@@ -93,14 +93,19 @@ def main(input_dir, config_file):
         #run_overstrike.main(processed_dir, config['overstrike'], timespans_list=timespans_list)
         logger.info('Finished OverStrike in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
+    # Run motion estimation
+    logger.info('Starting DREDge for motion estimation.')
+    run_dredge.main(processed_dir, config)
+    logger.info("Finished DREDge motion estimation in {}.".format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
+
     # Run Kilosort
-    logger.info('Starting Kilosort.')
+    logger.info('Starting Kilosort for spike-sorting.')
     #run_kilosort.main(processed_dir, config)
     logger.info("Finished Kilosort in {}.".format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     # Run quality metrics e.g. bombcell
     logger.info('Starting bombcell quality metrics.')
-    run_bombcell.main(processed_dir, config)
+    #run_bombcell.main(processed_dir, config)
     logger.info('Finished bombcell quality metrics in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     catgt_epoch_name = [f for f in os.listdir(processed_dir) if '_g' in f and 'cat' in f][0]
@@ -121,7 +126,7 @@ if __name__ == '__main__':
     experimenter = 'Axel_Bisi'
 
     #args.input = r'M:\data\AB142\Recording\AB142_20241128_113227\Ephys' #until \Ephys
-    #args.input = r'M:\data\AB164\Recording\AB164_20250422_115457\Ephys' #until \Ephys
+    args.input = r'M:\data\AB164\Recording\AB164_20250422_115457\Ephys' #until \Ephys
 
     if experimenter == 'Axel_Bisi':
         pass # ignore inputs if batch processing
