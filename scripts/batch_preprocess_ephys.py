@@ -32,7 +32,7 @@ if EXPERIMENTER == 'Axel_Bisi':
     if machine == 'SV-07-014':
         CONFIG_FILE = r'C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_config.yaml'
         SCRIPTS = {
-            "preprocess_spikesort": Path(r"C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_spikesort.py"),
+            #"preprocess_spikesort": Path(r"C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_spikesort.py"),
             "preprocess_sync": Path(r"C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_sync.py"),
             # "preprocess_ibl_ephys_atlas": Path(...),
         }
@@ -42,13 +42,6 @@ if EXPERIMENTER == 'Axel_Bisi':
             "preprocess_spikesort": Path(r"C:\Users\bisi\ephys_utils\preprocessing\preprocess_spikesort.py"),
             "preprocess_sync": Path(r"C:\Users\bisi\ephys_utils\preprocessing\preprocess_sync.py"),
             # "preprocess_ibl_ephys_atlas": Path(...),
-        }
-    else:
-        # default in this branch
-        CONFIG_FILE = r'C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_config.yaml'
-        SCRIPTS = {
-            "preprocess_spikesort": Path(r"C:\Users\bisi\ephys_utils\preprocessing\preprocess_spikesort.py"),
-            "preprocess_sync": Path(r"C:\Users\bisi\ephys_utils\preprocessing\preprocess_sync.py"),
         }
 else:
     CONFIG_FILE = Path(r"C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_config.yaml")
@@ -71,8 +64,7 @@ LOG_ROOT.mkdir(exist_ok=True)
 MAX_WORKERS = 6
 
 # Mice to process
-INPUTS = ["AB150", "AB151", "AB152", "AB153", "AB154", "AB155", "AB156", "AB157", "AB158", "AB159",
-          "AB160", "AB161", "AB162", "AB163", "AB164"]
+INPUTS = ["AB164"]
 
 # For testing override a subset
 # INPUTS = ["AB150"]
