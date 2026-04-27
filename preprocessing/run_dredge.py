@@ -12,11 +12,9 @@ sys.path.append(os.path.dirname(__file__))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pathlib
 from loguru import logger
-from utils import readSGLX
 
+from utils import dredge_utils
 from utils.ephys_utils import check_if_valid_recording
-import testing_dredge
-
 
 
 def main(input_dir, config):
@@ -50,9 +48,9 @@ def main(input_dir, config):
         # Run DREDge pipeline
         logger.info('Running DREDge pipeline on probe {}.'.format(probe_id))
         out_path = pathlib.Path(os.path.join(probe_path, 'dredge'))
-        testing_dredge.run(bin_file=bin_path, output_folder=out_path, preset='dredge', use_lfp=False, overwrite=True)
+        dredge_utils.run(bin_file=bin_path, output_folder=out_path, preset='dredge', use_lfp=False, overwrite=True)
         out_path = pathlib.Path(os.path.join(probe_path, 'dredge_fast'))
-        testing_dredge.run(bin_file=bin_path, output_folder=out_path, preset='dredge_fast', use_lfp=False, overwrite=True)
+        dredge_utils.run(bin_file=bin_path, output_folder=out_path, preset='dredge_fast', use_lfp=False, overwrite=True)
 
 
 
