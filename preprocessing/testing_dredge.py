@@ -248,7 +248,6 @@ def run(
         #print(type(rec_corrected), type(motion))
         #_save_motion_figure(motion, figures_folder)
 
-        ## Myriam
         motion, motion_info = si.compute_motion(
             rec,
             preset=preset,

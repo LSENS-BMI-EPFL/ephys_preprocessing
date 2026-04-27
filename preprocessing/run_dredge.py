@@ -43,14 +43,17 @@ def main(input_dir, config):
         probe_path = os.path.join(input_dir, epoch_name, probe_folder)
 
         # Create output folder
-        out_path = pathlib.Path(os.path.join(probe_path, 'dredge'))
 
         bin_file_name = [f for f in os.listdir(probe_path) if 'ap.bin' in f][0]
         bin_path = pathlib.Path(os.path.join(probe_path, bin_file_name))
 
         # Run DREDge pipeline
         logger.info('Running DREDge pipeline on probe {}.'.format(probe_id))
+        out_path = pathlib.Path(os.path.join(probe_path, 'dredge'))
+        testing_dredge.run(bin_file=bin_path, output_folder=out_path, preset='dredge', use_lfp=False, overwrite=True)
+        out_path = pathlib.Path(os.path.join(probe_path, 'dredge_fast'))
         testing_dredge.run(bin_file=bin_path, output_folder=out_path, preset='dredge_fast', use_lfp=False, overwrite=True)
+
 
 
     return
