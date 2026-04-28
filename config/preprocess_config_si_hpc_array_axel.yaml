@@ -1,0 +1,79 @@
+---
+# HPC/Singularity configuration for ephys preprocessing pipeline (JOB ARRAY VERSION)
+# Optimized for SLURM job arrays on H100 nodes
+# Tool paths point to container locations (/opt/tools/*)
+# Data paths use scratch filesystem (/scratch/bisi/*)
+
+raw_data_path: '/scratch/bisi/data'
+output_path: '/scratch/bisi/data'
+mice_info_path: '/home/bisi/mice_info'
+
+overstrike:
+     overstrike_path: '/opt/tools/OverStrike-linux'
+
+catgt:
+     do: false
+     catgt_path: '/opt/tools/CatGT-linux'
+     overwrite: false
+
+artifact_correction:
+     do: false
+     window_ms: 3
+     ms_before: 0.2
+     ms_after: 3.7
+     mode: 'linear'
+
+motion:
+     do: true
+     preset: 'dredge_fast'
+
+drift_correction:
+     do: false
+     preset: 'kilosort_like'
+
+sorters:
+     do: false
+     overwrite_preprocessed: true
+     sorter_list:
+          - kilosort4
+     job_kwargs:
+          n_jobs: 16                    # H100 array: 8 cores per job (32 cores / 4 GPUs)
+          chunk_duration: 3s
+          progress_bar: true
+     kilosort2:
+          sorter_path: '/opt/tools/Kilosort'
+          singularity_image: false # Not working properly, need to troubleshoot
+          nblocks: 5
+          sorter_params:
+               projection_threshold: [ 10, 4 ]
+               lam: 10
+               AUCsplit: 0.9
+               car: false
+               delete_recording_dat: true
+     kilosort4:
+          singularity_image: false # Not working properly, need to troubleshoot
+          sorter_params:
+               do_CAR: false
+               delete_recording_dat: false
+               save_preprocessed_copy: true
+               do_correction: true
+
+bombcell:
+     do: false
+     # Python-only bombcell (no MATLAB required in container)
+     bombcell_path: '/opt/tools/bombcell'
+     run_bombcell_path: '/opt/code/ephys_preprocessing/matlab'
+     npy_path: '/opt/tools/npy-matlab'
+     matlab_path: ''  # Not used for Python-only bombcell
+
+tprime:
+     tprime_path: '/opt/tools/TPrime-linux'
+     syncperiod: 1
+     default_tostream_probe: 0
+
+cwaves:
+     cwaves_path: '/opt/tools/C_Waves-linux'
+     samples_per_spike: 82
+     pre_samples: 30
+     num_spikes: 1000
+     snr_radius: 8

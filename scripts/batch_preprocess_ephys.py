@@ -32,8 +32,8 @@ if EXPERIMENTER == 'Axel_Bisi':
     if machine == 'SV-07-014':
         CONFIG_FILE = r'C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_config.yaml'
         SCRIPTS = {
-            #"preprocess_spikesort": Path(r"C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_spikesort.py"),
-            "preprocess_sync": Path(r"C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_sync.py"),
+            "preprocess_spikesort": Path(r"C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_spikesort.py"),
+            #"preprocess_sync": Path(r"C:\Users\bisi\Github\ephys_preprocessing\preprocessing\preprocess_sync.py"),
             # "preprocess_ibl_ephys_atlas": Path(...),
         }
     elif machine == 'SV-07-081':

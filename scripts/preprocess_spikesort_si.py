@@ -13,6 +13,7 @@ logger.add("log/preprocess_spikesort_{time}.log", colorize=True,
 from ephys_preprocessing.preprocessing import (
     run_catgt, 
     run_overstrike,
+    run_dredge,
     run_sorter,
     run_py_bombcell,
 )
@@ -57,6 +58,13 @@ def main(input_dir, config_file):
         logger.info('Starting OverStrike.')
         run_overstrike.main(processed_dir, config['overstrike'], timespans_list=timespans_list)
         logger.info('Finished OverStrike in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
+
+    # # Run DREDge
+    if config['motion']['do']:
+        logger.info('Starting DREDge.')
+        run_dredge.main(processed_dir, config)
+        logger.info("Finished DREDge in {}.".format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
+
 
     # # Run Kilosort
     if config['sorters']['do']:
