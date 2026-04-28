@@ -34,6 +34,8 @@ Selective rsync copy of folders and associated files from cluster: same remove `
 
 ```bash
 rsync -aPv \
+  --no-perms \
+  --no-times \
   --include='*/' \
   --include='dredge/***' \
   --exclude='*' \
