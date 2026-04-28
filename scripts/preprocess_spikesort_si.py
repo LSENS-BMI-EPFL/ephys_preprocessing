@@ -33,12 +33,17 @@ def main(input_dir, config_file):
     logger.info('Recording using {} probe(s).'.format(n_probes))
 
     # Create output folder
-    # mouse_name = input_dir.split('\\')[2]
-    # session_name = input_dir.split('\\')[-2]
+    #mouse_name = input_dir.split('\\')[2]
+    #session_name = input_dir.split('\\')[-2]
     mouse_name = input_dir.parents[2].name
+    if mouse_name == 'data':
+        mouse_name = input_dir.parents[1].name
+
     session_name = input_dir.name
     if session_name == 'Ephys':
         session_name = input_dir.parents[0].name
+    print('Mouse name', mouse_name)
+    print('Session name', session_name)
     processed_dir = os.path.join(config['output_path'], mouse_name, session_name, 'Ephys')
     logger.info('Processed data will be saved to {}.'.format(processed_dir))
     pathlib.Path(processed_dir).mkdir(parents=True, exist_ok=True)
@@ -52,7 +57,7 @@ def main(input_dir, config_file):
     # Optionally, run OverStrike
     timespans_list = None
     if mouse_name == 'PB191':
-        timespans_list = [(2350, 2373), (2724, 2778)]
+        timespans_list = [(2350, 2373), (2724, 2778)] #add timespans to overtrike config here (trials will be ignored at NWB conversion)
 
     if timespans_list:
         logger.info('Starting OverStrike.')

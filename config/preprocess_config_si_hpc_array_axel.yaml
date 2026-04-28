@@ -5,7 +5,7 @@
 # Data paths use scratch filesystem (/scratch/bisi/*)
 
 raw_data_path: '/scratch/bisi/data'
-output_path: '/scratch/bisi/data'
+output_path: '/scratch/bisi/data' #/data?
 mice_info_path: '/home/bisi/mice_info'
 
 overstrike:

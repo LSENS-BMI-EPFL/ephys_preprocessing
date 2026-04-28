@@ -26,12 +26,14 @@ def check_if_valid_recording(config, mouse_id, probe_id, day_id=0):
     :param day_index: (int) day index of recordings (naive, expert).
     :return:
     """
-    if mouse_id.startswith('AB'):
-        path_to_probe_insertion_info = os.path.join(config['mice_info_path'], 'probe_insertion_info_setup.xlsx')
+    if mouse_id.startswith('AB') or mouse_id.startswith('MH'):
+        path_to_probe_insertion_info = os.path.join(config['mice_info_path'], 'joint_probe_insertion_info.xlsx')
+        print('Reading experimental metadata:', path_to_probe_insertion_info)
     else:
         path_to_probe_insertion_info = os.path.join(config['mice_info_path'], 'probe_insertion_info.xlsx')
 
     probe_info_df = pd.read_excel(path_to_probe_insertion_info)
+
     if 'day_of_recording' not in probe_info_df.columns:
         logger.error('No day_of_recording column in probe insertion info table. Specify to select correct insertion')
 
