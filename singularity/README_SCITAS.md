@@ -43,3 +43,15 @@ rsync -aPv \
   bisi@haas056.rcp.epfl.ch:/mnt/lsens-analysis/Axel_Bisi/data/AB163/
 ```
 
+Or for a list of mouse folders, parallelized and with SSH multiplexing (1 pwd prompt):
+
+````bash
+printf "%s\n" AB{163..164} | \
+xargs -P 4 -I {} rsync -av --no-perms --no-times --dry-run \
+  -e "ssh -o ControlMaster=auto -o ControlPersist=10m -o ControlPath=~/.ssh/cm-%r@%h:%p" \
+  --include='*/' \
+  --include='dredge/***' \
+  --exclude='*' \
+  /scratch/bisi/data/{}/ \
+  bisi@haas056.rcp.epfl.ch:/mnt/lsens-analysis/Axel_Bisi/data/{}/
+````
