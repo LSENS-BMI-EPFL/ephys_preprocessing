@@ -23,7 +23,12 @@ This directory contains scripts for running the ephys preprocessing pipeline on 
 docker compose build
 singularity build singularity/ephys-pipeline.sif docker-daemon://ephys-pipeline:latest
 ```
-Or, after pushing the Docker image to Docker Hub, using:
+Or, after pushing the Docker image to Docker Hub:
+```bash
+docker tag source_image:TAG target_image:TAG
+docker push username/target_image:TAG
+```
+then upload an image directly from Dockerhub to Apptainer/Singularity via:
 https://scitas-doc.epfl.ch/advanced-guide/singularity-docker/
 
 ### 2. Configure for Your HPC Cluster
