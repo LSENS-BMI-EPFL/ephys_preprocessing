@@ -12,6 +12,10 @@ This directory contains scripts for running the ephys preprocessing pipeline on 
 
 ## Quick Start
 
+#### 0. Prerequesites
+- Install docker and required tools
+- Singularity is on the cluster so no need to install
+- 
 ### 1. Build the Singularity Image
 
 ```bash
@@ -19,6 +23,8 @@ This directory contains scripts for running the ephys preprocessing pipeline on 
 docker compose build
 singularity build singularity/ephys-pipeline.sif docker-daemon://ephys-pipeline:latest
 ```
+Or, after pushing the Docker image to Docker Hub, using:
+https://scitas-doc.epfl.ch/advanced-guide/singularity-docker/
 
 ### 2. Configure for Your HPC Cluster
 
