@@ -67,7 +67,7 @@ def main(input_dir, config_file):
     # # Run DREDge
     if config['motion']['do']:
         logger.info('Starting DREDge.')
-        run_dredge.main(processed_dir, config)
+        run_dredge.main(processed_dir, config['motion'])
         logger.info("Finished DREDge in {}.".format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
 

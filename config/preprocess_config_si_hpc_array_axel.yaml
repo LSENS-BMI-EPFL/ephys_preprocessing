@@ -25,11 +25,11 @@ artifact_correction:
 
 motion:
      do: true
-     preset: 'dredge_fast'
+     preset: 'dredge'
 
 drift_correction:
      do: false
-     preset: 'kilosort_like'
+     preset: 'dredge'
 
 sorters:
      do: false
@@ -59,7 +59,7 @@ sorters:
                do_correction: true
 
 bombcell:
-     do: false
+     do: true
      # Python-only bombcell (no MATLAB required in container)
      bombcell_path: '/opt/tools/bombcell'
      run_bombcell_path: '/opt/code/ephys_preprocessing/matlab'
