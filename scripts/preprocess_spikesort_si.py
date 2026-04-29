@@ -11,7 +11,7 @@ logger.add("log/preprocess_spikesort_{time}.log", colorize=True,
 
 # Import submodules
 from ephys_preprocessing.preprocessing import (
-    run_catgt, 
+    run_catgt,
     run_overstrike,
     run_dredge,
     run_sorter,
@@ -67,7 +67,7 @@ def main(input_dir, config_file):
     # # Run DREDge
     if config['motion']['do']:
         logger.info('Starting DREDge.')
-        run_dredge.main(processed_dir, config['motion'])
+        run_dredge.main(processed_dir, config)
         logger.info("Finished DREDge in {}.".format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
 
