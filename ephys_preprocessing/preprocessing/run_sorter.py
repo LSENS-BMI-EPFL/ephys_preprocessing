@@ -63,6 +63,7 @@ def main(input_dir, config):
 
             # Drift correction before sorting to avoid problem on the clusters
             # where drift correction hangs forever (kilosort4)
+            # Note this is different than the motion estimation step of before
             if config['drift_correction']['do']:
                 logger.info('Correcting drift before sorting')
                 recording = si.correct_motion(
