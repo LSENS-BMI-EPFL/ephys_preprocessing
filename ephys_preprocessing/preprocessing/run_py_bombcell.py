@@ -49,9 +49,15 @@ def main(input_dir, config):
 
             logger.info('Running bombcell for IMEC probe {}.'.format(probe_id))
 
+            # Compute quality metrics
             quality_metrics, param, unit_type, unit_type_string, = bc.run_bombcell(
                 kilosort_path, save_path, param,
             )
+
+            # Compute ephys properties for cell type classification
+            ephys_param = bc.get_ephys_parameters(kilosort_path)
+            # Compute all ephys properties - now defaults to ks_dir/bombcell
+            ephys_properties, ephys_param = bc.run_all_ephys_properties(kilosort_path, ephys_param, save_path=save_path)
 
         # cluster_info table creation
         logger.info('Creating cluster_info table for IMEC probe {}.'.format(probe_id))

@@ -1,13 +1,14 @@
 #!/bin/bash
-#SBATCH --job-name=ephys-array-cpu
-#SBATCH --array=1-3%10            # 40 tasks, max 10 concurrent
+#SBATCH --job-name=ephys-array
+#SBATCH --array=1-3%10            # 40 tasks, max 8 concurrent (2 H100 nodes)
 #SBATCH --output=logs/spikesort_%A_%a.out
 #SBATCH --error=logs/spikesort_%A_%a.err
-#SBATCH --time=12:00:00 #was 6
-#SBATCH --partition=bigmem
-#SBATCH --cpus-per-task=64
-#SBATCH --mem=256G
-#SBATCH --qos=bigmem
+#SBATCH --time=12:00:00
+#SBATCH --partition=h100
+#SBATCH --gres=gpu:1              # Each task gets 1 GPU
+#SBATCH --cpus-per-task=16         # 32 cores / 4 GPUs = 8 cores per job
+#SBATCH --mem=32G
+#SBATCH --qos=long
 # ============================================================================
 
 # SLURM job array script for parallel spike sorting (CPU version)
@@ -17,18 +18,20 @@
 # ============================================================================
 
 # Load required modules (adjust if needed)
-
+# module load singularity
+# module load cuda/12.1
 # module load singularity
 
 # Set environment variables
-
+# Set environment variables
 export EPHYS_LOG_DIR=/home/bisi/logs
+export CUDA_VISIBLE_DEVICES=0
 
-# Prevent thread oversubscription / deadlocks
-
-export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
-export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK}
-export OPENBLAS_NUM_THREADS=${SLURM_CPUS_PER_TASK}
+# Prevent KMeans/MKL deadlocks during Kilosort4 drift correction
+# (scikit-learn + CUDA can hang on HPC clusters with multiple threads)
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
 
 # Define paths
 

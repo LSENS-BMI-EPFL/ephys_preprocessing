@@ -34,8 +34,8 @@ def check_if_valid_recording(config, mouse_id, probe_id, day_id=0):
 
     probe_info_df = pd.read_excel(path_to_probe_insertion_info)
 
-    if 'day_of_recording' not in probe_info_df.columns:
-        logger.error('No day_of_recording column in probe insertion info table. Specify to select correct insertion')
+    #if 'day_of_recording' not in probe_info_df.columns:
+    #    logger.error('No day_of_recording column in probe insertion info table. Specify to select correct insertion')
 
     probe_info = probe_info_df.loc[(probe_info_df['mouse_name'] == mouse_id)
                                       & (probe_info_df['probe_id'] == int(probe_id))

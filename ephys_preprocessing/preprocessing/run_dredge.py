@@ -47,9 +47,10 @@ def main(input_dir, config):
 
         # Run DREDge pipeline
         logger.info('Running DREDge pipeline on probe {}.'.format(probe_id))
-        out_path = pathlib.Path(os.path.join(probe_path, 'dredge'))
-        dredge_utils.run(bin_file=bin_path, output_folder=out_path, preset='dredge', use_lfp=False, overwrite=True)
-        #out_path = pathlib.Path(os.path.join(probe_path, 'dredge_fast'))
+        preset='dredge_fast'
+        out_path = pathlib.Path(os.path.join(probe_path, preset))
+        dredge_utils.run(bin_file=bin_path, output_folder=out_path, preset=preset, use_lfp=False, overwrite=True)
+        #out_path = pathlib.Path(os.path.join(probe_path, preset'))
         #dredge_utils.run(bin_file=bin_path, output_folder=out_path, preset='dredge_fast', use_lfp=False, overwrite=True)
 
     return

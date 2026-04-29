@@ -16,6 +16,7 @@ import shutil
 import sys
 import time
 from pathlib import Path
+import matplotlib.pyplot as plt
 
 import psutil
 
@@ -229,7 +230,10 @@ def run(
         NT = 64 * 1024 + 64
         FS = rec.sampling_frequency
         rec.reset_times()
-        rec = si.highpass_filter(recording=rec, freq_min=300.)
+        rec = rec.astype('float32')
+        #rec = si.highpass_filter(recording=rec, freq_min=300., freq_max=6000.)
+        rec = si.bandpass_filter(recording=rec, freq_min=300., freq_max=6000.)
+        rec = si.common_reference(rec, reference="global", operator="median")
 
         motion_dict = {
             'bin_s': NT / FS,
@@ -257,6 +261,19 @@ def run(
             estimate_motion_kwargs=motion_dict,
             **JOB_KWARGS,
         )
+
+        fig = plt.figure(figsize=(14, 8))
+        si.plot_motion_info(
+            motion_info, rec,
+            figure=fig,
+            depth_lim=(0, 4000),
+            color_amplitude=True,
+            amplitude_cmap="inferno",
+            scatter_decimate=10,
+        )
+        fig.suptitle(f"{preset=}")
+        # Save figure
+        plt.savefig(os.path.join(figures_folder, "motion_results.png"))
 
         del rec
         del motion_info
