@@ -90,6 +90,8 @@ def run_tprime_alignment(
     else: # Axel's setup
         whisker_stim_channel = f'{epoch_dir / f"{run_name}_tcat.nidq.xa_3_0.txt"}'
 
+    logger.info(f'Getting extracted whisker/coil artifact times from CatGT event file/channel {whisker_stim_channel}')
+
     # Build and run TPrime command
     command = [
         tprime_exe,
