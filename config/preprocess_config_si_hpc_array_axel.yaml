@@ -25,15 +25,15 @@ artifact_correction:
 
 motion:
      do: true
-     preset: 'dredge'
+     preset: 'dredge_fast'
 
 drift_correction:
      do: false
-     preset: 'dredge'
+     preset: 'dredge_fast'
 
 sorters:
      do: false
-     overwrite_preprocessed: true
+     overwrite_preprocessed: false
      sorter_list:
           - kilosort4
      job_kwargs:

@@ -39,18 +39,28 @@ def main(input_dir, config):
 
         probe_folder = '{}_imec{}'.format(epoch_name.replace('catgt_', ''), probe_id)
         probe_path = os.path.join(input_dir, epoch_name, probe_folder)
-
-        # Create output folder
+        if mouse_id.startswith('MH'):
+            probe_path = probe_path.replace('Axel_Bisi', 'Myriam_Hamon')
 
         bin_file_name = [f for f in os.listdir(probe_path) if 'ap.bin' in f][0]
         bin_path = pathlib.Path(os.path.join(probe_path, bin_file_name))
+        bin_path = str(bin_path).replace("_corrected", "") # not using the corrected version here
 
         # Run DREDge pipeline
         logger.info('Running DREDge pipeline on probe {}.'.format(probe_id))
         preset = config['motion']['preset']
         out_path = pathlib.Path(os.path.join(probe_path, preset))
-        dredge_utils.run(bin_file=bin_path, output_folder=out_path, preset=preset, use_lfp=False, overwrite=True)
+        if mouse_id.startswith('MH'):
+            out_path = str(out_path).replace('Myriam_Hamon', 'Axel_Bisi')
 
+
+        stream_name = f'imec{probe_id}.ap'
+        dredge_utils.run(folder_path=probe_path,
+                         stream_name=stream_name,
+                         output_folder=out_path,
+                         preset=preset,
+                         use_lfp=False,
+                         overwrite=True)
 
     return
 

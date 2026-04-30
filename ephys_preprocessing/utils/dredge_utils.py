@@ -17,8 +17,11 @@ import sys
 import time
 from pathlib import Path
 import matplotlib.pyplot as plt
-
 import psutil
+
+import spikeinterface
+import spikeinterface.full as si
+from spikeinterface.sortingcomponents.motion import estimate_motion
 
 # ---------------------------------------------------------------------------
 # Root logger — console only at startup; per-job file handlers added later
@@ -39,7 +42,7 @@ log = logging.getLogger(__name__)
 # Lower this further (n_jobs=2) if you still see crashes.
 # ---------------------------------------------------------------------------
 JOB_KWARGS = dict(
-    n_jobs=24,
+    n_jobs=32,
     chunk_duration="1s",
     progress_bar=True,
 )
@@ -86,6 +89,14 @@ def _close_handler_safe(fh: logging.FileHandler):
 # ---------------------------------------------------------------------------
 # SpikeGLX binary reader
 # ---------------------------------------------------------------------------
+
+import spikeglx
+def _sample2v(ap_file):
+    md = spikeglx.read_meta_data(ap_file.with_suffix(".meta"))
+    s2v = spikeglx._conversion_sample2v_from_meta(md)
+    return s2v["ap"][0]
+
+
 def _read_spikeglx_bin(bin_file: Path, load_sync_channel: bool = False):
     import spikeinterface.full as si
     from probeinterface import read_spikeglx as pi_read_spikeglx
@@ -111,7 +122,7 @@ def _read_spikeglx_bin(bin_file: Path, load_sync_channel: bool = False):
         sampling_frequency=sampling_frequency,
         num_channels=n_channels,
         dtype="int16",
-        gain_to_uV=1.0,
+        gain_to_uV=_sample2v(bin_file),
         offset_to_uV=0.0,
         channel_ids=[str(i) for i in range(n_channels)],
     )
@@ -181,28 +192,30 @@ def _wait_for_ram(threshold_gb: float = 12.0, poll_interval: float = 30.0):
 # Core run() — one probe
 # ---------------------------------------------------------------------------
 def run(
-    bin_file: Path,
+    folder_path: Path,
+    stream_name: str,
     output_folder: Path,
     preset: str = "dredge",
     use_lfp: bool = False,
     overwrite: bool = True,
 ):
-    import spikeinterface.full as si
-    from spikeinterface.sortingcomponents.motion import estimate_motion
 
-    bin_file      = Path(bin_file)
+    folder_path = Path(folder_path)
     output_folder = Path(output_folder)
     output_folder.mkdir(parents=True, exist_ok=True)
 
     motion_folder  = output_folder / "motion"
+    motion_folder.mkdir(parents=True, exist_ok=True)
     figures_folder = output_folder / "figures"
-    figures_folder.mkdir(exist_ok=True)
+    figures_folder.mkdir(parents=True, exist_ok=True)
 
-    if overwrite and motion_folder.exists():
-        shutil.rmtree(motion_folder)
 
-    log.info("Loading %s", bin_file.name)
-    rec = _read_spikeglx_bin(bin_file, load_sync_channel=False) #stream name?
+    #if overwrite and motion_folder.exists():
+    #    shutil.rmtree(motion_folder)
+
+    log.info("Loading %s", folder_path)
+    import spikeinterface.extractors as se
+    rec = se.read_spikeglx(folder_path=folder_path, stream_name=stream_name)
     log.info("Recording: %s", rec)
     _log_ram("after loading recording")
 
@@ -230,9 +243,7 @@ def run(
         NT = 64 * 1024 + 64
         FS = rec.sampling_frequency
         rec.reset_times()
-        rec = rec.astype('float32')
-        #rec = si.highpass_filter(recording=rec, freq_min=300., freq_max=6000.)
-        rec = si.bandpass_filter(recording=rec, freq_min=300., freq_max=6000.)
+        rec = si.highpass_filter(recording=rec, freq_min=300.)
         rec = si.common_reference(rec, reference="global", operator="median")
 
         motion_dict = {
@@ -240,49 +251,36 @@ def run(
             'histogram_time_smooth_s': NT / FS
         }
 
-        ## Mayo
-        #rec_corrected, motion = si.correct_motion(recording=rec,
-        #                                          preset=preset,
-        #                                          folder=motion_folder,
-        #                                          output_motion_info=True,
-        #                                          n_jobs=24,
-        #                                          progress_bar=True,
-        #                                          estimate_motion_kwargs=motion_dict,
-        #                                          overwrite=overwrite)
-        #print(type(rec_corrected), type(motion))
-        #_save_motion_figure(motion, figures_folder)
+        rec_corrected, motion = si.correct_motion(recording=rec,
+                                                  preset=preset,
+                                                  folder=motion_folder,
+                                                  output_motion_info=True,
+                                                  n_jobs=28,
+                                                  progress_bar=True,
+                                                  estimate_motion_kwargs=motion_dict,
+                                                  overwrite=overwrite)
 
-        motion, motion_info = si.compute_motion(
-            rec,
-            preset=preset,
-            folder=motion_folder,
-            output_motion_info=True,
-            overwrite=overwrite,
-            estimate_motion_kwargs=motion_dict,
-            **JOB_KWARGS,
-        )
+        #si.save_motion_info(motion, motion_folder, overwrite=overwrite)
 
-        fig = plt.figure(figsize=(14, 8))
+        fig = plt.figure(figsize=(14, 8),dpi=300)
         si.plot_motion_info(
-            motion_info, rec,
+            motion, rec,
             figure=fig,
-            depth_lim=(0, 4000),
+            depth_lim=(500, 2000),
             color_amplitude=True,
             amplitude_cmap="inferno",
             scatter_decimate=10,
         )
-        fig.suptitle(f"{preset=}")
-        # Save figure
+
+        fig.suptitle(f"Recording: {folder_path.name}; {preset=}")
         plt.savefig(os.path.join(figures_folder, "motion_results.png"))
 
         del rec
-        del motion_info
+        del motion
 
-    log.info("Motion estimated: %s", motion)
     _log_ram("after motion estimation")
     _log_vram()
 
-    _save_motion_figure(motion, figures_folder)
     del motion
 
     gc.collect()

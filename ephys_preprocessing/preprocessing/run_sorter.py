@@ -36,7 +36,7 @@ def main(input_dir, config):
         overwrite_preprocessed = config['sorters']['overwrite_preprocessed']
 
         if preprocessed_path.exists() and any(preprocessed_path.iterdir()) and not overwrite_preprocessed:
-            recording = si.load_extractor(preprocessed_path)
+            recording = si.load_extractor(preprocessed_path) #TODO: this throws an error
         else:
             recording = se.read_spikeglx(probe_path, stream_id=f'imec{probe_id}.ap')
             if config['artifact_correction']['do']:

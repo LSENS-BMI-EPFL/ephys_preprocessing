@@ -30,15 +30,24 @@ def main(input_dir, config):
             # Set paths
             ks_name = kilosort_folder.name
             kilosort_version = extract_ks_version(ks_name)
-            kilosort_path = os.path.join(kilosort_folder, 'sorter_output')
+            if mouse_id.startswith('AB') or mouse_id.startswith('MH'):
+                kilosort_path = os.path.join(kilosort_folder)
+            else:
+                kilosort_path = os.path.join(kilosort_folder, 'sorter_output')
+
             save_path = os.path.join(kilosort_path, 'bombcell')
 
-            # apbin_fname = '{}_tcat_corrected.imec{}.ap.bin'.format(epoch_name, probe_id)
-            apbin_fname = '{}_tcat.imec{}.ap.bin'.format(epoch_name, probe_id)
-            path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
-            # meta_fname = '{}_tcat_corrected.imec{}.ap.meta'.format(epoch_name, probe_id)
-            meta_fname = '{}_tcat.imec{}.ap.meta'.format(epoch_name, probe_id)
-            path_to_meta = os.path.join(input_dir, probe_folder, meta_fname)
+            try:
+                apbin_fname = '{}_tcat_corrected.imec{}.ap.bin'.format(epoch_name, probe_id)
+                meta_fname = '{}_tcat_corrected.imec{}.ap.meta'.format(epoch_name, probe_id)
+                path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
+                path_to_meta = os.path.join(input_dir, probe_folder, meta_fname)
+
+            except FileNotFoundError:
+                apbin_fname = '{}_tcat.imec{}.ap.bin'.format(epoch_name, probe_id)
+                meta_fname = '{}_tcat.imec{}.ap.meta'.format(epoch_name, probe_id)
+                path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
+                path_to_meta = os.path.join(input_dir, probe_folder, meta_fname)
 
             param = bc.get_default_parameters(
                 kilosort_path, 
@@ -56,6 +65,7 @@ def main(input_dir, config):
 
             # Compute ephys properties for cell type classification
             ephys_param = bc.get_ephys_parameters(kilosort_path)
+
             # Compute all ephys properties - now defaults to ks_dir/bombcell
             ephys_properties, ephys_param = bc.run_all_ephys_properties(kilosort_path, ephys_param, save_path=save_path)
 
