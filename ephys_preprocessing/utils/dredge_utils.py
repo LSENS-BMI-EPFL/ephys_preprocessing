@@ -281,11 +281,8 @@ def run(
     _log_ram("after motion estimation")
     _log_vram()
 
-    del motion
-
     gc.collect()
     _clear_gpu()
-    _log_ram("after full cleanup")
     log.info("Done. Motion saved in %s", motion_folder)
 
 
