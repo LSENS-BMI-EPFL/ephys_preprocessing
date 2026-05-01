@@ -45,8 +45,12 @@ def main(input_dir, config_file):
     print('Mouse name', mouse_name)
     print('Session name', session_name)
     processed_dir = os.path.join(config['output_path'], mouse_name, session_name, 'Ephys')
+    if mouse_name.startswith('MH'):
+        processed_dir = processed_dir.replace('Axel_Bisi', 'Myriam_Hamon')
+
     logger.info('Processed data will be saved to {}.'.format(processed_dir))
     pathlib.Path(processed_dir).mkdir(parents=True, exist_ok=True)
+
 
     # Run CatGT
     if config['catgt']['do']:
@@ -133,8 +137,48 @@ def cli(input_list, config, legacy_mode):
     # Legacy mode with hardcoded paths
     if legacy_mode:
         logger.info('Running in legacy mode with hardcoded paths')
-        data_path = Path('/mnt/lsens/data')
-        input_paths = [
+
+        from pathlib import Path
+        from concurrent.futures import ThreadPoolExecutor
+
+        analysis_path = Path(r"M:\analysis\Axel_Bisi\data")
+        data_path = Path(r"M:\data")
+
+        def process_session(session_dir):
+            ephys = session_dir / "Ephys"
+            if not ephys.exists():
+                return None
+            if any(ephys.glob("catgt_*/*/*tcat_corrected*")):
+                mouse = session_dir.parent.name
+                session = session_dir.name
+                return data_path / mouse / "Recording" / session / "Ephys"
+
+        sessions = [
+            session
+            for mouse in analysis_path.iterdir() if mouse.is_dir() and 'AB' in mouse.name
+            for session in mouse.iterdir() if session.is_dir()
+        ]
+
+        with ThreadPoolExecutor() as ex:
+            input_paths = sorted(p for p in ex.map(process_session, sessions) if p)
+
+        for p in input_paths:
+            print(p)
+
+       #input_paths = []
+       #for f in sorted(path_analysis.rglob("*tcat_corrected*")):
+       #    ephys = next((p for p in f.parents if p.name == "Ephys"), None)
+       #    if ephys is None:
+       #        continue
+       #    new_path = data_path / ephys.relative_to(path_analysis)
+       #    if new_path not in input_paths and ('AB' in str(new_path)):  # or 'MH' in str(new_path)
+       #        print(new_path)
+       #        input_paths.append(new_path)
+
+        #input_paths = [
+            #'MH035/Recording/MH035_20250514_142713/Ephys',
+            #'MH031/Recording/MH031_20250507_104425/Ephys',
+            #'AB131/Recording/AB131_20240905_123601/Ephys',
             # 'PB191/Recording/Ephys/PB191_20241210_110601',
             # 'PB192/Recording/Ephys/PB192_20241211_113347',
             # 'PB201/Recording/Ephys/PB201_20241212_192123',
@@ -156,10 +200,13 @@ def cli(input_list, config, legacy_mode):
             # 'JL007/Recording/JL007_20250523_144849/Ephys/',
             # 'JL006/Recording/JL006_20250601_104051/Ephys/',
             # 'JL006/Recording/JL006_20250602_122916/Ephys/',
-            'JL007/Recording/JL007_20250603_150143/Ephys/',
-            'JL007/Recording/JL007_20250605_145217/Ephys/'
-        ]
-        config_path = Path('/home/lebert/code/spikesorting_pipeline/spikeinterface_preprocessing/ephys_preprocessing/scripts/preprocess_config_si.yaml')
+            #'JL007/Recording/JL007_20250603_150143/Ephys/',
+            #'JL007/Recording/JL007_20250605_145217/Ephys/'
+        #]
+        print(input_paths)
+        #config_path = Path('/home/lebert/code/spikesorting_pipeline/spikeinterface_preprocessing/ephys_preprocessing/scripts/preprocess_config_si.yaml')
+        config_path = Path(r"C:\Users\bisi\Github\ephys_preprocessing\scripts\preprocess_config_si.yaml")
+
     else:
         # New mode with CLI arguments
         if not input_list or not config:
@@ -179,6 +226,7 @@ def cli(input_list, config, legacy_mode):
 
     # Process each input
     for input_path in input_paths:
+        print(data_path / input_path, config_path)
         main(data_path / input_path, config_path)
 
 
