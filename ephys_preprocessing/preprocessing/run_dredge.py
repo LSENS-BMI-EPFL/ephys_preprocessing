@@ -19,11 +19,12 @@ from ephys_preprocessing.utils.ephys_utils import check_if_valid_recording
 
 def main(input_dir, config):
     """
-    Run Kilosort from MATLAB on preprocessed data.
+    Run DREDge on processed data.
     :param input_dir:  path to preprocessed data
     :param config:  config dict
     :return:
     """
+
 
     epoch_name = [f for f in os.listdir(input_dir) if '_g' in f][0]
     probe_folders = [f for f in os.listdir(os.path.join(input_dir, epoch_name)) if 'imec' in f]
@@ -31,6 +32,7 @@ def main(input_dir, config):
     n_probes = len(probe_folders)
 
     for probe_id in range(n_probes):
+
 
         # Check if probe recording is valid
         mouse_id = epoch_name.split('_')[1]
