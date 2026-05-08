@@ -1,19 +1,30 @@
 ---
-raw_data_path: '/home/lebert/lsens_srv/data'
-output_path: '/home/lebert/lsens_srv/analysis/Jules_Lebert/data'
-mice_info_path: '/home/lebert/lsens_srv/analysis/Jules_Lebert/mice_info'
+raw_data_path: 'M:/data/'
+output_path: 'M:/analysis/Axel_Bisi/data'
+mice_info_path: 'M:/share_internal/Axel_Bisi_Share/dataset_info'
 overstrike:
      overstrike_path: '/home/lebert/code/spikesorting_pipeline/tools/OverStrike-linux'
 catgt:
+     do: false
      catgt_path: '/home/lebert/code/spikesorting_pipeline/tools/CatGT-linux'
      overwrite: false
 artifact_correction:
-     do: true
+     do: false
      window_ms: 3
      ms_before: 0.2
      ms_after: 3.7
      mode: 'linear'
+
+motion:
+     do: true
+     preset: 'dredge_fast'
+
+drift_correction:
+     do: false
+     preset: 'dredge_fast'
+
 sorters:
+     do: false
      overwrite_preprocessed: true
      sorter_list:
           # - kilosort2
@@ -39,6 +50,7 @@ sorters:
                delete_recording_dat: false
                save_preprocessed_copy: true
 bombcell:
+     do: false
      bombcell_path: '/home/lebert/code/spikesorting_pipeline/tools/bombcell'
      run_bombcell_path: '/home/lebert/code/spikesorting_pipeline/spikeinterface_preprocessing/ephys_preprocessing/ephys_preprocessing/matlab'
      npy_path: '/home/lebert/code/spikesorting_pipeline/tools/npy-matlab'

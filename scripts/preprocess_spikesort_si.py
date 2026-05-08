@@ -6,6 +6,8 @@ import time
 import click
 from loguru import logger
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
+
 logger.add("log/preprocess_spikesort_{time}.log", colorize=True,
            format="{name} {message}", level="INFO", rotation="10 MB", retention="1 week")
 
@@ -138,32 +140,61 @@ def cli(input_list, config, legacy_mode):
     if legacy_mode:
         logger.info('Running in legacy mode with hardcoded paths')
 
-        from pathlib import Path
-        from concurrent.futures import ThreadPoolExecutor
+        OWNER_MAP = {
+            "AB": "Axel_Bisi",
+            "MH": "Myriam_Hamon",
+        }
 
-        analysis_path = Path(r"M:\analysis\Axel_Bisi\data")
+        analysis_root = Path(r"M:\analysis")
         data_path = Path(r"M:\data")
 
         def process_session(session_dir):
             ephys = session_dir / "Ephys"
+
             if not ephys.exists():
                 return None
+
             if any(ephys.glob("catgt_*/*/*tcat_corrected*")):
                 mouse = session_dir.parent.name
                 session = session_dir.name
+
                 return data_path / mouse / "Recording" / session / "Ephys"
 
-        sessions = [
-            session
-            for mouse in analysis_path.iterdir() if mouse.is_dir() and 'AB' in mouse.name
-            for session in mouse.iterdir() if session.is_dir()
-        ]
+        sessions = []
+
+        for prefix, owner in OWNER_MAP.items():
+            analysis_path = analysis_root / owner / "data"
+
+            if not analysis_path.exists():
+                continue
+
+
+            sessions.extend(
+                session
+                for mouse in analysis_path.iterdir()
+                if mouse.is_dir() and mouse.name.startswith(prefix)
+                for session in mouse.iterdir()
+                if session.is_dir()
+            )
+
+        print(sessions)
 
         with ThreadPoolExecutor() as ex:
-            input_paths = sorted(p for p in ex.map(process_session, sessions) if p)
+            input_paths = sorted(
+                p for p in ex.map(process_session, sessions) if p
+            )
 
         for p in input_paths:
             print(p)
+
+        # Filter by mouse_id
+        input_paths = [
+            p for p in input_paths
+            if p.parts[2].startswith("MH")
+               and int(p.parts[2][3:]) > 30
+        ]
+        print(input_paths)
+
 
        #input_paths = []
        #for f in sorted(path_analysis.rglob("*tcat_corrected*")):
@@ -176,7 +207,7 @@ def cli(input_list, config, legacy_mode):
        #        input_paths.append(new_path)
 
         #input_paths = [
-            #'MH035/Recording/MH035_20250514_142713/Ephys',
+        #    'MH035/Recording/MH035_20250514_142713/Ephys',
             #'MH031/Recording/MH031_20250507_104425/Ephys',
             #'AB131/Recording/AB131_20240905_123601/Ephys',
             # 'PB191/Recording/Ephys/PB191_20241210_110601',
