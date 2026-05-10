@@ -52,16 +52,24 @@ THR_LABELS = [f"permissive (>{THRESHOLDS[0]} µm/s)", f"conservative (>{THRESHOL
 
 CMAP_DISP = "PiYG"
 FIG_DPI   = 300
-N_WORKERS = 2
+N_WORKERS = 30
 
 plt.rcParams.update({"font.size": 8, "axes.titlesize": 9, "axes.labelsize": 8})
 
 INSERTION_DEPTHS: dict[tuple[str, str], float] = {}
+TARGET_AREAS: dict[tuple[str, str], str] = {}
 
 # Array fields stored in each record but excluded from DataFrames / CSV
 _ARRAY_FIELDS = ("t", "mean_d", "v", "dep", "mean_abs_disp_by_depth")
 
 # ── Utilities ────────────────────────────────────────────────────────────────
+
+TARGET_AREA_CUSTOM_CMAP = {
+    'wS1': '#379443', 'wS2': '#51db64', 'A1': '#334b82',
+    'PPC': '#5a81db', 'DLS': '#8232ba', 'wM1': '#fab143',
+    'wM2': '#ed753e', 'ALM': '#a31010', 'tjM1': '#e3320e',
+    'OFC': '#54110c', 'SC':  '#8a6c27',
+}
 
 def _despine_top_right(ax):
     ax.spines["top"].set_visible(False)
@@ -70,7 +78,6 @@ def _despine_top_right(ax):
 def _despine_top_right_bottom(ax):
     for s in ("top", "bottom", "right"):
         ax.spines[s].set_visible(False)
-
 
 def _load_insertion_depths() -> dict[tuple[str, str], float]:
     if not MOUSE_INFO.exists():
@@ -87,6 +94,16 @@ def _load_reward_group() -> dict[str, str]:
     df = pd.read_excel(MOUSE_INFO)
     return {str(row.mouse_name): str(row.reward_group) for row in df.itertuples(index=False)}
 
+def _load_target_area() -> dict[tuple[str, str], str]:
+    """Return {(mouse_name, probe_id): target_area}."""
+    if not MOUSE_INFO.exists():
+        return {}
+    df = pd.read_excel(MOUSE_INFO)
+    if "target_area" not in df.columns:
+        warnings.warn("No 'target_area' column in insertion info.")
+        return {}
+    return {(str(r.mouse_name), str(r.probe_id)): str(r.target_area)
+            for r in df.itertuples(index=False)}
 
 def load_motion_info(folder: Path) -> dict:
     folder = Path(folder)
@@ -216,8 +233,13 @@ def compute_metrics(mouse: str, reward_group: str, session: str, probe, motion: 
     t, dep, disp, md, v = _signals(motion, mouse, probe)
     p_per, p_con        = detect_peaks_dual(t, v)
     exp                 = _fit_exponential(t, md)
+    insertion_depth = INSERTION_DEPTHS.get((mouse, str(probe)), np.nan)
+    target_area  = TARGET_AREAS.get((mouse, str(probe)))
     return dict(
-        mouse=mouse, reward_group=reward_group, session=session, probe=probe,
+        mouse=mouse,
+        reward_group=reward_group,
+        session=session,
+        probe=probe,
         duration_s=float(t[-1]),
         max_abs_disp_um=float(np.max(np.abs(md))),
         p2p_um=float(md.max() - md.min()),
@@ -229,7 +251,8 @@ def compute_metrics(mouse: str, reward_group: str, session: str, probe, motion: 
         tau_r2=exp["r2"]     if exp else np.nan,
         tau_pval=exp["p_value"] if exp else np.nan,
         tau_valid=exp["tau_valid"] if exp else False,
-        insertion_depth=INSERTION_DEPTHS.get((mouse, str(probe)), np.nan),
+        insertion_depth=insertion_depth,
+        target_area=target_area,
         # arrays — kept in memory for L2 plots, excluded from CSV
         t=t, mean_d=md, v=v, dep=dep,
         mean_abs_disp_by_depth=np.mean(np.abs(disp), axis=0),
@@ -239,9 +262,10 @@ def compute_metrics(mouse: str, reward_group: str, session: str, probe, motion: 
 # ── L1-R: per-recording figure ───────────────────────────────────────────────
 
 def _plot_recording_worker(args):
-    mouse, session, probe, dredge_path, out_dir, insertion_depths = args
-    global INSERTION_DEPTHS
+    mouse, session, probe, dredge_path, out_dir, insertion_depths, target_areas = args
+    global INSERTION_DEPTHS, TARGET_AREAS
     INSERTION_DEPTHS = insertion_depths
+    TARGET_AREAS = target_areas
     try:
         motion = load_motion_info(Path(dredge_path))["motion"]
         if motion is None:
@@ -405,7 +429,7 @@ def _scalar_df(records):
 
 def plot_grand_overlay(records, out):
     all_amp = np.concatenate([r["mean_d"] for r in records])
-    spacing = np.percentile(np.abs(all_amp), 90) * 0.5
+    spacing = np.percentile(np.abs(all_amp), 90) * 0.9
 
     fig, ax = plt.subplots(figsize=(12, max(5, len(records) // 2 * 0.6)))
     yticks, ylabels = [], []
@@ -438,15 +462,19 @@ def plot_magnitude_distributions(records, out):
             ax = axes[i, col]
             if hue is None:
                 sns.kdeplot(data=df, x=metric, fill=True, color="k",
-                            alpha=0.3, lw=1.5, ax=ax)
+                            alpha=0.3, lw=1.5, ax=ax, cut=0)
+                sns.histplot(data=df,x=metric, bins=50, ax=ax, color='k', alpha=0.3, lw=1.0, stat='density', element="step", fill=False)
                 sns.rugplot(data=df, x=metric, color="k", height=0.05, ax=ax)
             else:
                 sns.kdeplot(data=df, x=metric, hue=hue, hue_order=["R+", "R-"],
                             palette=palette, fill=True, alpha=0.25, lw=1.5,
-                            common_norm=False, ax=ax)
+                            common_norm=False, ax=ax, cut=0)
+                sns.histplot(data=df,x=metric,  hue=hue, hue_order=["R+", "R-"],
+                             palette=palette, bins=50, ax=ax, color='k', alpha=0.3, lw=1.0, stat='density', element="step", fill=False)
                 sns.rugplot(data=df, x=metric, hue=hue, hue_order=["R+", "R-"],
                             palette=palette, height=0.05, ax=ax)
             ax.set_ylabel(ylabel); ax.set_xlabel("")
+            ax.legend(title='', loc='upper right', frameon=False)
             if i == 0: ax.set_title(col_title)
             _despine_top_right(ax)
     for ax in axes[-1]:
@@ -480,44 +508,75 @@ def plot_magnitude_distributions_sessions(records, out):
 
 def plot_drift_correlation(records, out):
     import scipy.stats
+
+    metrics = [
+        ("max_abs_disp_um",   "Max |disp| (µm)"),
+        ("p2p_um",            "Peak-to-peak (µm)"),
+        ("rms_um",            "RMS (µm)"),
+        ("mean_abs_vel_um_s", "Mean |vel| (µm/s)"),
+        ("tau",               "Settling τ (s)"),
+    ]
+    palette = {"R+": "forestgreen", "R-": "crimson"}
     df = _scalar_df(records)
 
-    fig, axs = plt.subplots(1, 2, figsize=(10, 5))
-    for ax in axs:
+    fig, axs = plt.subplots(len(metrics), 2,
+                            figsize=(10, 3.5 * len(metrics)),
+                            sharex=False)
+
+    for row, (metric, ylabel) in enumerate(metrics):
+        needed = ["duration_s", metric]
+        sub_all = df.dropna(subset=needed)
+
+        # Flag NaNs
+        nan_mask = df[needed].isna().any(axis=1)
+        for _, r in df[nan_mask].iterrows():
+            print(f"  NaN [{metric}]: {r['mouse']} | {r['session']} | imec{r['probe']}")
+
+        if sub_all.empty:
+            for ax in axs[row]: ax.set_visible(False)
+            continue
+
+        # ── Left: all black ──────────────────────────────────────────────
+        ax = axs[row, 0]
+        ax.scatter(sub_all["duration_s"], sub_all[metric],
+                   color="k", s=25, alpha=0.8, linewidths=0)
+        if len(sub_all) >= 2:
+            coeffs = np.polyfit(sub_all["duration_s"], sub_all[metric], 1)
+            xr = np.array([sub_all["duration_s"].min(), sub_all["duration_s"].max()])
+            ax.plot(xr, np.polyval(coeffs, xr), color="k", lw=1.5)
+            r, p = scipy.stats.pearsonr(sub_all["duration_s"], sub_all[metric])
+            ax.annotate(f"r={r:.2f}, p={p:.3f} (n={len(sub_all)})",
+                        xy=(0.05, 0.95), xycoords="axes fraction",
+                        ha="left", va="top", fontsize=7)
+        ax.set_xlabel("Recording duration (s)")
+        ax.set_ylabel(ylabel)
+        if row == 0: ax.set_title("All recordings")
         _despine_top_right(ax)
 
-    ax = axs[0]
-    ax.scatter(df["duration_s"], df["max_abs_disp_um"],
-               color="k", s=25, alpha=0.8, linewidths=0)
-    coeffs = np.polyfit(df["duration_s"], df["max_abs_disp_um"], 1)
-    xr = np.array([df["duration_s"].min(), df["duration_s"].max()])
-    ax.plot(xr, np.polyval(coeffs, xr), color="k", lw=1.5)
-    r, p = scipy.stats.pearsonr(df["duration_s"], df["max_abs_disp_um"])
-    ax.annotate(f"r={r:.2f}, p={p:.3f}", xy=(0.05, 0.95), xycoords="axes fraction",
-                ha="left", va="top", fontsize=7)
-    ax.set_xlabel("Recording duration (s)"); ax.set_ylabel("Max |disp| (µm)")
-    ax.set_title("Drift vs. recording duration")
+        # ── Right: by reward group ────────────────────────────────────────
+        ax = axs[row, 1]
+        sns.scatterplot(data=sub_all, x="duration_s", y=metric,
+                        hue="reward_group", hue_order=["R+", "R-"],
+                        palette=palette, ax=ax, s=25, alpha=0.8, edgecolor="none")
+        y_pos = 0.95
+        for grp, color in palette.items():
+            sub = sub_all[sub_all["reward_group"] == grp]
+            if len(sub) < 2: continue
+            c = np.polyfit(sub["duration_s"], sub[metric], 1)
+            xr = np.array([sub["duration_s"].min(), sub["duration_s"].max()])
+            ax.plot(xr, np.polyval(c, xr), color=color, lw=1.5)
+            r, p = scipy.stats.pearsonr(sub["duration_s"], sub[metric])
+            ax.annotate(f"{grp}: r={r:.2f}, p={p:.3f} (n={len(sub)})",
+                        xy=(0.05, y_pos), xycoords="axes fraction",
+                        ha="left", va="top", fontsize=7, color=color)
+            y_pos -= 0.08
+        ax.set_xlabel("Recording duration (s)")
+        ax.set_ylabel(ylabel)
+        if row == 0: ax.set_title("By reward group")
+        ax.legend(frameon=False, fontsize=7)
+        _despine_top_right(ax)
 
-    ax = axs[1]
-    palette = {"R+": "forestgreen", "R-": "crimson"}
-    sns.scatterplot(data=df, x="duration_s", y="max_abs_disp_um",
-                    hue="reward_group", hue_order=["R+", "R-"],
-                    palette=palette, ax=ax, s=25, alpha=0.8, edgecolor="none")
-    y_pos = 0.95
-    for grp, color in palette.items():
-        sub = df[df["reward_group"] == grp]
-        if len(sub) < 2: continue
-        c = np.polyfit(sub["duration_s"], sub["max_abs_disp_um"], 1)
-        xr = np.array([sub["duration_s"].min(), sub["duration_s"].max()])
-        ax.plot(xr, np.polyval(c, xr), color=color, lw=1.5)
-        r, p = scipy.stats.pearsonr(sub["duration_s"], sub["max_abs_disp_um"])
-        ax.annotate(f"{grp}: r={r:.2f}, p={p:.3f}", xy=(0.05, y_pos),
-                    xycoords="axes fraction", ha="left", va="top",
-                    fontsize=7, color=color)
-        y_pos -= 0.08
-    ax.set_xlabel("Recording duration (s)"); ax.set_ylabel("Max |disp| (µm)")
-    ax.set_title("Drift vs. recording duration")
-    ax.legend(frameon=False, fontsize=7)
+    fig.suptitle("Drift vs. recording duration", fontsize=10)
     fig.tight_layout()
     fig.savefig(out / "L2C_drift_vs_duration.png", dpi=FIG_DPI, bbox_inches="tight")
     plt.close(fig)
@@ -717,7 +776,7 @@ def plot_autocorrelation(records, out):
     Layout: 6 example panels (or fewer) + 1 summary (mean ± std).
     """
     dt_list = [float(np.mean(np.diff(r["t"]))) for r in records]
-    n_lags  = min(int(0.5 * min(len(r["v"]) for r in records)), 500)
+    n_lags  = min(int(0.5 * min(len(r["mean_d"]) for r in records)), 500)
 
     acorrs, lag_s_list = [], []
     for r, dt in zip(records, dt_list):
@@ -760,55 +819,172 @@ def plot_autocorrelation(records, out):
     ax_summ.legend(frameon=False, fontsize=7)
     _despine_top_right(ax_summ)
 
-    fig.suptitle("Velocity autocorrelation", fontsize=10)
-    fig.savefig(out / "L2H_velocity_autocorrelation.png", dpi=FIG_DPI, bbox_inches="tight")
+    fig.suptitle("Motion autocorrelation", fontsize=10)
+    fig.savefig(out / "L2H_motion_autocorrelation.png", dpi=FIG_DPI, bbox_inches="tight")
     plt.close(fig)
 
 
 def plot_depth_gradient(records, out):
     """
     Mean |displacement| as a function of spatial bin depth.
-    Individual traces in mouse colours; bold mean ± std across all recordings.
+    Individual traces in mouse colours; bold mean ± std pooled across all data points per depth bin.
     """
-    mc = _mouse_colors(records)
-
     valid = [r for r in records if len(r["dep"]) >= 2]
     if not valid:
         print("  No depth data — skipping L2I."); return
 
-    dep_min = max(r["dep"][0]  for r in valid)
-    dep_max = min(r["dep"][-1] for r in valid)
-    if dep_min >= dep_max:
-        dep_min = min(r["dep"][0]  for r in valid)
-        dep_max = max(r["dep"][-1] for r in valid)
-    dep_com = np.linspace(dep_min, dep_max, 200)
+    # Pool all (depth, value) pairs across recordings
+    all_dep = np.concatenate([r["dep"] for r in valid])
+    all_val = np.concatenate([r["mean_abs_disp_by_depth"] for r in valid])
 
-    profiles = []
-    for r in valid:
-        prof = np.interp(dep_com, r["dep"], r["mean_abs_disp_by_depth"])
-        profiles.append(prof)
+    dep_min, dep_max = all_dep.min(), all_dep.max()
+    edges   = np.linspace(dep_min, dep_max, 101)
+    centers = 0.5 * (edges[:-1] + edges[1:])
+    mu, sd  = np.full(100, np.nan), np.full(100, np.nan)
+    for k in range(100):
+        mask = (all_dep >= edges[k]) & (all_dep < edges[k + 1])
+        if mask.sum() >= 2:
+            mu[k] = all_val[mask].mean()
+            sd[k] = all_val[mask].std()
 
     fig, ax = plt.subplots(figsize=(6, 7))
     for r in valid:
         ax.plot(r["mean_abs_disp_by_depth"], r["dep"],
-                color=mc[r["mouse"]], lw=0.7, alpha=0.35)
-    if profiles:
-        mu = np.array(profiles).mean(0)
-        sd = np.array(profiles).std(0)
-        ax.fill_betweenx(dep_com, mu - sd, mu + sd, color="k", alpha=0.15)
-        ax.plot(mu, dep_com, color="k", lw=2, label="mean ± std")
+                color="k", lw=0.7, alpha=0.35)
+
+    valid_bins = ~np.isnan(mu)
+    ax.fill_betweenx(centers[valid_bins],
+                     (mu - sd)[valid_bins], (mu + sd)[valid_bins],
+                     color="k", alpha=0.15)
+    ax.plot(mu[valid_bins], centers[valid_bins], color="k", lw=2, label="mean ± std")
 
     ax.set_xlabel("Mean |displacement| (µm)")
     ax.set_ylabel("Depth along probe (µm)")
     ax.set_title("Depth gradient of drift magnitude")
-    # Mouse colour legend
-    handles = [plt.Line2D([0], [0], color=mc[m], lw=1.5, label=m)
-               for m in sorted(mc)]
-    handles.append(plt.Line2D([0], [0], color="k", lw=2, label="mean ± std"))
-    ax.legend(handles=handles, fontsize=7, frameon=False, loc="upper right")
     _despine_top_right(ax)
     fig.tight_layout()
     fig.savefig(out / "L2I_depth_gradient.png", dpi=FIG_DPI, bbox_inches="tight")
+    plt.close(fig)
+
+def plot_depth_gradient_absolute(records, out):
+    valid = [r for r in records
+             if len(r["dep"]) >= 2 and not np.isnan(r["insertion_depth"])]
+    if not valid:
+        print("  No absolute depth data — skipping L2I_abs."); return
+
+    all_dep = np.concatenate([(r["insertion_depth"] - r["dep"]) for r in valid])
+    all_val = np.concatenate([r["mean_abs_disp_by_depth"] for r in valid])
+
+    # Depth-binned mean ± std
+    dep_min, dep_max = all_dep.min(), all_dep.max()
+    edges   = np.linspace(dep_min, dep_max, 51)
+    centers = 0.5 * (edges[:-1] + edges[1:])
+    mu = np.full(50, np.nan)
+    sd = np.full(50, np.nan)
+    for k in range(50):
+        mask = (all_dep >= edges[k]) & (all_dep < edges[k + 1])
+        if mask.sum() >= 2:
+            mu[k] = all_val[mask].mean()
+            sd[k] = all_val[mask].std()
+    vb = ~np.isnan(mu)
+
+    g = sns.JointGrid(x=all_val, y=all_dep, height=8, ratio=4)
+
+    # Main panel: 2D KDE + binned mean ± std
+    sns.kdeplot(x=all_val, y=all_dep, ax=g.ax_joint,
+                fill=True, cmap="Greys", thresh=0.02, levels=12)
+    g.ax_joint.fill_betweenx(centers[vb], (mu - sd)[vb], (mu + sd)[vb],
+                              color="firebrick", alpha=0.2)
+    g.ax_joint.plot(mu[vb], centers[vb], color="firebrick", lw=2, label="mean ± std")
+    g.ax_joint.legend(frameon=False, fontsize=7, loc="lower right")
+    g.ax_joint.invert_yaxis()
+    g.ax_joint.set_xlabel("Mean |displacement| (µm)")
+    g.ax_joint.set_ylabel("Depth below brain surface (µm)")
+    g.ax_joint.set_title("Drift magnitude vs. absolute depth", pad=12)
+    _despine_top_right(g.ax_joint)
+
+    # Bottom marginal: displacement distribution
+    sns.histplot(x=all_val, ax=g.ax_marg_x, color="k",
+                 alpha=0.4, bins=40, stat="density", element="step", fill=True)
+    sns.kdeplot(x=all_val, ax=g.ax_marg_x, color="k", lw=1.5)
+    sns.rugplot(x=all_val, ax=g.ax_marg_x, color="k", alpha=0.3, height=0.1)
+    _despine_top_right(g.ax_marg_x)
+
+    # Right marginal: depth distribution
+    sns.histplot(y=all_dep, ax=g.ax_marg_y, color="k",
+                 alpha=0.4, bins=40, stat="density", element="step", fill=True)
+    sns.kdeplot(y=all_dep, ax=g.ax_marg_y, color="k", lw=1.5)
+    sns.rugplot(y=all_dep, ax=g.ax_marg_y, color="k", alpha=0.3, height=0.1)
+    g.ax_marg_y.invert_yaxis()
+    _despine_top_right(g.ax_marg_y)
+
+    g.figure.savefig(out / "L2I_depth_gradient_absolute.png",
+                     dpi=FIG_DPI, bbox_inches="tight")
+    plt.close(g.figure)
+
+def plot_depth_gradient_barh(records, out):
+    """
+    Horizontal bar chart: mean |displacement| per depth bin, averaged across recordings.
+    Shallow bins at top, deep bins at bottom.
+    """
+    valid = [r for r in records
+             if len(r["dep"]) >= 2 and not np.isnan(r["insertion_depth"])]
+    if not valid:
+        print("  No depth data — skipping depth gradient bar chart."); return
+
+    all_dep = np.concatenate([(r["insertion_depth"] - r["dep"]) for r in valid])
+    all_val = np.concatenate([r["mean_abs_disp_by_depth"] for r in valid])
+
+    dep_min, dep_max = all_dep.min(), all_dep.max()
+    n_bins  = 40
+    edges   = np.linspace(dep_min, dep_max, n_bins + 1)
+    centers = 0.5 * (edges[:-1] + edges[1:])
+    mu = np.full(n_bins, np.nan)
+    sd = np.full(n_bins, np.nan)
+    counts = np.zeros(n_bins, dtype=int)
+    for k in range(n_bins):
+        mask = (all_dep >= edges[k]) & (all_dep < edges[k + 1])
+        counts[k] = mask.sum()
+        if counts[k] >= 2:
+            mu[k] = all_val[mask].mean()
+            sd[k] = all_val[mask].std()
+
+    vb = ~np.isnan(mu)
+    y      = centers[vb]
+    mu_v   = mu[vb]
+    sd_v   = sd[vb]
+    n_v    = counts[vb]
+
+    # Color by depth
+    norm   = plt.Normalize(y.min(), y.max())
+    colors = plt.colormaps["viridis"](norm(y))
+    colors='k'
+
+    fig, ax = plt.subplots(figsize=(6, max(5, n_bins * 0.2)))
+    bars = ax.barh(y, mu_v, height=(dep_max - dep_min) / n_bins * 0.8,
+                   color=colors, alpha=0.85, linewidth=0)
+    ax.errorbar(mu_v, y, xerr=sd_v, fmt="none", color="k",
+                lw=0.8, capsize=2, alpha=0.6)
+
+    # Grand mean reference line
+    grand_mean = np.nanmean(mu_v)
+    ax.axvline(grand_mean, color="firebrick", lw=1.2, ls="--",
+               label=f"grand mean = {grand_mean:.2f} µm")
+
+
+    ax.invert_yaxis()  # shallow at top
+    ax.set_xlabel("Mean |displacement| (µm)")
+    ax.set_ylabel("Depth below brain surface (µm)")
+    ax.set_title("Drift magnitude by depth bin")
+    ax.legend(frameon=False, fontsize=7)
+    _despine_top_right(ax)
+
+    # Colorbar for depth
+    #sm = plt.cm.ScalarMappable(cmap="viridis", norm=norm)
+    #plt.colorbar(sm, ax=ax, label="Depth (µm)", shrink=0.5, pad=0.02)
+
+    fig.tight_layout()
+    fig.savefig(out / "L2I_depth_gradient_barh.png", dpi=FIG_DPI, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -823,9 +999,10 @@ def plot_insertion_depth_scatter(records, out):
         print("  No insertion depth data — skipping L2J."); return
 
     pairs = [
+        ("max_abs_disp_um",    "Max |disp| (µm)"),
         ("p2p_um",            "Peak-to-peak (µm)"),
         ("rms_um",            "RMS (µm)"),
-        ("tau",               "Settling τ (s)"),
+        ("tau", "Settling τ (s)"),
         ("mean_abs_vel_um_s", "Mean |vel| (µm/s)"),
     ]
     fig, axes = plt.subplots(1, len(pairs), figsize=(14, 4))
@@ -838,7 +1015,8 @@ def plot_insertion_depth_scatter(records, out):
             xr = np.array([sub["insertion_depth"].min(), sub["insertion_depth"].max()])
             ax.plot(xr, np.polyval(coeffs, xr), color="firebrick", lw=1.4, ls="--")
             r, p = pearsonr(sub["insertion_depth"], sub[metric])
-            ax.annotate(f"r={r:.2f}, p={p:.3f}", xy=(0.05, 0.95),
+            n_recs = len(sub)
+            ax.annotate(f"r={r:.2f}, p={p:.3f} (n={n_recs})", xy=(0.05, 0.95),
                         xycoords="axes fraction", ha="left", va="top",
                         fontsize=7, color="firebrick")
         ax.set_xlabel("Insertion depth (µm)"); ax.set_ylabel(ylabel)
@@ -849,6 +1027,66 @@ def plot_insertion_depth_scatter(records, out):
     fig.savefig(out / "L2J_insertion_depth_scatter.png", dpi=FIG_DPI, bbox_inches="tight")
     plt.close(fig)
 
+def plot_motion_by_target(records, out):
+    """
+    Stripplot of motion metrics by brain target area.
+    Each dot is one recording; overlaid mean ± std per target.
+    Targets coloured via TARGET_AREA_CUSTOM_CMAP; unknown targets in gray.
+    """
+    df = _scalar_df(records)
+    df = df[df["target_area"].notna() & (df["target_area"] != "unknown")].copy()
+    if df.empty:
+        print("  No target area data — skipping L2K."); return
+
+    metrics = [
+        ("max_abs_disp_um",    "Max |disp| (µm)"),
+        ("p2p_um",             "Peak-to-peak (µm)"),
+        ("rms_um",             "RMS (µm)"),
+        ("mean_abs_vel_um_s",  "Mean |vel| (µm/s)"),
+        ("n_fast_events_permissive", "Fast events (permissive)"),
+        ("tau",                "Settling τ (s)"),
+    ]
+    metrics = [(m, lbl) for m, lbl in metrics if m in df.columns]
+
+    # Ordered targets: those present in data, ordered by cmap keys then remainder
+    present = df["target_area"].unique().tolist()
+    ordered = [t for t in TARGET_AREA_CUSTOM_CMAP if t in present]
+    ordered += [t for t in present if t not in ordered]
+    palette = {t: TARGET_AREA_CUSTOM_CMAP.get(t, "#888888") for t in ordered}
+
+    n_metrics = len(metrics)
+    fig, axes = plt.subplots(n_metrics, 1, figsize=(max(8, len(ordered) * 0.7), n_metrics * 2.8),
+                             sharex=False)
+    if n_metrics == 1:
+        axes = [axes]
+
+    for ax, (metric, ylabel) in zip(axes, metrics):
+        sub = df[df[metric].notna() & np.isfinite(df[metric])]
+
+        # Strip
+        sns.stripplot(data=sub, x="target_area", y=metric, order=ordered,
+                      palette=palette, ax=ax, size=4, alpha=0.5,
+                      jitter=True, linewidth=0, zorder=2)
+
+        # Mean ± std per target
+        for k, target in enumerate(ordered):
+            vals = sub[sub["target_area"] == target][metric].dropna()
+            if len(vals) < 1: continue
+            mu, sd = vals.mean(), vals.std() if len(vals) > 1 else 0.0
+            ax.plot([k - 0.1, k + 0.1], [mu, mu], color='k', lw=2, zorder=3)
+            ax.errorbar(k, mu, yerr=sd, fmt="none", color='k', lw=1, capsize=0, zorder=3)
+
+        ax.set_ylabel(ylabel)
+        ax.set_xlabel("")
+        ax.axhline(0, color="gray", lw=0.5, ls="--")
+        _despine_top_right(ax)
+
+    axes[-1].set_xlabel("Target area")
+    axes[-1].tick_params(axis="x", rotation=30)
+    fig.suptitle("Motion metrics by insertion target", fontsize=10)
+    fig.tight_layout()
+    fig.savefig(out / "L2K_motion_by_target.png", dpi=FIG_DPI, bbox_inches="tight")
+    plt.close(fig)
 
 def save_summary_table(records, out):
     df = _scalar_df(records)
@@ -867,20 +1105,60 @@ def save_summary_table(records, out):
     fig.savefig(out / "L2F_summary_table.png", dpi=FIG_DPI, bbox_inches="tight")
     plt.close(fig)
 
+def report_extreme_recordings(records):
+    """Print recordings in the top or bottom 10% of any motion metric."""
+    df = _scalar_df(records)
+    metrics = [
+        ("max_abs_disp_um",          "Max |disp|"),
+        ("p2p_um",                   "P2P"),
+        ("rms_um",                   "RMS"),
+        ("mean_abs_vel_um_s",        "Mean |vel|"),
+    ]
+
+    print("\n── Extreme recordings (top/bottom 10% per metric) ──────────────────")
+    flagged = defaultdict(list)  # (mouse, session, probe) -> [reason]
+
+    for metric, label in metrics:
+        if metric not in df.columns: continue
+        col = df[metric].dropna()
+        if len(col) < 5: continue
+        lo = col.quantile(0.10)
+        hi = col.quantile(0.90)
+        for _, row in df.iterrows():
+            val = row.get(metric)
+            if pd.isna(val): continue
+            key = (row["mouse"], row["session"], int(row["probe"]))
+            if val <= lo:
+                flagged[key].append(f"{label}={val:.3g} [bottom 10%, thr≤{lo:.3g}]")
+            elif val >= hi:
+                flagged[key].append(f"{label}={val:.3g} [top 10%, thr≥{hi:.3g}]")
+
+    if not flagged:
+        print("  None found.")
+        return
+
+    for (mouse, session, probe), reasons in sorted(flagged.items()):
+        print(f"\n  {mouse} | {session} | imec{probe}")
+        for r in reasons:
+            print(f"    · {r}")
+    print()
+
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
     parser = argparse.ArgumentParser(description="Probe drift motion summary.")
-    parser.add_argument("--mode", choices=["single", "dataset", "all"], default="dataset")
+    parser.add_argument("--mode", choices=["single", "dataset", "all"], default="all")
     parser.add_argument("--mouse",   default=None)
     parser.add_argument("--session", default=None)
     parser.add_argument("--workers", type=int, default=N_WORKERS)
     args = parser.parse_args()
 
-    global INSERTION_DEPTHS
+    global INSERTION_DEPTHS, TARGET_AREAS
     INSERTION_DEPTHS = _load_insertion_depths()
     REWARD_GROUPS    = _load_reward_group()
+    TARGET_AREAS = _load_target_area()
+    print()
     L1_OUT.mkdir(parents=True, exist_ok=True)
     L2_OUT.mkdir(parents=True, exist_ok=True)
 
@@ -910,7 +1188,7 @@ def main():
     if args.mode in ("single", "all"):
         print(f"\nGenerating L1 per-recording figures ({args.workers} workers)...")
         worker_args = [
-            (mouse, session, probe, str(dredge_path), str(L1_OUT), INSERTION_DEPTHS)
+            (mouse, session, probe, str(dredge_path), str(L1_OUT), INSERTION_DEPTHS, TARGET_AREAS)
             for mouse, session, probe, dredge_path in all_recs
         ]
         with ProcessPoolExecutor(max_workers=args.workers) as pool:
@@ -935,8 +1213,15 @@ def main():
         plot_exponential_decay(records, L2_OUT)
         plot_autocorrelation(records, L2_OUT)
         plot_depth_gradient(records, L2_OUT)
+        plot_depth_gradient_absolute(records, L2_OUT)
+        plot_depth_gradient_barh(records, L2_OUT)
         plot_insertion_depth_scatter(records, L2_OUT)
+        plot_motion_by_target(records, L2_OUT)
         save_summary_table(records, L2_OUT)
+
+    # Print mouse/session/probes with extreme metrics
+    report_extreme_recordings(records)
+
 
     print(f"\nDone.\n  L1 : {L1_OUT}\n  L2 : {L2_OUT}")
 
