@@ -184,16 +184,10 @@ def cli(input_list, config, legacy_mode):
                 p for p in ex.map(process_session, sessions) if p
             )
 
+        # Filter by mouse_id
+        input_paths = [p for p in input_paths if p.parts[2].startswith("MH") and int(p.parts[2][3:]) == 31]
         for p in input_paths:
             print(p)
-
-        # Filter by mouse_id
-        input_paths = [
-            p for p in input_paths
-            if p.parts[2].startswith("MH")
-               and int(p.parts[2][3:]) > 30
-        ]
-        print(input_paths)
 
 
        #input_paths = []
