@@ -1,10 +1,15 @@
+import sys
+
 from qtpy import QtGui
-from qtpy.QtWidgets import QWidget, QApplication, QSizePolicy, QMainWindow, QGridLayout
+from qtpy.QtWidgets import (
+    QWidget, QApplication, QSizePolicy, QMainWindow, QGridLayout,
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
+    QDialogButtonBox, QTextEdit, QMessageBox, QSplitter,
+)
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QTransform
 
 import matplotlib
-
 import pyqtgraph as pg
 import numpy as np
 
@@ -24,36 +29,39 @@ from spikeinterface.sortingcomponents.tools import (
     create_sorting_analyzer_with_existing_templates,
 )
 
-#%%
-# CHANGE PATHS AS NECESSARY
-RAW_PATH = Path(r"M:\analysis\Myriam_Hamon\data\MH031\MH031_20250507_104425\Ephys\catgt_MH031_g0\MH031_g0_imec0")
-STREAM_NAME = 'imec0.ap'
-SORTING_PATH = Path(r"M:\analysis\Myriam_Hamon\data\MH031\MH031_20250507_104425\Ephys\catgt_MH031_g0\MH031_g0_imec0\ibl_format")
-METRICS_FILE = Path(r"M:\analysis\Myriam_Hamon\data\MH031\MH031_20250507_104425\Ephys\catgt_MH031_g0\MH031_g0_imec0\kilosort2\cluster_bc_unitType.tsv")
-MOTION_PATH = Path(r'M:\analysis\Myriam_Hamon\data\MH031\MH031_20250507_104425\Ephys\catgt_MH031_g0\MH031_g0_imec0\dredge_fast\motion')
+# ---------------------------------------------------------------------------
+# Paths – filled in by SessionPickerDialog at startup
+# ---------------------------------------------------------------------------
+BASE_DATA_PATH = Path(r"M:\analysis\Axel_Bisi\data")
 
-# DRIFT INTERVALS DURING RECORDING TO COMPARE
+RAW_PATH     = None
+STREAM_NAME  = None
+SORTING_PATH = None
+METRICS_FILE = None
+MOTION_PATH  = None
+
 INTERVALS = [
     [0, 2000],
     [2000, 4000],
 ]
 
-#%%
+# ---------------------------------------------------------------------------
+# pyqtgraph global config
+# ---------------------------------------------------------------------------
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
 
-
-GOOD_RGB = np.array([40, 170, 70, 220], dtype=np.uint8)
-MUA_RGB = np.array([0, 0, 255, 220], dtype=np.uint8)
-BAD_RGB = np.array([210, 50, 50, 220], dtype=np.uint8)
-NOLABEL_RGB = np.array([70, 70, 70, 220], dtype=np.uint8)
+GOOD_RGB    = np.array([40, 170, 70, 220],  dtype=np.uint8)
+MUA_RGB     = np.array([0, 0, 255, 220],    dtype=np.uint8)
+BAD_RGB     = np.array([210, 50, 50, 220],  dtype=np.uint8)
+NOLABEL_RGB = np.array([70, 70, 70, 220],   dtype=np.uint8)
 
 FONT = QtGui.QFont()
-FONT.setPointSize(8)
+FONT.setPointSize(16)
 
-DEFAULT_PEN = pg.mkPen(None)
-SELECTED_PEN = pg.mkPen(255, 220, 0, width=6)
-DEFAULT_SIZE = 10
+DEFAULT_PEN   = pg.mkPen(None)
+SELECTED_PEN  = pg.mkPen(255, 220, 0, width=6)
+DEFAULT_SIZE  = 10
 SELECTED_SIZE = 15
 
 INTERVAL_COLORS = [
@@ -62,26 +70,144 @@ INTERVAL_COLORS = [
     (0, 158, 115, 70),
 ]
 
-# Voltage snippet panel settings
-N_VOLTAGE_CHANNELS = 16   # number of channels to show, centered on cluster depth
-VOLTAGE_WINDOW_S = 0.05   # total window width in seconds (50 ms)
-VOLTAGE_MAX_SAMPLES = 2000  # downsample display to at most this many points
+# Full-recording decimated voltage overview
+VOLT_N_DISPLAY = 10000   # number of time points sampled across the full recording
 
 
-#%%
+# ===========================================================================
+# Session picker dialog
+# ===========================================================================
+
+class SessionPickerDialog(QDialog):
+
+    REQUIRED_GLOBS = [
+        ("ibl_format",                        "ibl_format/ directory"),
+        ("kilosort2/cluster_bc_unitType.tsv",  "kilosort2/cluster_bc_unitType.tsv"),
+        ("dredge_fast/motion",                 "dredge_fast/motion/ directory"),
+    ]
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Select Session")
+        self.resize(580*2, 300*2)
+        self._imec_dirs = {}
+
+        layout = QVBoxLayout(self)
+
+        for label_text, attr in [("Mouse:", "mouse_combo"), ("Session:", "session_combo"),
+                                  ("Probe:",  "probe_combo")]:
+            row = QHBoxLayout()
+            row.addWidget(QLabel(label_text))
+            combo = QComboBox()
+            setattr(self, attr, combo)
+            row.addWidget(combo)
+            layout.addLayout(row)
+
+        self.status = QTextEdit()
+        self.status.setReadOnly(True)
+        self.status.setFixedHeight(280)
+        layout.addWidget(self.status)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.ok_button = buttons.button(QDialogButtonBox.Ok)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+        self._populate_mice()
+        self.mouse_combo.currentIndexChanged.connect(self._on_mouse_changed)
+        self.session_combo.currentIndexChanged.connect(self._on_session_changed)
+        self.probe_combo.currentIndexChanged.connect(self._validate)
+        self._on_mouse_changed()
+
+    def _populate_mice(self):
+        if not BASE_DATA_PATH.exists():
+            self.status.setText(f"Base path not found:\n{BASE_DATA_PATH}")
+            return
+        mice = sorted(d.name for d in BASE_DATA_PATH.iterdir()
+                      if d.is_dir() and not d.name.startswith('.'))
+        self.mouse_combo.addItems(mice)
+
+    def _on_mouse_changed(self):
+        self.session_combo.clear()
+        mouse = self.mouse_combo.currentText()
+        if not mouse:
+            return
+        sessions = sorted(
+            (d.name for d in (BASE_DATA_PATH / mouse).iterdir() if d.is_dir()),
+            reverse=True,
+        )
+        self.session_combo.addItems(sessions)
+        self._on_session_changed()
+
+    def _on_session_changed(self):
+        self.probe_combo.clear()
+        mouse, session = self.mouse_combo.currentText(), self.session_combo.currentText()
+        if not mouse or not session:
+            return
+        imec_dirs = sorted((BASE_DATA_PATH / mouse / session).glob("Ephys/catgt_*/*_imec*"))
+        self._imec_dirs = {p.name: p for p in imec_dirs}
+        self.probe_combo.addItems(list(self._imec_dirs))
+        self._validate()
+
+    def _validate(self):
+        paths, missing = self._resolve_paths()
+        if missing:
+            self.status.setStyleSheet("color: red")
+            self.status.setText("Missing:\n" + "\n".join(missing))
+            self.ok_button.setEnabled(False)
+        else:
+            self.status.setStyleSheet("color: green")
+            self.status.setText(
+                "All files found \u2713\n"
+                f"  Raw:     {paths['raw_path']}\n"
+                f"  Sorting: {paths['sorting_path']}"
+            )
+            self.ok_button.setEnabled(True)
+
+    def _resolve_paths(self):
+        probe_name = self.probe_combo.currentText()
+        if not probe_name or probe_name not in self._imec_dirs:
+            return None, ["No imec folder found under session/Ephys/catgt_*/"]
+        imec = self._imec_dirs[probe_name]
+        missing = []
+        for glob, label in self.REQUIRED_GLOBS:
+            if not list(imec.glob(glob)):
+                missing.append(f"  {label}  \u2192  {imec / glob}")
+        if not list(imec.glob("*.ap.bin")):
+            missing.append(f"  *.ap.bin  \u2192  {imec}")
+        if missing:
+            return None, missing
+        imec_part = next(
+            (p for p in reversed(probe_name.split('_')) if p.startswith('imec')), 'imec0'
+        )
+        return {
+            'raw_path':     imec,
+            'stream_name':  f"{imec_part}.ap",
+            'sorting_path': imec / "ibl_format",
+            'metrics_file': imec / "kilosort2" / "cluster_bc_unitType.tsv",
+            'motion_path':  imec / "dredge_fast" / "motion",
+        }, []
+
+    def get_paths(self):
+        paths, _ = self._resolve_paths()
+        return paths
+
+
+# ===========================================================================
+# Data loading
+# ===========================================================================
+
 def load_data_with_spike_interface():
-
-    # Load in the raw data
     recording = si.read_spikeglx(folder_path=RAW_PATH, stream_name=STREAM_NAME)
     recording.reset_times()
-    fs = recording.sampling_frequency
+    fs      = recording.sampling_frequency
     sorting = ALFSortingExtractor(SORTING_PATH, fs)
 
-    # Load in the spike sorting data
-    spikes = alfio.load_object(SORTING_PATH, "spikes")
-    templates = alfio.load_object(SORTING_PATH, "templates")
-    templates_array = np.nan_to_num(templates["waveforms"])
-    winds = templates["waveformsChannels"]
+    spikes        = alfio.load_object(SORTING_PATH, "spikes")
+    templates_obj = alfio.load_object(SORTING_PATH, "templates")
+    templates_array = np.nan_to_num(templates_obj["waveforms"])
+    winds = templates_obj["waveformsChannels"]
 
     sparsity = np.zeros((len(templates_array), 384), dtype=bool)
     for i in range(len(templates_array)):
@@ -98,41 +224,34 @@ def load_data_with_spike_interface():
         channel_ids=recording.channel_ids,
     )
 
-    positions = np.zeros(
-        len(spikes["depths"]), dtype=dtype_localize_by_method["center_of_mass"]
-    )
+    positions = np.zeros(len(spikes["depths"]),
+                         dtype=dtype_localize_by_method["center_of_mass"])
     positions["y"] = spikes["depths"]
 
-
     analyzer = create_sorting_analyzer_with_existing_templates(
-        sorting,
-        recording,
+        sorting, recording,
         spike_amplitudes=1e6 * spikes["amps"],
         spike_locations=positions,
         noise_levels=np.ones(recording.get_num_channels()),
         templates=templates,
     )
 
-    # Load in the metrics
     metrics = pd.read_csv(METRICS_FILE, sep='\t')
     metrics['gui_label'] = metrics['bc_unitType']
     analyzer.extensions["quality_metrics"] = ComputeQualityMetrics(analyzer)
     analyzer.extensions["quality_metrics"].set_data('metrics', metrics)
     analyzer.extensions["quality_metrics"].run_info["run_completed"] = True
-    analyzer.extensions["quality_metrics"].run_info["runtime_s"] = 0
+    analyzer.extensions["quality_metrics"].run_info["runtime_s"]     = 0
 
-    # Load in the motion data
     motion = sp.load_motion_info(MOTION_PATH)['motion']
-
     return analyzer, motion
 
 
+# ===========================================================================
+# Main GUI
+# ===========================================================================
 
 class MainGUI(QMainWindow):
-
-    # --------------------------------------------------------------------------------------------
-    # Main
-    # --------------------------------------------------------------------------------------------
 
     def __init__(self):
         super().__init__()
@@ -140,33 +259,35 @@ class MainGUI(QMainWindow):
         self.analyzer, self.motion = load_data_with_spike_interface()
 
         if INTERVALS is None:
-            self.intervals = [
-                [0, self.analyzer.get_total_duration() //2],
-                [self.analyzer.get_total_duration()//2, self.analyzer.get_total_duration()],
-            ]
+            half = self.analyzer.get_total_duration() / 2
+            self.intervals = [[0, half], [half, self.analyzer.get_total_duration()]]
         else:
-            self.intervals = INTERVALS
+            self.intervals = [list(iv) for iv in INTERVALS]
 
-        # Initialize the setup
         self.init_gui()
 
-        # Load the data
+        # Cluster colours
         self.compute_average_metrics_by_cluster()
         has_label = 'gui_label' in self.analyzer.get_extension('quality_metrics').get_data()
         if not has_label:
             self.cluster_rgba = np.tile(NOLABEL_RGB, (self.clust_idx.size, 1))
         else:
             self.cluster_rgba = np.tile(BAD_RGB, (self.clust_idx.size, 1))
-            mua_idx = self.analyzer.get_extension('quality_metrics').get_data()['gui_label'] == 'MUA'
-            self.cluster_rgba[mua_idx] = MUA_RGB
-            good_idx = self.analyzer.get_extension('quality_metrics').get_data()['gui_label'] == 'GOOD'
-            self.cluster_rgba[good_idx] = GOOD_RGB
+            qm = self.analyzer.get_extension('quality_metrics').get_data()
+            self.cluster_rgba[qm['gui_label'] == 'MUA']  = MUA_RGB
+            self.cluster_rgba[qm['gui_label'] == 'GOOD'] = GOOD_RGB
 
-        # Cache probe channel depths once (used by voltage panel)
+        # Cache channel depths ordered by depth (used by voltage RMS)
         probe = self.analyzer.recording.get_probe()
-        self._channel_depths = probe.contact_positions[:, 1]  # (n_channels,)
+        self._channel_depths = probe.contact_positions[:, 1]
+        self._depth_sort     = np.argsort(self._channel_depths)
+        self._sorted_depths  = self._channel_depths[self._depth_sort]
 
-        # Initialise plots
+        # Compute full-recording decimated voltage (2000 single-frame reads)
+        print("Computing decimated voltage overview…")
+        self._compute_voltage_decimated()
+
+        # Static plots
         self.plot_depth_amp_scatter()
         self.plot_drift_overview()
         self.plot_spike_raster()
@@ -174,21 +295,19 @@ class MainGUI(QMainWindow):
         self.plot_drift_lines(self.fig3, np.arange(self.motion.spatial_bins_um.size) * 20)
         self.plot_drift_intervals()
 
-        # Initialise cluster cycle mode
-        self.spot_by_cluster_idx = {int(spot.data()): spot for spot in self.scatter.points()}
-        self.cycle_mode = 'all'
+        self.spot_by_cluster_idx = {int(s.data()): s for s in self.scatter.points()}
+        self.cycle_mode        = 'all'
         self.cycle_cluster_ids = self.clust_idx
 
-        # Initialise the first selected cluster
         first_spot = self.scatter.points()[0]
         self.selected_clust_idx = int(first_spot.data())
-        self.selected_spot = None
-
+        self.selected_spot      = None
         self.set_selected_cluster(self.selected_clust_idx)
 
-    # --------------------------------------------------------------------------------------------
-    # Initialization and setup
-    # --------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
+    # Layout
+    # -----------------------------------------------------------------------
+
     def init_gui(self):
         self.resize(1800, 1000)
         self.setWindowTitle('Drift QC GUI')
@@ -199,21 +318,46 @@ class MainGUI(QMainWindow):
         self.setCentralWidget(central_widget)
         self.central_widget = central_widget
 
-        # Figure 1 scatter depth vs amp
+        # col 0 – depth vs amplitude scatter
         self.fig1 = pg.PlotWidget()
         self.fig1.setLabel('left', 'Depth along probe (um)')
         self.fig1.setLabel('bottom', 'Amplitude (uV)')
         self.fig1.getAxis('left').label.setFont(FONT)
         self.fig1.getAxis('bottom').label.setFont(FONT)
 
-        # Figure 2 image of depth and firing rate
+        # col 1 top – spike raster
         self.fig2 = pg.PlotWidget()
         self.fig2.setLabel('left', 'Depth along probe (um)')
         self.fig2.setLabel('bottom', 'Time (s)')
         self.fig2.getAxis('left').label.setFont(FONT)
         self.fig2.getAxis('bottom').label.setFont(FONT)
 
+        # col 1 bottom – full-recording voltage RMS heatmap
+        # Intentionally NOT y-linked to fig2: independent zoom/pan and free height
+        self.fig_voltage = pg.PlotWidget()
+        self.fig_voltage.setLabel('left', 'Depth (um)')
+        self.fig_voltage.setLabel('bottom', 'Time (s)')
+        self.fig_voltage.getAxis('left').label.setFont(FONT)
+        self.fig_voltage.getAxis('bottom').label.setFont(FONT)
+        self._volt_img = pg.ImageItem()
+        self.fig_voltage.addItem(self._volt_img)
+        # Dashed yellow line: selected cluster's mean depth
+        self._volt_depth_line = pg.InfiniteLine(
+            angle=0,
+            pen=pg.mkPen(255, 220, 0, 220, width=2, style=Qt.DashLine),
+        )
+        self._volt_depth_line.setZValue(10)
+        self.fig_voltage.addItem(self._volt_depth_line)
+
+        # QSplitter in col 1: user can drag the divider to resize both panels freely
+        col1_splitter = QSplitter(Qt.Vertical)
+        col1_splitter.addWidget(self.fig2)
+        col1_splitter.addWidget(self.fig_voltage)
+        col1_splitter.setStretchFactor(0, 3)   # initial ratio: raster ~60 %
+        col1_splitter.setStretchFactor(1, 2)   # voltage RMS ~40 %
+
         max_width = 80
+
         self.fig3 = pg.PlotItem()
         self.fig3.setTitle("<span style='font-size:8pt'>Drift overview</span>")
         self.fig3.getAxis('left').setWidth(max_width)
@@ -225,11 +369,11 @@ class MainGUI(QMainWindow):
         self.fig4.addItem(self.amp_img)
         self.fig4.setTitle("<span style='font-size:8pt'>Amplitude distribution across session</span>")
         self.fig4.getAxis('left').setWidth(max_width)
-        self.fig4.setLabel('left', 'Amplitude (uV)', size=2)
+        self.fig4.setLabel('left', 'Amplitude (uV)')
         self.fig4.getAxis('left').label.setFont(FONT)
 
         self.fig5 = pg.PlotItem()
-        self.fr_curve = pg.PlotCurveItem(pen=pg.mkPen(0, 0, 0, width=2), name='fr')
+        self.fr_curve = pg.PlotCurveItem(pen=pg.mkPen(0, 0, 0, width=2))
         self.fig5.addItem(self.fr_curve)
         self.fig5.getAxis('left').setWidth(max_width)
         self.fig5.setTitle("<span style='font-size:8pt'>Mean cluster firing rate across session</span>")
@@ -237,7 +381,7 @@ class MainGUI(QMainWindow):
         self.fig5.getAxis('left').label.setFont(FONT)
 
         self.fig6 = pg.PlotItem()
-        self.amp_curve = pg.PlotCurveItem(pen=pg.mkPen(0, 0, 0, width=2), name='amp')
+        self.amp_curve = pg.PlotCurveItem(pen=pg.mkPen(0, 0, 0, width=2))
         self.fig6.addItem(self.amp_curve)
         self.fig6.getAxis('left').setWidth(max_width)
         self.fig6.setTitle("<span style='font-size:8pt'>Mean amplitude across session</span>")
@@ -246,10 +390,13 @@ class MainGUI(QMainWindow):
         self.fig6.getAxis('left').label.setFont(FONT)
 
         self.fig7 = pg.PlotItem()
-        self.drift_curve = pg.PlotCurveItem(pen=pg.mkPen(0, 0, 0, width=2), name='drift')
+        self.drift_curve = pg.PlotCurveItem(pen=pg.mkPen(0, 0, 0, width=2))
         self.fig7.addItem(self.drift_curve)
         self.fig7.getAxis('left').setWidth(max_width)
-        self.fig7.setTitle("<span style='font-size:8pt'>Estimated drift at cluster depth across session</span>")
+        self.fig7.setTitle(
+            "<span style='font-size:8pt'>Estimated drift at cluster depth "
+            "– drag coloured regions to change intervals</span>"
+        )
         self.fig7.setLabel('left', 'Estimated drift (um)')
         self.fig7.setLabel('bottom', 'Time (s)')
         self.fig7.getAxis('left').label.setFont(FONT)
@@ -273,23 +420,8 @@ class MainGUI(QMainWindow):
         self.fig9.getAxis('left').label.setFont(FONT)
         self.fig9.getAxis('bottom').label.setFont(FONT)
 
-        # ---- Voltage snippet panel (new) ----
-        self.fig_voltage = pg.PlotWidget()
-        self.fig_voltage.setTitle(
-            "<span style='font-size:8pt'>Raw voltage – median spike ± 25 ms "
-            "(16 ch centred on cluster depth)</span>"
-        )
-        self.fig_voltage.setLabel('left', 'Depth (um)')
-        self.fig_voltage.setLabel('bottom', 'Time (ms)')
-        self.fig_voltage.getAxis('left').label.setFont(FONT)
-        self.fig_voltage.getAxis('bottom').label.setFont(FONT)
-        # Hide the y-tick labels because depth context comes from fig2 alignment
-        self.fig_voltage.getAxis('left').setStyle(showValues=True)
-        self._voltage_curves: list = []
-        self._voltage_spike_lines: list = []
-
-        layout = pg.GraphicsLayout()
-        widget = pg.GraphicsLayoutWidget()
+        layout      = pg.GraphicsLayout()
+        widget      = pg.GraphicsLayoutWidget()
         hist_layout = pg.GraphicsLayout()
         hist_widget = pg.GraphicsLayoutWidget()
 
@@ -299,105 +431,105 @@ class MainGUI(QMainWindow):
         layout.addItem(self.fig6, row=8, col=0)
         layout.addItem(self.fig7, row=9, col=0)
 
+        # Link all x-axes in col 2 to fig7 so time ranges stay identical.
+        # Suppress bottom tick labels on intermediate plots so only fig7
+        # (the bottom panel) labels the time axis — this also removes the
+        # extra height those labels would add, keeping plot areas pixel-aligned.
+        for fig in [self.fig3, self.fig4, self.fig5, self.fig6]:
+            fig.setXLink(self.fig7)
+            fig.getAxis('bottom').setStyle(showValues=False)
+
         hist_layout.addItem(self.fig8, row=0, col=0)
         hist_layout.addItem(self.fig9, row=1, col=0)
 
         widget.addItem(layout)
         hist_widget.addItem(hist_layout)
 
-        central_layout.addWidget(self.fig1, 0, 0, 5, 1)
-        central_layout.addWidget(self.fig2, 0, 1, 5, 1)
-        central_layout.addWidget(widget, 0, 2, 5, 1)
-        # Voltage panel sits above the histogram pair in column 3
-        central_layout.addWidget(self.fig_voltage, 0, 3, 2, 1)
-        central_layout.addWidget(hist_widget, 2, 3, 3, 1)
+        central_layout.addWidget(self.fig1,       0, 0, 5, 1)
+        central_layout.addWidget(col1_splitter,   0, 1, 5, 1)
+        central_layout.addWidget(widget,          0, 2, 5, 1)
+        central_layout.addWidget(hist_widget,     0, 3, 5, 1)
 
-    # --------------------------------------------------------------------------------------------
-    # Load data
-    # --------------------------------------------------------------------------------------------
+        # col 1 (raster + voltage) gets 3× more width than col 0 (scatter)
+        central_layout.setColumnStretch(0, 1)
+        central_layout.setColumnStretch(1, 3)
+        central_layout.setColumnStretch(2, 2)
+        central_layout.setColumnStretch(3, 1)
+
+    # -----------------------------------------------------------------------
+    # Data
+    # -----------------------------------------------------------------------
 
     def compute_average_metrics_by_cluster(self):
-        """Compute average amplitude, firing rate, and depth for each cluster."""
         df = pd.DataFrame()
         df['clusters'] = self.analyzer.sorting.to_spike_vector()["unit_index"]
-        df['amps'] = self.analyzer.get_extension("spike_amplitudes").data['amplitudes']
-        df['depths'] = self.analyzer.get_extension("spike_locations").data["spike_locations"]["y"]
-
+        df['amps']     = self.analyzer.get_extension("spike_amplitudes").data['amplitudes']
+        df['depths']   = self.analyzer.get_extension("spike_locations").data["spike_locations"]["y"]
         avgs = df.groupby('clusters').agg(['mean', 'count'])
         self.clust_idx = avgs.index.values
-        self.avg_amp = avgs['amps']['mean'].values
-        self.avg_fr = avgs['depths']['count'].values / self.analyzer.get_total_duration()
+        self.avg_amp   = avgs['amps']['mean'].values
+        self.avg_fr    = avgs['depths']['count'].values / self.analyzer.get_total_duration()
         self.avg_depth = avgs['depths']['mean'].values
-
         del df, avgs
 
     def compute_data_for_cluster(self, clust_idx: int):
-
         idx = self.analyzer.sorting.to_spike_vector()["unit_index"] == clust_idx
-        self.clust_times = self.analyzer.recording.get_times()[self.analyzer.sorting.to_spike_vector()["sample_index"][idx]]
+        self.clust_times = self.analyzer.recording.get_times()[
+            self.analyzer.sorting.to_spike_vector()["sample_index"][idx]
+        ]
         self.clust_amps = self.analyzer.get_extension("spike_amplitudes").data['amplitudes'][idx]
 
-
-        # Get the mean amplitude and firing rate
-        n_bins = self.motion.temporal_bins_s[0].size
-        bin_indices = np.searchsorted(self.motion.temporal_bin_edges_s[0], self.clust_times, side="right") - 1
-        bin_indices = np.clip(bin_indices, 0, n_bins - 1)
-
-        amp_sum = np.bincount(bin_indices, weights=self.clust_amps, minlength=n_bins)
+        n_bins      = self.motion.temporal_bins_s[0].size
+        bin_indices = np.clip(
+            np.searchsorted(self.motion.temporal_bin_edges_s[0], self.clust_times, side="right") - 1,
+            0, n_bins - 1,
+        )
+        amp_sum   = np.bincount(bin_indices, weights=self.clust_amps, minlength=n_bins)
         amp_count = np.bincount(bin_indices, minlength=n_bins)
 
-        self.mean_amp = np.full(n_bins, np.nan, dtype=float)
+        self.mean_amp = np.full(n_bins, np.nan)
+        self.mean_fr  = np.full(n_bins, np.nan)
         valid = amp_count > 0
         self.mean_amp[valid] = amp_sum[valid] / amp_count[valid]
-        self.mean_fr = np.full(n_bins, np.nan, dtype=float)
-        self.mean_fr[valid] = amp_count[valid]
+        self.mean_fr[valid]  = amp_count[valid]
 
-    # --------------------------------------------------------------------------------------------
-    # Plots
-    # --------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
+    # Static plots
+    # -----------------------------------------------------------------------
+
     def plot_depth_amp_scatter(self):
-
         self.scatter = pg.ScatterPlotItem()
         self.scatter.sigClicked.connect(self._on_plot_click)
         self.fig1.addItem(self.scatter)
-
-        self.default_pen = pg.mkPen(None)
-        self.selected_pen = pg.mkPen(255, 220, 0, width=6)
-        self.default_size = 10
-        self.selected_size = 15
-
         self.scatter.setData(
-            x=self.avg_amp,
-            y=self.avg_depth,
-            data=self.clust_idx,
+            x=self.avg_amp, y=self.avg_depth, data=self.clust_idx,
             brush=[pg.mkBrush(*rgba) for rgba in self.cluster_rgba],
-            pen=DEFAULT_PEN,
-            size=DEFAULT_SIZE,
-            pxMode=True,
+            pen=DEFAULT_PEN, size=DEFAULT_SIZE, pxMode=True,
         )
         self.fig1.setXRange(-50, np.nanmin([np.nanmax(self.avg_amp) + 200, 1200]))
         self.fig1.setYRange(0, 4000)
 
     def plot_spike_raster(self):
-
-        isnan = ~np.isnan(self.analyzer.get_extension("spike_locations").data["spike_locations"]["y"])
+        isnan  = ~np.isnan(
+            self.analyzer.get_extension("spike_locations").data["spike_locations"]["y"]
+        )
         depths = self.analyzer.get_extension("spike_locations").data["spike_locations"]["y"][isnan]
-        times = self.analyzer.recording.get_times()[self.analyzer.sorting.to_spike_vector()["sample_index"][isnan]]
-
-        fr, times, depths = bincount2D(times, depths, xbin=0.05, ybin=10, ylim=[np.min([0, np.min(depths)]), np.max([3840, np.max(depths)])])
+        times  = self.analyzer.recording.get_times()[
+            self.analyzer.sorting.to_spike_vector()["sample_index"][isnan]
+        ]
+        fr, times, depths = bincount2D(
+            times, depths, xbin=0.05, ybin=10,
+            ylim=[min(0, depths.min()), max(3840, depths.max())],
+        )
         fr = fr.T
-
         xscale = (times[-1] - times[0]) / fr.shape[0]
         yscale = (depths[-1] - depths[0]) / fr.shape[1]
-        yoffset = depths[0]
-        xoffset = times[0]
-
         levels = np.quantile(np.mean(fr, axis=0), [0, 1])
         fr_img = pg.ImageItem()
         fr_img.setImage(fr)
-        fr_img.setTransform(QTransform(xscale, 0.0, 0.0, 0.0, yscale, 0.0, xoffset, yoffset, 1.0))
+        fr_img.setTransform(QTransform(xscale, 0, 0, 0, yscale, 0, times[0], depths[0], 1))
         fr_img.setOpacity(0.8)
-        cmap, lut, grad = get_color('binary')
+        _, lut, _ = get_color('binary')
         fr_img.setLookupTable(lut)
         fr_img.setLevels(levels)
         self.fig2.addItem(fr_img)
@@ -405,309 +537,214 @@ class MainGUI(QMainWindow):
         self.fig2.setYRange(0, 4000)
 
     def plot_drift_overview(self):
-        # Compute drift interpolated at different depths
         drift_interp = self.motion.get_displacement_at_time_and_depth(
             times_s=self.motion.temporal_bins_s[0],
             locations_um=np.arange(0, 3840, 40),
-            segment_index=0,
-            grid=True,
+            segment_index=0, grid=True,
         ).T
-
-        xscale = (self.motion.temporal_bin_edges_s[0].max() - self.motion.temporal_bin_edges_s[0].min()) / self.motion.temporal_bins_s[0].size
-        yscale = 3840 / drift_interp.shape[1]
+        xscale  = (self.motion.temporal_bin_edges_s[0].max() -
+                   self.motion.temporal_bin_edges_s[0].min()) / self.motion.temporal_bins_s[0].size
+        yscale  = 3840 / drift_interp.shape[1]
         xoffset = self.motion.temporal_bin_edges_s[0].min()
-        yoffset = 0
-
         drift_img = pg.ImageItem()
         drift_img.setImage(drift_interp)
-        drift_img.setTransform(QTransform(xscale, 0.0, 0.0, 0.0, yscale, 0.0, xoffset, yoffset, 1.0))
-        cmap, lut, grad = get_color('seismic')
+        drift_img.setTransform(QTransform(xscale, 0, 0, 0, yscale, 0, xoffset, 0, 1))
+        _, lut, _ = get_color('seismic')
         drift_img.setLookupTable(lut)
         drift_img.setLevels((-30, 30))
-
         self.fig2.addItem(drift_img)
-        self.fig2.setXRange(0, self.analyzer.get_total_duration() + 50)
-        self.fig2.setYRange(0, 4000)
 
     def plot_drift_lines(self, fig, offsets):
-
-        for i, [disp, offset] in enumerate(zip(self.motion.displacement[0].T, offsets)):
-
-            drift_plot = pg.PlotCurveItem()
-            drift_plot.setData(x=self.motion.temporal_bins_s[0], y=disp + offset, pen='k', linewidth=4)
-            fig.addItem(drift_plot)
-
+        for disp, offset in zip(self.motion.displacement[0].T, offsets):
+            curve = pg.PlotCurveItem()
+            curve.setData(x=self.motion.temporal_bins_s[0], y=disp + offset, pen='r', linewidth=12)
+            fig.addItem(curve)
         fig.setXRange(0, self.analyzer.get_total_duration() + 50)
 
-
     def plot_drift_intervals(self):
-
+        self._interval_regions = []
         t_min = float(np.nanmin(self.motion.temporal_bins_s[0]))
         t_max = float(np.nanmax(self.motion.temporal_bins_s[0]))
         for (start, end), color in zip(self.intervals, INTERVAL_COLORS):
             lo = max(float(start), t_min)
-            hi = min(float(end), t_max)
+            hi = min(float(end),   t_max)
             if hi <= lo:
                 continue
             region = pg.LinearRegionItem(
                 values=(lo, hi),
                 orientation='vertical',
-                movable=False,
+                movable=True,
                 brush=pg.mkBrush(*color),
-                pen=pg.mkPen(color[0], color[1], color[2], 130),
+                pen=pg.mkPen(color[0], color[1], color[2], 200),
                 swapMode='sort',
             )
             region.setZValue(-20)
+            region.sigRegionChanged.connect(self._on_interval_changed)
             self.fig7.addItem(region)
+            self._interval_regions.append(region)
+
+    def _on_interval_changed(self):
+        self.intervals = [list(r.getRegion()) for r in self._interval_regions]
+        if hasattr(self, 'mean_amp') and self.mean_amp is not None:
+            self.plot_amplitude_histogram()
+            self.plot_firing_rate_histogram()
+
+    # -----------------------------------------------------------------------
+    # Full-recording decimated voltage overview
+    # -----------------------------------------------------------------------
+
+    def _compute_voltage_decimated(self):
+        """Stride-subsample the raw recording to VOLT_N_DISPLAY time points.
+        Stores the full (n_time, n_channels_depth_sorted) array; slicing to
+        50 channels is done cheaply per cluster in _update_voltage_panel."""
+        rec     = self.analyzer.recording
+        n_total = rec.get_num_samples()
+        n_ch    = rec.get_num_channels()
+        stride  = max(1, n_total // VOLT_N_DISPLAY)
+
+        volt = np.zeros((VOLT_N_DISPLAY, n_ch), dtype=np.float32)
+        for i in range(VOLT_N_DISPLAY):
+            frame = i * stride
+            if frame >= n_total:
+                break
+            volt[i] = rec.get_traces(
+                start_frame=frame, end_frame=frame + 1, return_scaled=True
+            )[0]
+
+        self._voltage_dec        = volt[:, self._depth_sort]   # depth-sorted columns
+        self._voltage_dec_times  = np.arange(VOLT_N_DISPLAY) * stride / rec.sampling_frequency
+        self._voltage_dec_stride = stride
+
+    def _update_voltage_panel(self):
+        """Slice the cached array to 50 channels around the selected cluster
+        and repaint the heatmap.  No disk I/O — pure numpy indexing."""
+        N_SHOW = 50
+        target = self.avg_depth[self.selected_clust_idx]
+
+        # 50 nearest channels in depth-sorted order
+        sel = np.sort(np.argsort(np.abs(self._sorted_depths - target))[:N_SHOW])
+        ch_depths  = self._sorted_depths[sel]
+        volt_slice = self._voltage_dec[:, sel]   # (n_time, N_SHOW)
+
+        t0 = float(self._voltage_dec_times[0])
+        t1 = float(self._voltage_dec_times[-1])
+        d0 = float(ch_depths[0])
+        d1 = float(ch_depths[-1])
+        xscale = (t1 - t0) / max(volt_slice.shape[0] - 1, 1)
+        yscale = (d1 - d0) / max(volt_slice.shape[1] - 1, 1)
+
+        clim = float(np.nanpercentile(np.abs(volt_slice), 99))
+        clim = max(clim, 1.0)
+
+        self._volt_img.setImage(volt_slice)
+        self._volt_img.setTransform(QTransform(xscale, 0, 0, 0, yscale, 0, t0, d0, 1))
+        _, lut, _ = get_color('seismic')
+        self._volt_img.setLookupTable(lut)
+        self._volt_img.setLevels((-clim, clim))
+
+        self._volt_depth_line.setPos(target)
+
+        spacing = float(np.median(np.diff(ch_depths))) if len(ch_depths) > 1 else 20.0
+        pad = max(spacing, 20.0) * 0.6
+        self.fig_voltage.setYRange(d0 - pad, d1 + pad)
+        self.fig_voltage.setXRange(0, self.analyzer.get_total_duration() + 50)
+
+        clus_id   = self.analyzer.sorting.get_unit_ids()[self.selected_clust_idx]
+        stride_s  = self._voltage_dec_stride / self.analyzer.recording.sampling_frequency
+        self.fig_voltage.setTitle(
+            f"<span style='font-size:8pt'>Raw voltage – cluster {clus_id} "
+            f"| {N_SHOW} ch @ {target:.0f} \u00b5m "
+            f"| 1 sample / {stride_s:.1f} s "
+            f"| \u00b1{clim:.1f} \u00b5V</span>"
+        )
+
+    # -----------------------------------------------------------------------
+    # Per-cluster plots
+    # -----------------------------------------------------------------------
 
     def plot_amplitude_distribution(self):
-
         self.amp_img.clear()
         bins = [400, 200]
         H, xedges, yedges = np.histogram2d(self.clust_times, self.clust_amps * 1e6, bins=bins)
         H[H == 0] = np.nan
-        self.amp_img.setImage(H)
         xscale = (xedges[-1] - xedges[0]) / bins[0]
         yscale = (yedges[-1] - yedges[0]) / bins[1]
-        xoffset = xedges[0]
-        yoffset = yedges[0]
-        self.amp_img.setTransform(QTransform(xscale, 0.0, 0.0, 0.0, yscale, 0.0, xoffset, yoffset, 1.0))
-        cmap = pg.colormap.get("viridis")
-        self.amp_img.setLookupTable(cmap.getLookupTable())
+        self.amp_img.setImage(H)
+        self.amp_img.setTransform(
+            QTransform(xscale, 0, 0, 0, yscale, 0, xedges[0], yedges[0], 1)
+        )
+        self.amp_img.setLookupTable(pg.colormap.get("viridis").getLookupTable())
         self.fig4.setYRange(0, yedges[-1] + 20)
         self.fig4.setXRange(0, self.analyzer.get_total_duration() + 50)
 
     def plot_mean_amplitude(self):
-
-        self.amp_curve.clear()
         self.amp_curve.setData(self.motion.temporal_bins_s[0], self.mean_amp * 1e6)
         self.fig6.setXRange(0, self.analyzer.get_total_duration() + 50)
 
     def plot_mean_firing_rate(self):
-        self.fr_curve.clear()
         self.fr_curve.setData(self.motion.temporal_bins_s[0], self.mean_fr)
         self.fig5.setXRange(0, self.analyzer.get_total_duration() + 50)
 
     def plot_estimated_depth(self):
-
         drift_at_depth = self.motion.get_displacement_at_time_and_depth(
             times_s=self.motion.temporal_bins_s[0],
             locations_um=[self.avg_depth[self.selected_clust_idx]],
             grid=True,
         )[0]
-
-        self.drift_curve.clear()
         self.drift_curve.setData(self.motion.temporal_bins_s[0], drift_at_depth)
         self.fig7.setXRange(0, self.analyzer.get_total_duration() + 50)
 
     def plot_histogram(self, data, fig, hist_items):
-
         for item in hist_items:
             fig.removeItem(item)
-
         hist_items = []
 
-        data_max = float(np.nanmax(data))
+        data_max = float(np.nanmax(data)) if np.any(np.isfinite(data)) else 1.0
         if data_max <= 0:
             data_max = 1.0
         bin_edges = np.linspace(0.0, data_max * 1.05, 24)
         bin_width = np.diff(bin_edges)
-        centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
-        times = self.motion.temporal_bins_s[0]
+        centers   = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+        times     = self.motion.temporal_bins_s[0]
 
         for (start, end), color in zip(self.intervals, INTERVAL_COLORS):
-            interval_mask = (times >= start) & (times < end)
-            vals = data[interval_mask]
+            vals = data[(times >= start) & (times < end)]
             if vals.size == 0:
                 continue
-
             counts, _ = np.histogram(vals, bins=bin_edges)
             total = counts.sum()
             if total == 0:
                 continue
             counts = counts.astype(float) / (total * bin_width)
             bar = pg.BarGraphItem(
-                x=centers,
-                height=counts,
-                width=bin_width * 0.92,
+                x=centers, height=counts, width=bin_width * 0.92,
                 brush=pg.mkBrush(color[0], color[1], color[2], 170),
                 pen=pg.mkPen(color[0], color[1], color[2], 220),
             )
             fig.addItem(bar)
             hist_items.append(bar)
-
         return hist_items
 
     def plot_amplitude_histogram(self):
-
         self.fig9_hist_items = self.plot_histogram(self.mean_amp, self.fig9, self.fig9_hist_items)
 
     def plot_firing_rate_histogram(self):
-
         self.fig8_hist_items = self.plot_histogram(self.mean_fr, self.fig8, self.fig8_hist_items)
 
-    # --------------------------------------------------------------------------------------------
-    # Voltage snippet panel
-    # --------------------------------------------------------------------------------------------
-
-    def plot_voltage_snippet(self):
-        """
-        Show a short raw-voltage snippet centred on the median spike of the
-        selected cluster.  N_VOLTAGE_CHANNELS channels nearest to the cluster
-        depth are displayed as vertically-offset traces (depth-ordered, y axis
-        in µm).  Traces are downsampled to at most VOLTAGE_MAX_SAMPLES points.
-
-        Visual conventions
-        ------------------
-        * Grey traces  – neighbouring channels
-        * Coloured trace (cluster RGBA) – the single channel closest to the
-          cluster's mean depth
-        * Faint yellow vertical lines – all spike times inside the window
-        * Dashed yellow line at t = 0 – the median spike (window centre)
-        """
-        # Clear previous items
-        for item in self._voltage_curves + self._voltage_spike_lines:
-            self.fig_voltage.removeItem(item)
-        self._voltage_curves = []
-        self._voltage_spike_lines = []
-
-        if self.clust_times.size == 0:
-            return
-
-        fs = self.analyzer.recording.sampling_frequency
-        n_total = self.analyzer.recording.get_num_samples()
-        half_win = VOLTAGE_WINDOW_S / 2.0
-
-        # Centre the window on the median spike time
-        center_s = float(np.median(self.clust_times))
-        start_s = max(0.0, center_s - half_win)
-        end_s = min(n_total / fs, center_s + half_win)
-
-        start_frame = int(start_s * fs)
-        end_frame = int(end_s * fs)
-        n_frames = end_frame - start_frame
-        if n_frames < 2:
-            return
-
-        # Select channels closest to the cluster's mean depth
-        target_depth = self.avg_depth[self.selected_clust_idx]
-        dist_to_target = np.abs(self._channel_depths - target_depth)
-        # Sorted by distance; take the N nearest, then re-sort by depth for display
-        nearest_local = np.argsort(dist_to_target)[:N_VOLTAGE_CHANNELS]
-        nearest_local = nearest_local[np.argsort(self._channel_depths[nearest_local])]  # depth order
-        channel_ids_sel = self.analyzer.recording.channel_ids[nearest_local]
-        channel_depths_sel = self._channel_depths[nearest_local]  # (N,) in depth order
-
-        # Fetch raw traces  –  SpikeGLX files are memory-mapped so this is fast
-        traces = self.analyzer.recording.get_traces(
-            start_frame=start_frame,
-            end_frame=end_frame,
-            channel_ids=channel_ids_sel,
-            return_scaled=True,   # µV
-        )  # shape: (n_frames, N_VOLTAGE_CHANNELS)
-
-        # Downsample for display
-        if n_frames > VOLTAGE_MAX_SAMPLES:
-            step = max(1, n_frames // VOLTAGE_MAX_SAMPLES)
-            traces_ds = traces[::step]
-        else:
-            step = 1
-            traces_ds = traces
-
-        n_ds = traces_ds.shape[0]
-        # Time axis relative to the centre spike, in ms
-        t_ms = (np.arange(n_ds) * step / fs + (start_s - center_s)) * 1000.0
-
-        # Vertical scale: fit each trace into 80 % of the median inter-channel gap.
-        # Use a robust noise estimate (MAD) per channel so the scale is automatic.
-        if len(channel_depths_sel) > 1:
-            spacing = float(np.median(np.diff(channel_depths_sel)))
-        else:
-            spacing = 20.0
-        spacing = max(spacing, 10.0)  # guard against degenerate probes
-
-        mad_per_ch = np.median(np.abs(traces_ds - np.median(traces_ds, axis=0)), axis=0)
-        # Replace 0 MAD with the global median so we don't divide by zero
-        global_mad = float(np.median(mad_per_ch[mad_per_ch > 0])) if np.any(mad_per_ch > 0) else 1.0
-        mad_per_ch = np.where(mad_per_ch > 0, mad_per_ch, global_mad)
-        # Scale factor: 1 MAD  →  20 % of inter-channel spacing  (so ±3 σ ≈ ±60 %)
-        scale_per_ch = (0.20 * spacing) / mad_per_ch
-
-        # Index of the channel closest to the cluster depth (within selected set)
-        best_local = int(np.argmin(np.abs(channel_depths_sel - target_depth)))
-        rgba = self.cluster_rgba[self.selected_clust_idx].astype(int)
-
-        for i, depth in enumerate(channel_depths_sel):
-            y = (traces_ds[:, i] - np.median(traces_ds[:, i])) * scale_per_ch[i] + depth
-
-            if i == best_local:
-                pen = pg.mkPen(int(rgba[0]), int(rgba[1]), int(rgba[2]), 230, width=2)
-            else:
-                pen = pg.mkPen(100, 100, 100, 160, width=1)
-
-            curve = pg.PlotCurveItem(x=t_ms, y=y, pen=pen)
-            self.fig_voltage.addItem(curve)
-            self._voltage_curves.append(curve)
-
-        # Faint vertical ticks at every spike inside the window
-        spike_mask = (self.clust_times >= start_s) & (self.clust_times <= end_s)
-        for st in self.clust_times[spike_mask]:
-            t_rel = (st - center_s) * 1000.0
-            vline = pg.InfiniteLine(
-                pos=t_rel, angle=90,
-                pen=pg.mkPen(200, 170, 0, 60, width=1),
-            )
-            self.fig_voltage.addItem(vline)
-            self._voltage_spike_lines.append(vline)
-
-        # Dashed line at t = 0 (centre / median spike)
-        vline0 = pg.InfiniteLine(
-            pos=0.0, angle=90,
-            pen=pg.mkPen(220, 180, 0, 180, width=2, style=Qt.DashLine),
-        )
-        self.fig_voltage.addItem(vline0)
-        self._voltage_spike_lines.append(vline0)
-
-        # Set axis ranges with a little padding
-        pad_depth = spacing * 0.6
-        self.fig_voltage.setYRange(
-            channel_depths_sel.min() - pad_depth,
-            channel_depths_sel.max() + pad_depth,
-        )
-        self.fig_voltage.setXRange(t_ms[0], t_ms[-1])
-
-        # Update the title to show which spike / cluster we centred on
-        clus_id = self.analyzer.sorting.get_unit_ids()[self.selected_clust_idx]
-        n_spikes_shown = int(spike_mask.sum())
-        self.fig_voltage.setTitle(
-            f"<span style='font-size:8pt'>Raw voltage – cluster {clus_id} "
-            f"| median spike ± {int(half_win * 1000)} ms "
-            f"| {n_spikes_shown} spikes shown "
-            f"| {N_VOLTAGE_CHANNELS} ch @ depth ≈ {target_depth:.0f} µm</span>"
-        )
-
-    # --------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
     # Interactions
-    # --------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------
 
     def _on_plot_click(self, _, point):
-        clicked_pos = point[0].pos()
-        clicked_spots = self.scatter.pointsAt(clicked_pos)
-        if len(clicked_spots) == 0:
-            return
-
-        clicked_spot = clicked_spots[0]
-        self.set_selected_cluster(int(clicked_spot.data()))
+        spots = self.scatter.pointsAt(point[0].pos())
+        if spots:
+            self.set_selected_cluster(int(spots[0].data()))
 
     def keyPressEvent(self, event):
         if event.modifiers() & Qt.ShiftModifier:
-            mode_key_map = {
-                Qt.Key_G: 'good',
-                Qt.Key_M: 'mua',
-                Qt.Key_B: 'bad',
-                Qt.Key_A: 'all',
-            }
-            mode = mode_key_map.get(event.key())
+            mode_map = {Qt.Key_G: 'good', Qt.Key_M: 'mua',
+                        Qt.Key_B: 'bad',  Qt.Key_A: 'all'}
+            mode = mode_map.get(event.key())
             if mode is not None:
                 self._set_cycle_mode(mode)
                 event.accept()
@@ -718,76 +755,54 @@ class MainGUI(QMainWindow):
             if self.cycle_cluster_ids.size == 0:
                 event.accept()
                 return
-            current_pos = int(np.where(self.cycle_cluster_ids == self.selected_clust_idx)[0][0])
+            pos  = int(np.where(self.cycle_cluster_ids == self.selected_clust_idx)[0][0])
             step = -1 if event.key() == Qt.Key_Left else 1
-            next_pos = (current_pos + step) % self.cycle_cluster_ids.size
-            self.set_selected_cluster(int(self.cycle_cluster_ids[next_pos]))
+            self.set_selected_cluster(
+                int(self.cycle_cluster_ids[(pos + step) % self.cycle_cluster_ids.size])
+            )
             event.accept()
             return
 
         super().keyPressEvent(event)
 
-    # --------------------------------------------------------------------------------------------
-    # Keyboard interaction for cycling through clusters based on quality labels
-    # --------------------------------------------------------------------------------------------
-
-    def _clusters_for_cycle_mode(self, mode: str) -> np.ndarray:
-        """Return cluster IDs eligible for keyboard cycling under a mode."""
-        if mode == 'good':
-            return self.clust_idx[np.all(self.cluster_rgba == GOOD_RGB, axis=1)]
-        if mode == 'mua':
-            return self.clust_idx[np.all(self.cluster_rgba == MUA_RGB, axis=1)]
-        if mode == 'bad':
-            return self.clust_idx[np.all(self.cluster_rgba == BAD_RGB, axis=1)]
-
+    def _clusters_for_cycle_mode(self, mode):
+        if mode == 'good': return self.clust_idx[np.all(self.cluster_rgba == GOOD_RGB, axis=1)]
+        if mode == 'mua':  return self.clust_idx[np.all(self.cluster_rgba == MUA_RGB,  axis=1)]
+        if mode == 'bad':  return self.clust_idx[np.all(self.cluster_rgba == BAD_RGB,  axis=1)]
         return self.clust_idx
 
-    def _set_cycle_mode(self, mode: str):
-        """Set active keyboard cycle mode and keep selection valid for that mode."""
-        cycle_ids = self._clusters_for_cycle_mode(mode)
-        if cycle_ids.size == 0:
+    def _set_cycle_mode(self, mode):
+        ids = self._clusters_for_cycle_mode(mode)
+        if ids.size == 0:
             return
-
         self.cycle_mode = mode
-        self.cycle_cluster_ids = cycle_ids
-        if self.selected_clust_idx not in self.cycle_cluster_ids:
-            self.set_selected_cluster(int(self.cycle_cluster_ids[0]))
+        self.cycle_cluster_ids = ids
+        if self.selected_clust_idx not in ids:
+            self.set_selected_cluster(int(ids[0]))
 
     def _sync_cycle_ids_with_selected(self):
-        """Ensure keyboard cycling list contains the selected cluster."""
         if not hasattr(self, 'cycle_cluster_ids') or self.cycle_cluster_ids.size == 0:
             self.cycle_mode = 'all'
             self.cycle_cluster_ids = self.clust_idx
-
         if self.selected_clust_idx not in self.cycle_cluster_ids:
             self.cycle_mode = 'all'
             self.cycle_cluster_ids = self.clust_idx
 
-
-    # --------------------------------------------------------------------------------------------
-    # Cluster selection
-    # --------------------------------------------------------------------------------------------
-
     def _update_background_for_selected_cluster(self):
-        """Set central widget background to the selected cluster color."""
         rgba = self.cluster_rgba[self.selected_clust_idx].astype(int)
         self.central_widget.setStyleSheet(
-            f"background-color: rgba({rgba[0]}, {rgba[1]}, {rgba[2]}, 120);"
+            f"background-color: rgba({rgba[0]},{rgba[1]},{rgba[2]},120);"
         )
 
     def _update_selected_spot(self, spot):
-        """Highlight only the selected spot; reset previous selection style."""
-        if getattr(self, "selected_spot", None) is not None and self.selected_spot is not spot:
+        if getattr(self, 'selected_spot', None) is not None and self.selected_spot is not spot:
             self.selected_spot.setPen(DEFAULT_PEN)
             self.selected_spot.setSize(DEFAULT_SIZE)
-
         self.selected_spot = spot
         self.selected_spot.setPen(SELECTED_PEN)
         self.selected_spot.setSize(SELECTED_SIZE)
 
-
-    def _update_plots_for_cluster(self, clust_idx: int):
-        """Update all dependent plots for a given cluster index."""
+    def _update_plots_for_cluster(self, clust_idx):
         self.compute_data_for_cluster(clust_idx)
         self.plot_amplitude_distribution()
         self.plot_mean_amplitude()
@@ -795,59 +810,63 @@ class MainGUI(QMainWindow):
         self.plot_estimated_depth()
         self.plot_amplitude_histogram()
         self.plot_firing_rate_histogram()
-        self.plot_voltage_snippet()   # ← new
+        self._update_voltage_panel()
 
     def set_selected_cluster(self, clust_idx: int):
-        """Select a cluster, update highlight, and refresh dependent plots."""
-
         self.selected_clust_idx = int(clust_idx)
         self._sync_cycle_ids_with_selected()
         clus_id = self.analyzer.sorting.get_unit_ids()[self.selected_clust_idx]
-        self.fig1.setTitle(f"<span style='font-size:10pt'>Cluster {clus_id}, index {self.selected_clust_idx}</span>")
+        self.fig1.setTitle(
+            f"<span style='font-size:10pt'>Cluster {clus_id}, "
+            f"index {self.selected_clust_idx}</span>"
+        )
         self._update_selected_spot(self.spot_by_cluster_idx[self.selected_clust_idx])
         self._update_background_for_selected_cluster()
         self._update_plots_for_cluster(clust_idx)
 
 
-def get_color(
-        cmap_name: str, cbin: int = 256
-    ):
-        """
-        Generate a pyqtgraph-compatible color map, LUT, and gradient from a given colormap.
+# ===========================================================================
+# Utilities
+# ===========================================================================
 
-        Parameters
-        ----------
-        cmap_name : str
-            Name of the Matplotlib colormap.
-        cbin : int, default=256
-            Number of discrete bins for the LUT.
+def get_color(cmap_name: str, cbin: int = 256):
+    mpl_cmap = matplotlib.colormaps[cmap_name]
+    if isinstance(mpl_cmap, mpl.colors.LinearSegmentedColormap):
+        cbins  = np.linspace(0.0, 1.0, cbin)
+        colors = mpl_cmap(cbins)[:, :3].tolist()
+    else:
+        colors = mpl_cmap.colors
+    colors    = [(np.array(c) * 255).astype(int).tolist() + [255] for c in colors]
+    positions = np.linspace(0, 1, len(colors))
+    cmap      = pg.ColorMap(positions, colors)
+    return cmap, cmap.getLookupTable(), cmap.getGradient()
 
-        Returns
-        -------
-        map : pg.ColorMap
-            A pyqtgraph ColorMap object.
-        lut : np.ndarray
-            Lookup table for color mapping.
-        grad : QtGui.QLinearGradient
-            Gradient object for rendering the bar.
-        """
-        mpl_cmap = matplotlib.colormaps[cmap_name]
-        if isinstance(mpl_cmap, mpl.colors.LinearSegmentedColormap):
-            cbins = np.linspace(0.0, 1.0, cbin)
-            colors = (mpl_cmap(cbins)[np.newaxis, :, :3][0]).tolist()
-        else:
-            colors = mpl_cmap.colors
-        colors = [(np.array(c) * 255).astype(int).tolist() + [255.0] for c in colors]
-        positions = np.linspace(0, 1, len(colors))
-        cmap = pg.ColorMap(positions, colors)
-        lut = cmap.getLookupTable()
-        grad = cmap.getGradient()
 
-        return cmap, lut, grad
-
+# ===========================================================================
+# Entry point
+# ===========================================================================
 
 if __name__ == "__main__":
-    app = QApplication([])
+    app = QApplication(sys.argv)
+    font = app.font()
+    font.setPointSize(16)
+    app.setFont(font)
+
+    dialog = SessionPickerDialog()
+    if dialog.exec_() != QDialog.Accepted:
+        sys.exit(0)
+
+    paths = dialog.get_paths()
+    if paths is None:
+        QMessageBox.critical(None, "Error", "Could not resolve session paths.")
+        sys.exit(1)
+
+    RAW_PATH     = paths['raw_path']
+    STREAM_NAME  = paths['stream_name']
+    SORTING_PATH = paths['sorting_path']
+    METRICS_FILE = paths['metrics_file']
+    MOTION_PATH  = paths['motion_path']
+
     gui = MainGUI()
     gui.show()
-    app.exec_()
+    sys.exit(app.exec_())
