@@ -1148,7 +1148,7 @@ def report_extreme_recordings(records):
 
 def main():
     parser = argparse.ArgumentParser(description="Probe drift motion summary.")
-    parser.add_argument("--mode", choices=["single", "dataset", "all"], default="all")
+    parser.add_argument("--mode", choices=["single", "dataset", "all"], default="dataset")
     parser.add_argument("--mouse",   default=None)
     parser.add_argument("--session", default=None)
     parser.add_argument("--workers", type=int, default=N_WORKERS)
@@ -1198,26 +1198,26 @@ def main():
 
         print("\nGenerating L1 per-mouse figures...")
         for mouse, recs in by_mouse.items():
-            plot_mouse(mouse, recs, L1_OUT)
+            #plot_mouse(mouse, recs, L1_OUT)
             print(f"  {mouse}_all_probes.png")
 
     if args.mode in ("dataset", "all"):
         print("\nGenerating L2 dataset figures...")
-        plot_grand_overlay(records, L2_OUT)
-        plot_magnitude_distributions(records, L2_OUT)
-        plot_magnitude_distributions_sessions(records, L2_OUT)
-        plot_drift_correlation(records, L2_OUT)
-        plot_cross_recording_correlation(records, L2_OUT)
-        plot_fast_event_summary(records, L2_OUT)
-        plot_drift_over_session(records, L2_OUT)
-        plot_exponential_decay(records, L2_OUT)
-        plot_autocorrelation(records, L2_OUT)
-        plot_depth_gradient(records, L2_OUT)
-        plot_depth_gradient_absolute(records, L2_OUT)
-        plot_depth_gradient_barh(records, L2_OUT)
-        plot_insertion_depth_scatter(records, L2_OUT)
-        plot_motion_by_target(records, L2_OUT)
-        save_summary_table(records, L2_OUT)
+        #plot_grand_overlay(records, L2_OUT)
+        #plot_magnitude_distributions(records, L2_OUT)
+        #plot_magnitude_distributions_sessions(records, L2_OUT)
+        #plot_drift_correlation(records, L2_OUT)
+        #plot_cross_recording_correlation(records, L2_OUT)
+        #plot_fast_event_summary(records, L2_OUT)
+        #plot_drift_over_session(records, L2_OUT)
+        #plot_exponential_decay(records, L2_OUT)
+        #plot_autocorrelation(records, L2_OUT)
+        #plot_depth_gradient(records, L2_OUT)
+        #plot_depth_gradient_absolute(records, L2_OUT)
+        #plot_depth_gradient_barh(records, L2_OUT)
+        #plot_insertion_depth_scatter(records, L2_OUT)
+        #plot_motion_by_target(records, L2_OUT)
+        #save_summary_table(records, L2_OUT)
 
     # Print mouse/session/probes with extreme metrics
     report_extreme_recordings(records)
