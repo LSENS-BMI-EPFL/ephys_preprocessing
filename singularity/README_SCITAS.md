@@ -1,5 +1,6 @@
 # Copying data to cluster
 
+### rsync
 Some rsync commands to transfer data going through the Haas because it seems faster.
 
 #### To a cluster for processing
@@ -55,3 +56,30 @@ xargs -P 4 -I {} rsync -av --no-perms --no-times --dry-run \
   /scratch/bisi/data/{}/ \
   bisi@haas056.rcp.epfl.ch:/mnt/lsens-analysis/Axel_Bisi/data/{}/
 ````
+
+### rclone
+Or using rclone directly in a SCITAS cluster:
+
+Configure: ``rclone config``
+
+```
+[NAS-SV]
+type = smb
+host = sv-nas1.rcp.epfl.ch
+user = USER
+pass = PASSWORD
+domain = INTRANET.EPFL.CH
+spn = sv-nas1.rcp.epfl.ch
+```
+
+check the remote works:
+```
+rclone lsd nas-sv:"Petersen-Lab/analysis/Axel_Bisi/data/"
+``` 
+It should list the content of the folders. Then run:
+
+```bash
+rclone copy nas-sv:"Petersen-Lab/analysis/Axel_Bisi/data/" "/scratch/bisi/data/"   --filter "+ */"   --filter "+ **/*corrected*"   --filter "- *"  --transfers 8 --checkers 8 --progress --log-file rclone_transfer.log
+```
+
+Make sure the filters are correct.

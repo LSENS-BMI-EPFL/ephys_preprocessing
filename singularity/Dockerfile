@@ -1,10 +1,10 @@
 # Dockerfile for ephys preprocessing pipeline
-# Supports both Docker and Singularity (via conversion)
+# Supports both Docker and Singularity/Apptainer (via conversion)
 
 # ============================================================================
 # Stage 1: Builder stage - Install dependencies
 # ============================================================================
-FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04 AS builder
+FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04 AS builder
 
 # Avoid interactive prompts during build
 ENV DEBIAN_FRONTEND=noninteractive
@@ -25,11 +25,6 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
     update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
 
 # Upgrade pip and install uv for faster dependency resolution
-RUN python3.11 -m pip install --no-cache-dir \
-    torch==2.3.1 \
-    --index-url https://download.pytorch.org/whl/cu121
-
-
 RUN python3.11 -m pip install --no-cache-dir --upgrade pip && \
     python3.11 -m pip install --no-cache-dir uv
 
@@ -39,15 +34,31 @@ WORKDIR /opt/ephys
 # Copy only dependency files first (for layer caching)
 COPY pyproject.toml ./
 
-# Install Python dependencies using uv
+# FIX: Pin PyTorch to CUDA 12.1 BEFORE installing other deps via uv.
+# Without this explicit pin, uv/pip resolves the latest PyTorch wheel
+# which is built against CUDA 13.x — incompatible with kuma's driver
+# which supports up to CUDA 12.6 (driver version 12060).
+RUN python3.11 -m pip install --no-cache-dir \
+    torch \
+    --index-url https://download.pytorch.org/whl/cu121
+
+# Install remaining Python dependencies using uv.
+# PyTorch is already installed above so it will not be overridden.
 RUN python3.11 -m uv pip install --system --no-cache .
+
+# Verify PyTorch CUDA version at build time — fails the build if wrong.
+RUN python3.11 -c "\
+import torch; \
+v = torch.version.cuda; \
+assert v.startswith('12.1'), f'Expected CUDA 12.1, got {v}. Check pyproject.toml for a conflicting torch pin.'; \
+print(f'PyTorch CUDA version OK: {v}')"
 
 # ============================================================================
 # Stage 2: Runtime stage - Minimal production image
 # ============================================================================
+# Keep cudnn8-runtime for a smaller image. Base must stay 12.1.x to match
+# the PyTorch wheel installed above and remain under kuma's driver cap (12.6).
 FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
-#FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
-
 
 # Avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
@@ -126,12 +137,12 @@ RUN mkdir -p /opt/ephys/log
 # ============================================================================
 ENV PYTHONPATH=/opt/ephys
 ENV PATH=/opt/tools/CatGT-linux:/opt/tools/TPrime-linux:/opt/tools/OverStrike-linux:/opt/tools/C_Waves-linux:$PATH
-
-# Set log directory environment variable
 ENV EPHYS_LOG_DIR=/opt/ephys/log
 
 # CUDA environment variables (for PyTorch/Kilosort)
-#ENV CUDA_VISIBLE_DEVICES=0
+# NOTE: CUDA_VISIBLE_DEVICES is intentionally NOT set here.
+# SLURM controls GPU assignment via --gres=gpu:1. Setting it in the image
+# can conflict with SLURM's assignment on multi-GPU nodes.
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
@@ -146,28 +157,30 @@ CMD ["--help"]
 # ============================================================================
 LABEL maintainer="Jules Lebert"
 LABEL description="Electrophysiology preprocessing pipeline with SpikeInterface, Kilosort4, and Bombcell"
-LABEL version="0.1.0"
+LABEL version="0.2.0"
 
 # ============================================================================
-# Build instructions:
+# Build, push, and verify instructions:
 # ============================================================================
-# Build the image (tools are downloaded automatically):
-# docker build -t ephys-pipeline:latest .
+# 1. Build:
+#      docker build -t your_dockerhub_username/ephys-pipeline:cu121-v0.2.0 .
+#      docker tag your_dockerhub_username/ephys-pipeline:cu121-v0.2.0 \
+#                 your_dockerhub_username/ephys-pipeline:latest
 #
-# Or use docker compose:
-# docker compose build
+# 2. Verify GPU locally before pushing:
+#      docker run --rm --runtime=nvidia your_dockerhub_username/ephys-pipeline:latest \
+#        python3.11 -c "import torch; print(torch.cuda.is_available(), torch.version.cuda)"
+#      -> Expected: True 12.1
 #
-# Test the build:
-# docker run --rm --runtime=nvidia ephys-pipeline:latest --help
+# 3. Push both tags:
+#      docker push your_dockerhub_username/ephys-pipeline:cu121-v0.2.0
+#      docker push your_dockerhub_username/ephys-pipeline:latest
 #
-# Run with data:
-# docker run --runtime=nvidia \
-#   -v /mnt/lsens/data:/mnt/lsens/data:ro \
-#   -v /home/lebert/lsens_srv/analysis/Jules_Lebert/data:/home/lebert/lsens_srv/analysis/Jules_Lebert/data \
-#   -v $(pwd)/config:/mnt/config:ro \
-#   ephys-pipeline:latest \
-#   --input-list /mnt/config/inputs.txt \
-#   --config /mnt/config/preprocess_config_si_docker.yaml
+# 4. Pull on kuma (use YOUR image, not alpine):
+#      apptainer pull ephys-pipeline_latest.sif \
+#        docker://your_dockerhub_username/ephys-pipeline:latest
 #
-# Or use docker compose:
-# docker compose run --rm ephys-spikesort
+# 5. Verify on kuma before submitting jobs:
+#      apptainer exec --nv ephys-pipeline_latest.sif \
+#        python3.11 -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+#      -> Expected: True  NVIDIA H100 ...

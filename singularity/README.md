@@ -31,6 +31,8 @@ docker push username/target_image:TAG
 then upload an image directly from Dockerhub to Apptainer/Singularity via:
 https://scitas-doc.epfl.ch/advanced-guide/singularity-docker/
 
+Link to DockerHub image: https://hub.docker.com/r/axbsi/ephys-pipeline
+
 ### 2. Configure for Your HPC Cluster
 
 Edit the SLURM scripts to match your cluster's configuration:
