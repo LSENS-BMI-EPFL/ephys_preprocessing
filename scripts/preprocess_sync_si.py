@@ -112,11 +112,13 @@ def main(input_dir, config):
 
     # Run TPrime
     logger.info('Starting Tprime.')
+    print(config['tprime'])
     run_tprime.main(input_dir, config['tprime'])
     logger.info('Finished Tprime in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     # Run Cwaves
     logger.info('Starting Cwaves.')
+    print(config['cwaves'])
     run_cwaves.main(input_dir, config['cwaves'])
     logger.info('Finished Cwaves in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 

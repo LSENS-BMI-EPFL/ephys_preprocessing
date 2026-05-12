@@ -6,7 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
     "bombcell>=0.72",
     "click>=8.3.1",
-    "cuda-python>=13.1.0",
+    #"cuda-python>=13.1.0",
     "kilosort>=4.1.3",
     "loguru>=0.7.3",
     "matplotlib>=3.10.7",
@@ -18,4 +18,5 @@ dependencies = [
     "pyyaml>=6.0.3",
     "spikeinterface>=0.103.2",
     "spython>=0.3.14",
+    "torch==2.3.1",
 ]

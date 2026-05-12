@@ -1,3 +1,4 @@
 # One item per job
-/scratch/bisi/data/AB163/AB163_20250419_155630/Ephys/
-/scratch/bisi/data/AB164/AB164_20250422_115457/Ephys/
+#/scratch/bisi/data/AB086/AB086_20231015_141742/Ephys/
+/scratch/bisi/data/AB121/AB121_20240813_125401/Ephys/
+#/scratch/bisi/data/MH062/MH062_20260109_114135/Ephys/

@@ -1,0 +1,3 @@
+# One item per job
+/scratch/bisi/data/AB163/AB163_20250419_155630/Ephys/
+/scratch/bisi/data/AB164/AB164_20250422_115457/Ephys/

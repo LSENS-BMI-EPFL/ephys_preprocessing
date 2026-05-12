@@ -26,11 +26,11 @@ from spikeinterface.sortingcomponents.tools import (
 
 #%%
 # CHANGE PATHS AS NECESSARY
-RAW_PATH = Path(r"M:\analysis\Axel_Bisi\data\AB163\AB163_20250419_155630\Ephys\catgt_AB163_g0\AB163_g0_imec0")
+RAW_PATH = Path(r"M:\analysis\Myriam_Hamon\data\MH031\MH031_20250507_104425\Ephys\catgt_MH031_g0\MH031_g0_imec0")
 STREAM_NAME = 'imec0.ap'
-SORTING_PATH = Path(r"M:\analysis\Axel_Bisi\data\AB163\AB163_20250419_155630\Ephys\catgt_AB163_g0\AB163_g0_imec0\ibl_format")
-METRICS_FILE = Path(r"M:\analysis\Axel_Bisi\data\AB163\AB163_20250419_155630\Ephys\catgt_AB163_g0\AB163_g0_imec0\kilosort2\cluster_bc_unitType.tsv")
-MOTION_PATH = Path(r'M:\analysis\Axel_Bisi\data\AB163\AB163_20250419_155630\Ephys\catgt_AB163_g0\AB163_g0_imec0\dredge_fast\motion')
+SORTING_PATH = Path(r"M:\analysis\Myriam_Hamon\data\MH031\MH031_20250507_104425\Ephys\catgt_MH031_g0\MH031_g0_imec0\ibl_format")
+METRICS_FILE = Path(r"M:\analysis\Myriam_Hamon\data\MH031\MH031_20250507_104425\Ephys\catgt_MH031_g0\MH031_g0_imec0\kilosort2\cluster_bc_unitType.tsv")
+MOTION_PATH = Path(r'M:\analysis\Myriam_Hamon\data\MH031\MH031_20250507_104425\Ephys\catgt_MH031_g0\MH031_g0_imec0\dredge_fast\motion')
 
 # DRIFT INTERVALS DURING RECORDING TO COMPARE
 INTERVALS = [

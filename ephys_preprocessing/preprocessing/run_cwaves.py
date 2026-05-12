@@ -45,8 +45,14 @@ def main(input_dir, config):
             path_cwave_output.mkdir(parents=True, exist_ok=True)
 
             # Path to probe binary file
-            apbin_fname = '{}_tcat.imec{}.ap.bin'.format(epoch_name, probe_id)
-            path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
+            try:
+                apbin_fname = '{}_tcat_corrected.imec{}.ap.bin'.format(epoch_name, probe_id)
+                path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
+                os.path.exists(path_to_apbin)
+            except FileNotFoundError:
+                apbin_fname = '{}_tcat.imec{}.ap.bin'.format(epoch_name, probe_id)
+                path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
+                os.path.exists(path_to_apbin)
 
             # Prepare spike data for C_Waves
             path_input_files = kilosort_folder / 'sorter_output'

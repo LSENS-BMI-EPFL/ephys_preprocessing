@@ -185,10 +185,9 @@ def cli(input_list, config, legacy_mode):
             )
 
         # Filter by mouse_id
-        input_paths = [p for p in input_paths if p.parts[2].startswith("MH") and int(p.parts[2][3:]) == 31]
+        input_paths = [p for p in input_paths if p.parts[2].startswith("AB") and int(p.parts[2][2:]) == 131]
         for p in input_paths:
             print(p)
-
 
        #input_paths = []
        #for f in sorted(path_analysis.rglob("*tcat_corrected*")):

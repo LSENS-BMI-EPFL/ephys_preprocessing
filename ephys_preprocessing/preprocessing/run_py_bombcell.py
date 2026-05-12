@@ -26,16 +26,21 @@ def main(input_dir, config):
         probe_path = os.path.join(input_dir, probe_folder)
 
         kilosort_folders = pathlib.Path(probe_path).glob('kilosort*')
+        # Run bombcell for all kilosort folders
         for kilosort_folder in kilosort_folders:
+
             # Set paths
             ks_name = kilosort_folder.name
             kilosort_version = extract_ks_version(ks_name)
-            if mouse_id.startswith('AB') or mouse_id.startswith('MH'):
+            if (mouse_id.startswith('AB') or mouse_id.startswith('MH')) and ks_name == 'kilosort2':
                 kilosort_path = os.path.join(kilosort_folder)
             else:
                 kilosort_path = os.path.join(kilosort_folder, 'sorter_output')
 
             save_path = os.path.join(kilosort_path, 'bombcell')
+            print(f' - Bombcell for {ks_name}')
+            print('KS input path:', kilosort_path)
+            print('BC output path:', save_path)
 
             try:
                 apbin_fname = '{}_tcat_corrected.imec{}.ap.bin'.format(epoch_name, probe_id)
@@ -49,31 +54,32 @@ def main(input_dir, config):
                 path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
                 path_to_meta = os.path.join(input_dir, probe_folder, meta_fname)
 
-            param = bc.get_default_parameters(
-                kilosort_path, 
-                raw_file=path_to_apbin,
-                meta_file=path_to_meta,
-                kilosort_version=kilosort_version,
-            )
-
+            param = bc.get_default_parameters(kilosort_path,
+                                              raw_file=path_to_apbin,
+                                              meta_file=path_to_meta,
+                                              kilosort_version=kilosort_version)
+            param.update({'savePlots':True})
             logger.info('Running bombcell for IMEC probe {}.'.format(probe_id))
 
+
             # Compute quality metrics
-            quality_metrics, param, unit_type, unit_type_string, = bc.run_bombcell(
-                kilosort_path, save_path, param,
-            )
+            try:
+                quality_metrics, param, unit_type, unit_type_string, = bc.run_bombcell(kilosort_path, save_path, param,)
 
-            # Compute ephys properties for cell type classification
-            ephys_param = bc.get_ephys_parameters(kilosort_path)
+                # Compute ephys properties for cell type classification
+                ephys_param = bc.get_ephys_parameters(kilosort_path)
 
-            # Compute all ephys properties - now defaults to ks_dir/bombcell
-            ephys_properties, ephys_param = bc.run_all_ephys_properties(kilosort_path, ephys_param, save_path=save_path)
+                # Compute all ephys properties - now defaults to ks_dir/bombcell
+                ephys_properties, ephys_param = bc.run_all_ephys_properties(kilosort_path, ephys_param, save_path=save_path)
 
-        # cluster_info table creation
-        logger.info('Creating cluster_info table for IMEC probe {}.'.format(probe_id))
-        phy_model = load_phy_model(os.path.join(kilosort_path, 'params.py'))
-        phy_model.create_metrics_dataframe()
-        phy_model.save_metrics_tsv(os.path.join(kilosort_path, 'cluster_info.tsv'))
+                # cluster_info table creation
+                logger.info('Creating cluster_info table for IMEC probe {}.'.format(probe_id))
+                phy_model = load_phy_model(os.path.join(kilosort_path, 'params.py'))
+                phy_model.create_metrics_dataframe()
+                phy_model.save_metrics_tsv(os.path.join(kilosort_path, 'cluster_info.tsv'))
+
+            except Exception as e:
+                logger.error(e)
 
     return
 
