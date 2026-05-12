@@ -12,12 +12,12 @@ overstrike:
      overstrike_path: '/opt/tools/OverStrike-linux'
 
 catgt:
-     do: false
+     do: true
      catgt_path: '/opt/tools/CatGT-linux'
      overwrite: false
 
 artifact_correction:
-     do: false
+     do: true
      window_ms: 3
      ms_before: 0.2
      ms_after: 3.7
@@ -28,11 +28,11 @@ motion:
      preset: 'dredge_fast'
 
 drift_correction:
-     do: false
+     do: true
      preset: 'dredge_fast'
 
 sorters:
-     do: false
+     do: true
      overwrite_preprocessed: true
      sorter_list:
           - kilosort4
@@ -72,8 +72,19 @@ tprime:
      default_tostream_probe: 0
 
 cwaves:
+     do: true
      cwaves_path: '/opt/tools/C_Waves-linux'
      samples_per_spike: 82
      pre_samples: 30
      num_spikes: 1000
      snr_radius: 8
+
+mean_waveform_metrics:
+     do: true
+
+depth_estimation:
+     do: false # Requires LFP data
+
+ibl_conversion:
+     do: false #Requires installation of IBL libraries
+

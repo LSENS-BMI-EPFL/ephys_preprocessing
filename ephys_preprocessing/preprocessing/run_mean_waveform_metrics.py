@@ -41,9 +41,17 @@ def main(input_dir):
             path_cwave_output = kilosort_folder / 'sorter_output' / 'cwaves'
 
             # Get sampling rate
-            metafile_name = '{}_tcat.imec{}.ap.meta'.format(epoch_name, probe_id)
-            apbin_metafile_path = os.path.join(input_dir, probe_folder, metafile_name)
-            ap_meta_dict = readSGLX.readMeta(pathlib.Path(apbin_metafile_path))
+            try:
+                metafile_name = '{}_tcat_corrected.imec{}.ap.meta'.format(epoch_name, probe_id)
+                apbin_metafile_path = os.path.join(input_dir, probe_folder, metafile_name)
+                ap_meta_dict = readSGLX.readMeta(pathlib.Path(apbin_metafile_path))
+
+            except FileNotFoundError:
+
+                metafile_name = '{}_tcat.imec{}.ap.meta'.format(epoch_name, probe_id)
+                apbin_metafile_path = os.path.join(input_dir, probe_folder, metafile_name)
+                ap_meta_dict = readSGLX.readMeta(pathlib.Path(apbin_metafile_path))
+
             imSampRate = float(ap_meta_dict['imSampRate'])  # probe-specific
 
             # Load mean waveform data from C_waves

@@ -17,7 +17,7 @@ artifact_correction:
 
 motion:
      do: true
-     preset: 'dredge_fast'
+     preset: 'dredge'
 
 drift_correction:
      do: false

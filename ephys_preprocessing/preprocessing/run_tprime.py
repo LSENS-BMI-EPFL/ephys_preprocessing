@@ -58,11 +58,13 @@ def main(input_dir, config):
             metafile_name = '{}_tcat_corrected.imec{}.ap.meta'.format(epoch_name, probe_id)
             apbin_metafile_path = os.path.join(input_dir, probe_folder, metafile_name)
             ap_meta_dict = readSGLX.readMeta(pathlib.Path(apbin_metafile_path))
+
         except FileNotFoundError:
 
             metafile_name = '{}_tcat.imec{}.ap.meta'.format(epoch_name, probe_id)
             apbin_metafile_path = os.path.join(input_dir, probe_folder, metafile_name)
             ap_meta_dict = readSGLX.readMeta(pathlib.Path(apbin_metafile_path))
+
 
         imSampRate = float(ap_meta_dict['imSampRate'])  # probe-specific
 
@@ -94,9 +96,16 @@ def main(input_dir, config):
         default_tostream_probe = config['default_tostream_probe']
 
     path_ref_probe = os.path.join(input_dir, '{}_imec{}'.format(epoch_name, default_tostream_probe))
-    ref_probe_edges_file = '{}_tcat.imec{}.ap.xd_{}_6_500.txt'.format(epoch_name,
-                                                                      default_tostream_probe,
-                                                                      int(ap_meta_dict['nSavedChans']) - 1)
+    try:
+        ref_probe_edges_file = '{}_tcat_corrected.imec{}.ap.xd_{}_6_500.txt'.format(epoch_name,
+                                                                                    default_tostream_probe,
+                                                                                    int(ap_meta_dict[
+                                                                                            'nSavedChans']) - 1)
+    except FileNotFoundError:
+        ref_probe_edges_file = '{}_tcat.imec{}.ap.xd_{}_6_500.txt'.format(epoch_name,
+                                                                                    default_tostream_probe,
+                                                                                    int(ap_meta_dict[
+                                                                                            'nSavedChans']) - 1)
     # Set reference streams
     if sys.platform.startswith('win'):
         Tprime_fullpath = 'Tprime'

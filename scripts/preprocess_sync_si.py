@@ -28,6 +28,7 @@ from ephys_preprocessing.preprocessing import (
      run_cwaves,
      run_mean_waveform_metrics,
     #  run_lfp_analysis,
+    run_ibl_ephys_atlas_format
 )
 
 
@@ -112,25 +113,32 @@ def main(input_dir, config):
 
     # Run TPrime
     logger.info('Starting Tprime.')
-    print(config['tprime'])
     run_tprime.main(input_dir, config['tprime'])
     logger.info('Finished Tprime in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     # Run Cwaves
-    logger.info('Starting Cwaves.')
-    print(config['cwaves'])
-    run_cwaves.main(input_dir, config['cwaves'])
-    logger.info('Finished Cwaves in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
+    if config['cwaves']['do']:
+        logger.info('Starting Cwaves.')
+        run_cwaves.main(input_dir, config['cwaves'])
+        logger.info('Finished Cwaves in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     # Run mean waveform metrics
-    logger.info('Starting mean waveform metrics.')
-    run_mean_waveform_metrics.main(input_dir)
-    logger.info('Finished mean waveform metrics in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
+    if config['mean_waveform_metrics']['do']:
+        logger.info('Starting mean waveform metrics.')
+        run_mean_waveform_metrics.main(input_dir)
+        logger.info('Finished mean waveform metrics in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
-    # LFP analysis for depth estimation (optional, currently disabled)
-    # logger.info('Starting LFP analysis.')
-    # run_lfp_analysis.main(input_dir)
-    # logger.info('Finished LFP analysis in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
+    # LFP analysis for depth estimation (optional, currently disabled - requires LFP data)
+    #if config['depth_estimation']['do']:
+        # logger.info('Starting LFP analysis.')
+        # run_lfp_analysis.main(input_dir)
+        # logger.info('Finished LFP analysis in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
+
+    # Convert to IBL format
+    if config['ibl_conversion']['do']:
+        logger.info('Running IBL ephys-atlas format conversion.')
+        run_ibl_ephys_atlas_format.main(input_dir, config)
+        logger.info('Finished IBL ephys-atlas formatting in {}.'.format(time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))))
 
     exec_time_hhmmss = time.strftime('%H:%M:%S', time.gmtime(time.time()-start_time))
     logger.success(f'Finished sync processing in {exec_time_hhmmss} for {input_dir}.')

@@ -9,6 +9,7 @@
 
 # Imports
 import os
+import sys
 import shutil
 import numpy as np
 import json
@@ -16,7 +17,7 @@ from loguru import logger
 from pathlib import Path
 
 from ephys_preprocessing.utils.ephys_utils import check_if_valid_recording
-
+sys.path.insert(0, "/home/bisi/code/iblapps") # for Kuma
 from atlaselectrophysiology.extract_files import extract_data
 from iblatlas.atlas import AllenAtlas
 
@@ -112,9 +113,8 @@ def main(input_dir, config):
             logger.warning(f'Probe track tracing folder not found at {anat_data_folder}. Skipping data formatting.')
             continue
 
-        atlas = AllenAtlas(res_um=25) # bregma estimate done in 25 micron resolution
+        atlas = AllenAtlas(res_um=25) # bregma estimate done in 25 micron resolution only
 
-        
 
         # Set path to brainreg-segment output file - day 0 vs. expert
         if mouse_id.startswith('AB'):

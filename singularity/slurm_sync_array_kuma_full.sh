@@ -75,12 +75,26 @@ singularity exec \
   --bind ${BIND_LOGS} \
   --bind ${BIND_CODE} \
   ${SIF_IMAGE} \
+  bash -c "
+python -m pip install --user ibllib ibl-neuropixel
+"
+
+singularity exec \
+  --nv \
+  --bind ${BIND_DATA} \
+  --bind ${BIND_OUTPUT} \
+  --bind ${BIND_MICE} \
+  --bind ${BIND_CONFIG} \
+  --bind ${BIND_LOGS} \
+  --bind ${BIND_CODE} \
+  ${SIF_IMAGE} \
   python3.11 -c "
 import sys
 sys.path.insert(0, '/opt/ephys')
 from pathlib import Path
 from scripts.preprocess_sync_si import main, transform_input_to_catgt_path
 import yaml
+
 
 # Load config
 config_path = Path('/mnt/config/preprocess_config_si_hpc_array.yaml')
