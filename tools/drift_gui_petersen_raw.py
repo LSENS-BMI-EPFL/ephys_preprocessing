@@ -80,22 +80,20 @@ VOLT_N_DISPLAY = 10000   # number of time points sampled across the full recordi
 
 class SessionPickerDialog(QDialog):
 
-    REQUIRED_GLOBS = [
-        ("ibl_format",                        "ibl_format/ directory"),
-        ("kilosort2/cluster_bc_unitType.tsv",  "kilosort2/cluster_bc_unitType.tsv"),
-        ("dredge_fast/motion",                 "dredge_fast/motion/ directory"),
-    ]
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Select Session")
-        self.resize(580*2, 300*2)
+        self.resize(580 * 2, 300 * 2)
         self._imec_dirs = {}
 
         layout = QVBoxLayout(self)
 
-        for label_text, attr in [("Mouse:", "mouse_combo"), ("Session:", "session_combo"),
-                                  ("Probe:",  "probe_combo")]:
+        for label_text, attr in [
+            ("Mouse:",     "mouse_combo"),
+            ("Session:",   "session_combo"),
+            ("Probe:",     "probe_combo"),
+            ("Kilosort:",  "ks_combo"),
+        ]:
             row = QHBoxLayout()
             row.addWidget(QLabel(label_text))
             combo = QComboBox()
@@ -117,15 +115,22 @@ class SessionPickerDialog(QDialog):
         self._populate_mice()
         self.mouse_combo.currentIndexChanged.connect(self._on_mouse_changed)
         self.session_combo.currentIndexChanged.connect(self._on_session_changed)
-        self.probe_combo.currentIndexChanged.connect(self._validate)
+        self.probe_combo.currentIndexChanged.connect(self._on_probe_changed)
+        self.ks_combo.currentIndexChanged.connect(self._validate)
         self._on_mouse_changed()
+
+    # ------------------------------------------------------------------
+    # Population helpers
+    # ------------------------------------------------------------------
 
     def _populate_mice(self):
         if not BASE_DATA_PATH.exists():
             self.status.setText(f"Base path not found:\n{BASE_DATA_PATH}")
             return
-        mice = sorted(d.name for d in BASE_DATA_PATH.iterdir()
-                      if d.is_dir() and not d.name.startswith('.'))
+        mice = sorted(
+            d.name for d in BASE_DATA_PATH.iterdir()
+            if d.is_dir() and not d.name.startswith('.')
+        )
         self.mouse_combo.addItems(mice)
 
     def _on_mouse_changed(self):
@@ -145,10 +150,71 @@ class SessionPickerDialog(QDialog):
         mouse, session = self.mouse_combo.currentText(), self.session_combo.currentText()
         if not mouse or not session:
             return
-        imec_dirs = sorted((BASE_DATA_PATH / mouse / session).glob("Ephys/catgt_*/*_imec*"))
+        imec_dirs = sorted(
+            (BASE_DATA_PATH / mouse / session).glob("Ephys/catgt_*/*_imec*")
+        )
         self._imec_dirs = {p.name: p for p in imec_dirs}
         self.probe_combo.addItems(list(self._imec_dirs))
+        self._on_probe_changed()
+
+    def _on_probe_changed(self):
+        """Repopulate the kilosort combo with all subdirectories of the imec folder."""
+        self.ks_combo.clear()
+        probe_name = self.probe_combo.currentText()
+        if not probe_name or probe_name not in self._imec_dirs:
+            self._validate()
+            return
+        imec = self._imec_dirs[probe_name]
+        ks_folders = sorted(d.name for d in imec.iterdir() if d.is_dir())
+        ks_folders = [f for f in ks_folders if 'kilosort' in f]
+        self.ks_combo.addItems(ks_folders)
         self._validate()
+
+    # ------------------------------------------------------------------
+    # Validation and path resolution
+    # ------------------------------------------------------------------
+
+    def _resolve_paths(self):
+        probe_name = self.probe_combo.currentText()
+        ks_name    = self.ks_combo.currentText()
+
+        if not probe_name or probe_name not in self._imec_dirs:
+            return None, ["No imec folder found under session/Ephys/catgt_*/"]
+        if not ks_name:
+            return None, ["No kilosort folder found inside the imec directory."]
+
+        imec   = self._imec_dirs[probe_name]
+        ks_dir = imec / ks_name
+
+        # ibl_format lives next to the imec root for ks2, inside ks_dir for ks4+
+        is_ks2          = ks_name.lower() == "kilosort2"
+        ibl_format_path = imec / "ibl_format" if is_ks2 else ks_dir / "ibl_format"
+        metrics_path    = ks_dir / "cluster_bc_unitType.tsv"
+        motion_path     = imec / "dredge_fast" / "motion"
+
+        missing = []
+        if not ibl_format_path.is_dir():
+            missing.append(f"  ibl_format/  →  {ibl_format_path}")
+        if not metrics_path.exists():
+            missing.append(f"  cluster_bc_unitType.tsv  →  {metrics_path}")
+        if not motion_path.is_dir():
+            missing.append(f"  dredge_fast/motion/  →  {motion_path}")
+        if not list(imec.glob("*.ap.bin")):
+            missing.append(f"  *.ap.bin  →  {imec}")
+
+        if missing:
+            return None, missing
+
+        imec_part = next(
+            (p for p in reversed(probe_name.split('_')) if p.startswith('imec')), 'imec0'
+        )
+        return {
+            'raw_path':     imec,
+            'stream_name':  f"{imec_part}.ap",
+            'sorting_path': ibl_format_path,
+            'metrics_file': metrics_path,
+            'motion_path':  motion_path,
+        }, []
 
     def _validate(self):
         paths, missing = self._resolve_paths()
@@ -159,35 +225,13 @@ class SessionPickerDialog(QDialog):
         else:
             self.status.setStyleSheet("color: green")
             self.status.setText(
-                "All files found \u2713\n"
-                f"  Raw:     {paths['raw_path']}\n"
-                f"  Sorting: {paths['sorting_path']}"
+                "All files found ✓\n"
+                f"  Raw:      {paths['raw_path']}\n"
+                f"  Sorting:  {paths['sorting_path']}\n"
+                f"  Metrics:  {paths['metrics_file']}\n"
+                f"  Motion:   {paths['motion_path']}"
             )
             self.ok_button.setEnabled(True)
-
-    def _resolve_paths(self):
-        probe_name = self.probe_combo.currentText()
-        if not probe_name or probe_name not in self._imec_dirs:
-            return None, ["No imec folder found under session/Ephys/catgt_*/"]
-        imec = self._imec_dirs[probe_name]
-        missing = []
-        for glob, label in self.REQUIRED_GLOBS:
-            if not list(imec.glob(glob)):
-                missing.append(f"  {label}  \u2192  {imec / glob}")
-        if not list(imec.glob("*.ap.bin")):
-            missing.append(f"  *.ap.bin  \u2192  {imec}")
-        if missing:
-            return None, missing
-        imec_part = next(
-            (p for p in reversed(probe_name.split('_')) if p.startswith('imec')), 'imec0'
-        )
-        return {
-            'raw_path':     imec,
-            'stream_name':  f"{imec_part}.ap",
-            'sorting_path': imec / "ibl_format",
-            'metrics_file': imec / "kilosort2" / "cluster_bc_unitType.tsv",
-            'motion_path':  imec / "dredge_fast" / "motion",
-        }, []
 
     def get_paths(self):
         paths, _ = self._resolve_paths()
