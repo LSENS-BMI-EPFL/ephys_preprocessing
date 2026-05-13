@@ -157,21 +157,22 @@ def main(input_dir: Path, config_path: Path):
     catgt_dir = find_catgt_folder(processed_dir)
     logger.info(f"Sync processing from catgt folder: {catgt_dir}")
 
-    logger.info("Starting TPrime.")
-    run_tprime.main(catgt_dir, config["tprime"])
-    logger.info(f"Finished TPrime in {elapsed()}.")
+    if config["tprime"]["do"]:
+        logger.info("Starting TPrime.")
+        run_tprime.main(catgt_dir, config["tprime"])
+        logger.info(f"Finished TPrime in {elapsed()}.")
 
-    if config.get("cwaves", {}).get("do", False):
+    if config["cwaves"]["do"]:
         logger.info("Starting CWaves.")
         run_cwaves.main(catgt_dir, config["cwaves"])
         logger.info(f"Finished CWaves in {elapsed()}.")
 
-    if config.get("mean_waveform_metrics", {}).get("do", False):
+    if config["mean_waveform_metrics"]["do"]:
         logger.info("Starting mean waveform metrics.")
         run_mean_waveform_metrics.main(catgt_dir)
         logger.info(f"Finished mean waveform metrics in {elapsed()}.")
 
-    if config.get("ibl_conversion", {}).get("do", False):
+    if config["ibl_conversion"]["do"]:
         logger.info("Starting IBL conversion.")
         run_ibl_ephys_atlas_format.main(catgt_dir, config)
         logger.info(f"Finished IBL conversion in {elapsed()}.")
