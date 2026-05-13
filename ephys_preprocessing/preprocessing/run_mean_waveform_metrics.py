@@ -14,7 +14,7 @@ import pathlib
 import pandas as pd
 from loguru import logger
 from ephys_preprocessing.utils.waveform_metrics_utils import calculate_waveform_metrics_from_avg
-
+from ephys_preprocessing.utils.waveform_diagnostics import plot_cwave_outputs
 
 def main(input_dir):
     """
@@ -90,6 +90,11 @@ def main(input_dir):
 
             # Save dataframe
             waveform_metrics_df.to_csv(os.path.join(path_cwave_output, 'waveform_metrics.csv'), index=False)
+
+
+            # Plot C_waves output as diagnostic
+            logger.info('Plotting C_waves/waveform output.')
+            plot_cwave_outputs(data_dir=path_cwave_output)
 
     return
 

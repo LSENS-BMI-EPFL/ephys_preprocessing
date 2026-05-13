@@ -1,5 +1,5 @@
 """
-cwaves_diagnostics.py
+waveform_diagnostics.py
 ---------------------
 Single-figure diagnostic summary for C_Waves outputs.
 
@@ -13,8 +13,8 @@ Expected files (set --data_dir, or place script alongside outputs):
                  trough_idx, peak_idx
 
 Usage:
-  python cwaves_diagnostics.py --data_dir /path/to/cwaves/output
-  python cwaves_diagnostics.py --data_dir . --out diagnostics.png
+  python waveform_diagnostics.py --data_dir /path/to/cwaves/output
+  python waveform_diagnostics.py --data_dir . --out diagnostics.png
 """
 
 import argparse
@@ -181,7 +181,7 @@ def panel_snr_vs_nspk(ax, snr, nspk, valid):
     ax.set_xscale("log")
 
 
-def panel_peak_waveforms(ax, fig, med_wf, snr, valid, metrics_df, max_traces=200):
+def panel_peak_waveforms(ax, fig, med_wf, snr, valid, metrics_df, max_traces=20):
     """
     Overlay median peak waveforms coloured by SNR.
     x-axis is aligned to the median trough_idx so trough sits at sample 0.
@@ -213,7 +213,7 @@ def panel_peak_waveforms(ax, fig, med_wf, snr, valid, metrics_df, max_traces=200
     # Draw traces
     colors = snr_colors(snr[idx])
     for i, c in zip(idx, colors):
-        ax.plot(t, med_wf[i], color=c, lw=0.45, alpha=0.45)
+        ax.plot(t, med_wf[i], color="white", lw=0.45, alpha=0.35)
 
     # Grand mean on top
     grand = np.nanmean(med_wf[valid], axis=0)
@@ -395,17 +395,17 @@ def panel_summary(ax, d, snr, nspk, valid, metrics_df):
 
 # ── main ───────────────────────────────────────────────────────────────────────
 
-def main():
-    parser = argparse.ArgumentParser(description="C_Waves diagnostic figure")
-    parser.add_argument("--data_dir",   default=".",
-                        help="Directory with C_Waves output files (default: .)")
-    parser.add_argument("--out",        default="cwaves_diagnostics.png",
-                        help="Output path (default: cwaves_diagnostics.png)")
-    parser.add_argument("--max_traces", type=int, default=200,
-                        help="Max waveforms overlaid in waveform panel (default 200)")
-    args = parser.parse_args()
+def plot_cwave_outputs(data_dir):
+    #parser = argparse.ArgumentParser(description="C_Waves diagnostic figure")
+    #parser.add_argument("--data_dir",   default=".",
+    #                    help="Directory with C_Waves output files (default: .)")
+    #parser.add_argument("--out",        default="cwaves_diagnostics.png",
+    #                    help="Output path (default: cwaves_diagnostics.png)")
+    #parser.add_argument("--max_traces", type=int, default=200,
+    #                    help="Max waveforms overlaid in waveform panel (default 200)")
+    #args = parser.parse_args()
 
-    data_dir = Path(args.data_dir)
+    data_dir = Path(data_dir)
     d        = load_data(data_dir)
     snr, nspk, valid = build_masks(d)
     metrics  = d["metrics"]
@@ -445,7 +445,7 @@ def main():
     panel_snr_vs_nspk(ax_snr_spk, snr, nspk, valid)
 
     panel_peak_waveforms(ax_waveforms, fig, d["med_wf"], snr, valid,
-                         metrics, args.max_traces)
+                         metrics, 200)
     panel_summary(ax_summary, d, snr, nspk, valid, metrics)
 
     panel_duration_halfwidth(ax_dur_hw, fig, metrics, snr, valid)
@@ -455,12 +455,13 @@ def main():
     panel_peak_channel(ax_pk_chan, metrics, valid, d["n_channels"])
     panel_trough_peak_offsets(ax_trpk, metrics, valid)
 
-    out_path = Path(args.out)
-    fig.savefig(out_path, dpi=150, bbox_inches="tight",
+    out_path = Path(data_dir / 'cwave_outputs.png')
+    fig.savefig(out_path, dpi=300, bbox_inches="tight",
                 facecolor=fig.get_facecolor())
     print(f"[OK] Figure saved → {out_path.resolve()}")
     plt.show()
+    return
 
 
 if __name__ == "__main__":
-    main()
+    plot_cwave_outputs()

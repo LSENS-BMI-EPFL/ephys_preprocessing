@@ -39,6 +39,7 @@ def main(input_dir, config):
 
     # Get synchronization period
     sglx_metafile_path = os.path.join(input_dir, '{}_tcat.nidq.meta'.format(epoch_name))
+    print(sglx_metafile_path)
     sglx_meta_dict = readSGLX.readMeta(pathlib.Path(sglx_metafile_path))
 
     # Use specified syncperiod if available, otherwise use default
@@ -64,7 +65,6 @@ def main(input_dir, config):
             metafile_name = '{}_tcat.imec{}.ap.meta'.format(epoch_name, probe_id)
             apbin_metafile_path = os.path.join(input_dir, probe_folder, metafile_name)
             ap_meta_dict = readSGLX.readMeta(pathlib.Path(apbin_metafile_path))
-
 
         imSampRate = float(ap_meta_dict['imSampRate'])  # probe-specific
 

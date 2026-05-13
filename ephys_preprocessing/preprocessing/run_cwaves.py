@@ -16,8 +16,6 @@ import pandas as pd
 import numpy as np
 from loguru import logger
 
-from ephys_preprocessing.utils import cwaves_diagnostics
-
 
 def main(input_dir, config):
     """
@@ -134,10 +132,5 @@ def main(input_dir, config):
             except:
                 logger.error('Error matching cluster indices in mean_waveforms.npy with cluster_info.tsv file.')
                 continue
-
-            # Plot C_waves output as diagnostic
-            logger.info('Plotting C_waves output.')
-            cwaves_diagnostics.main(data_dir = path_cwave_output)
-
 
     return

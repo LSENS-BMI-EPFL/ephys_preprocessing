@@ -96,6 +96,8 @@ rclone copy \
   --filter "+ */" \
   --filter "+ **/catgt_*/**/*corrected*" \
   --filter "+ **/catgt_*/**/*.meta" \
+  --filter "+ **/catgt_*/*.meta" \
+  --filter "+ **/catgt_*/*.txt" \
   --filter "+ **/catgt_*/**/*.txt" \
   --filter "+ **/tracks/**" \
   --filter "- *" \
