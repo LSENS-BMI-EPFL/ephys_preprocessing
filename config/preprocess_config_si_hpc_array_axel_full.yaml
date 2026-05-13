@@ -17,22 +17,22 @@ catgt:
      overwrite: false
 
 artifact_correction:
-     do: false
+     do: true
      window_ms: 3
      ms_before: 0.2
      ms_after: 3.7
      mode: 'linear'
 
 motion:
-     do: false
+     do: true
      preset: 'dredge_fast'
 
 drift_correction:
-     do: false
+     do: true
      preset: 'dredge_fast'
 
 sorters:
-     do: false
+     do: true
      overwrite_preprocessed: true
      sorter_list:
           - kilosort4
@@ -67,7 +67,7 @@ bombcell:
      matlab_path: ''  # Not used for Python-only bombcell
 
 tprime:
-     do: false
+     do: true
      tprime_path: '/opt/tools/TPrime-linux'
      syncperiod: 1
      default_tostream_probe: 0
@@ -81,7 +81,7 @@ cwaves:
      snr_radius: 8
 
 mean_waveform_metrics:
-     do: false
+     do: true
 
 depth_estimation:
      do: false # Requires LFP data

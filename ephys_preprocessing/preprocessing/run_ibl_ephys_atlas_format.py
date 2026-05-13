@@ -90,21 +90,13 @@ def main(input_dir, config):
         if not ephys_path.exists():
             logger.error(f"Ephys data not found at {ephys_path}. Please check the path.")
 
-        # Save path
-        #if mouse_id.startswith('AB'):
-        #    out_path = Path(input_dir) / probe_folder / kilosort_folders / 'ibl_format'
-        #elif mouse_id.startswith('MH'):
-        #    out_path = Path(output_path) / mouse_id / session_date / 'Ephys' / catgt_epoch_name / probe_folder / kilosort_folders / 'ibl_format'
-        #else:
-        #    out_path = ephys_path / 'ibl_format'
-
+        # Set paths
         ks_folder = [f for f in kilosort_folders if 'kilosort4' in f.name][0]
         ks_path = ks_folder / 'sorter_output'
-        #ks_path = kilosort_folders[0] / 'sorter_output'
         out_path = ks_folder / 'ibl_format'
 
-        logger.info('ephys path', ephys_path)
-        logger.info('out path', out_path)
+        logger.info(f'Ephys path: {ephys_path}')
+        logger.info(f'Output path: {output_path}')
 
         xyz_picks_path = out_path / 'xyz_picks.json'
         overwrite = config['ibl_conversion']['overwrite']
