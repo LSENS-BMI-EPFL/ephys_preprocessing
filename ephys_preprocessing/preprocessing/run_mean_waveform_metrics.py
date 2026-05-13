@@ -32,7 +32,7 @@ def main(input_dir):
     probe_ids = [f[-1] for f in probe_folders]
 
     # Perform computations for each probe separately
-    for probe_id in probe_ids:
+    for probe_id in sorted(probe_ids):
 
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
         kilosort_folders = (pathlib.Path(input_dir) / probe_folder).glob('kilosort*')

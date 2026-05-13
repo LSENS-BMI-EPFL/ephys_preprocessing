@@ -51,8 +51,16 @@ def main(input_dir, config):
     epoch_name = catgt_epoch_name.lstrip('catgt_')
 
     mouse_id = epoch_name.split('_')[0]
-    anat_data_folder = os.path.join(config['anatomy']['anat_data_path'], mouse_id, 'fused',
-                                    'registered', 'segmentation', 'atlas_space', 'tracks')
+    #anat_data_folder = os.path.join(config['anatomy']['anat_data_path'], mouse_id, 'fused',
+    #                                'registered', 'segmentation', 'atlas_space', 'tracks')
+
+    anat_data_folder = str(input_dir).replace('Ephys', 'Anatomy')
+    anat_data_folder = Path(anat_data_folder)
+    anat_parts = anat_data_folder.parts
+    anat_idx = anat_parts.index('Anatomy')
+    anat_data_folder = Path(*anat_parts[:anat_idx + 1])
+    anat_data_folder = anat_data_folder / 'fused' / 'registered' / 'segmentation' / 'atlas_space' / 'tracks'
+    logger.info(f'Fetching probe tracks data at: {anat_data_folder}')
 
     probe_folders = [f for f in os.listdir(input_dir) if 'imec' in f]
     probe_ids = sorted([f[-1] for f in probe_folders])
@@ -60,7 +68,7 @@ def main(input_dir, config):
     output_path = config['output_path']
 
     # Perform computations for each probe separately
-    for probe_id in probe_ids:
+    for probe_id in sorted(probe_ids):
 
         if not check_if_valid_recording(config, mouse_id, probe_id, day_id=day_index):
             continue
@@ -76,33 +84,41 @@ def main(input_dir, config):
         if len(kilosort_folders) == 0:
             logger.error(f"Kilosort output not found at {kilosort_folders}. Please run Kilosort first.")
         if len(kilosort_folders) > 1:
-            logger.warning(f"Not implemented: multiple Kilosort outputs found at {kilosort_folders}. Using {kilosort_folders[0]}.")
+            logger.warning(f"Not implemented: multiple Kilosort outputs found at {kilosort_folders}. Using kilosort4.")
 
         # Path to raw ephys data
         if not ephys_path.exists():
             logger.error(f"Ephys data not found at {ephys_path}. Please check the path.")
 
         # Save path
-        if mouse_id.startswith('AB'):
-            out_path = Path(input_dir) / probe_folder / 'ibl_format'
-        elif mouse_id.startswith('MH'):
-            out_path = Path(output_path) / mouse_id / session_date / 'Ephys' / catgt_epoch_name / probe_folder / 'ibl_format'
-        else:
-            out_path = ephys_path / 'ibl_format'
+        #if mouse_id.startswith('AB'):
+        #    out_path = Path(input_dir) / probe_folder / kilosort_folders / 'ibl_format'
+        #elif mouse_id.startswith('MH'):
+        #    out_path = Path(output_path) / mouse_id / session_date / 'Ephys' / catgt_epoch_name / probe_folder / kilosort_folders / 'ibl_format'
+        #else:
+        #    out_path = ephys_path / 'ibl_format'
+
+        ks_folder = [f for f in kilosort_folders if 'kilosort4' in f.name][0]
+        ks_path = ks_folder / 'sorter_output'
+        #ks_path = kilosort_folders[0] / 'sorter_output'
+        out_path = ks_folder / 'ibl_format'
+
+        logger.info('ephys path', ephys_path)
+        logger.info('out path', out_path)
 
         xyz_picks_path = out_path / 'xyz_picks.json'
-        overwrite = config['anatomy']['overwrite']
+        overwrite = config['ibl_conversion']['overwrite']
 
         if xyz_picks_path.exists() and not overwrite:
             logger.info(f'ibl_format folder already exists at {out_path}. Skipping ibl format conversion.')
             continue
+
         # If json does not exist or overwrite is True, but output dir exists, delete it before proceeding
         # if out_path.exists():
         #     logger.warning(f'Removing existing out_path directory at {out_path} before re-creating ibl format outputs.')
         #     import shutil
         #     shutil.rmtree(out_path)
 
-        ks_path = kilosort_folders[0] / 'sorter_output'
         if not out_path.exists():
             extract_data(ks_path, ephys_path, out_path)
 

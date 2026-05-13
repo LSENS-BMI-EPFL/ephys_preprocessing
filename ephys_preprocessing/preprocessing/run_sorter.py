@@ -40,6 +40,8 @@ def main(input_dir, config):
         else:
             recording = se.read_spikeglx(probe_path, stream_id=f'imec{probe_id}.ap')
             if config['artifact_correction']['do']:
+                logger.info('Correcting magnetic artifact before sorting...')
+
                 artifact_times = run_tprime_alignment(
                     input_dir=input_dir,
                     probe_id=probe_id,
@@ -63,16 +65,15 @@ def main(input_dir, config):
 
             # Drift correction before sorting to avoid problem on the clusters
             # where drift correction hangs forever (kilosort4)
-            # Note this is different than the motion estimation step of before
             if config['drift_correction']['do']:
-                logger.info('Correcting drift before sorting')
+                logger.info('Correcting drift before sorting...')
                 recording = si.correct_motion(
                     recording=recording,
                     preset=config['drift_correction']['preset'],
                     **config['sorters']['job_kwargs']
                 )
 
-            logger.info('Saving preprocessed recording')
+            logger.info('Saving artifact/drift preprocessed recording raw data')
             recording = recording.save(
                 folder = preprocessed_path, 
                 format='binary', 

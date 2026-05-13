@@ -36,7 +36,7 @@ def main(input_dir, config):
     probe_ids = [f[-1] for f in probe_folders]
 
     # Perform computations for each probe separately
-    for probe_id in probe_ids:
+    for probe_id in sorted(probe_ids):
 
         # Check if probe recording is valid
         mouse_id = epoch_name.split('_')[0]

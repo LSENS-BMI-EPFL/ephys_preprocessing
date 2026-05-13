@@ -15,7 +15,7 @@ def main(input_dir, config):
     probe_ids = [f[-1] for f in probe_folders]
 
     # Perform computations for each probe separately
-    for probe_id in probe_ids:
+    for probe_id in sorted(probe_ids):
 
         # Check if probe recording is valid
         mouse_id = epoch_name.split('_')[0]
@@ -54,13 +54,20 @@ def main(input_dir, config):
                 path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
                 path_to_meta = os.path.join(input_dir, probe_folder, meta_fname)
 
+            # If paths don't exist, log error and skip
+            if not os.path.exists(path_to_apbin) or not os.path.exists(path_to_meta):
+                logger.error(f"Raw data files not found for probe {probe_id} at {path_to_apbin} and {path_to_meta}. Skipping bombcell {ks_name}")
+                continue
+
+            logger.info(f"BC inputs for probe {probe_id}: {path_to_apbin}, {path_to_meta}, \
+            {kilosort_path}, {kilosort_version}")
             param = bc.get_default_parameters(kilosort_path,
                                               raw_file=path_to_apbin,
                                               meta_file=path_to_meta,
-                                              kilosort_version=kilosort_version)
+                                              kilosort_version=kilosort_version,
+                                              gain_to_uV=500) #hard-coded because imChan0apGain is missing in older recordings -> errors from bombcell
             param.update({'savePlots':True})
             logger.info('Running bombcell for IMEC probe {}.'.format(probe_id))
-
 
             # Compute quality metrics
             try:
