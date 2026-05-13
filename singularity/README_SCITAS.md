@@ -38,7 +38,9 @@ rsync -aPv \
   --no-perms \
   --no-times \
   --include='*/' \
-  --include='dredge/***' \
+  --include='dredge_fast/***' \
+  --include='kilosort4/***' \
+  --include='preprocess/***' \
   --exclude='*' \
   /scratch/bisi/data/AB163/ \
   bisi@haas056.rcp.epfl.ch:/mnt/lsens-analysis/Axel_Bisi/data/AB163/
@@ -59,6 +61,10 @@ xargs -P 4 -I {} rsync -av --no-perms --no-times --dry-run \
 
 ### rclone
 Or using rclone directly in a SCITAS cluster:
+
+```
+module load rclone
+```
 
 Configure: ``rclone config``
 
@@ -82,4 +88,22 @@ It should list the content of the folders. Then run:
 rclone copy nas-sv:"Petersen-Lab/analysis/Axel_Bisi/data/" "/scratch/bisi/data/"   --filter "+ */"   --filter "+ **/*corrected*"   --filter "- *"  --transfers 8 --checkers 8 --progress --log-file rclone_transfer.log
 ```
 
+Or, with more files requires in preprocessing:
+````bash
+rclone copy \
+  nas-sv:"Petersen-Lab/analysis/Axel_Bisi/data/" \
+  "/scratch/bisi/data/" \
+  --filter "+ */" \
+  --filter "+ **/catgt_*/**/*corrected*" \
+  --filter "+ **/catgt_*/**/*.meta" \
+  --filter "+ **/catgt_*/**/*.txt" \
+  --filter "+ **/tracks/**" \
+  --filter "- *" \
+  --transfers 8 \
+  --checkers 8 \
+  --progress \
+  --stats 30s \
+  --log-level INFO \
+  --log-file rclone_transfer.log
+````
 Make sure the filters are correct.
