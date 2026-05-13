@@ -12,12 +12,12 @@ overstrike:
      overstrike_path: '/opt/tools/OverStrike-linux'
 
 catgt:
-     do: true
+     do: false
      catgt_path: '/opt/tools/CatGT-linux'
      overwrite: false
 
 artifact_correction:
-     do: true
+     do: false
      window_ms: 3
      ms_before: 0.2
      ms_after: 3.7
@@ -28,11 +28,11 @@ motion:
      preset: 'dredge_fast'
 
 drift_correction:
-     do: true
+     do: false
      preset: 'dredge_fast'
 
 sorters:
-     do: true
+     do: false
      overwrite_preprocessed: true
      sorter_list:
           - kilosort4
@@ -67,6 +67,7 @@ bombcell:
      matlab_path: ''  # Not used for Python-only bombcell
 
 tprime:
+     do: false
      tprime_path: '/opt/tools/TPrime-linux'
      syncperiod: 1
      default_tostream_probe: 0
@@ -80,11 +81,12 @@ cwaves:
      snr_radius: 8
 
 mean_waveform_metrics:
-     do: true
+     do: false
 
 depth_estimation:
      do: false # Requires LFP data
 
 ibl_conversion:
-     do: false #Requires installation of IBL libraries
+     do: true #Requires having IBL libraries
+     overwrite: true
 
