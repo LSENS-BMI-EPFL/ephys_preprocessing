@@ -8,7 +8,11 @@ raw_data_path: '/scratch/bisi/data'
 output_path: '/scratch/bisi/data' #/data?
 mice_info_path: '/home/bisi/mice_info'
 
+band_extractor:
+     do: true
+
 overstrike:
+     do: true
      overstrike_path: '/opt/tools/OverStrike-linux'
 
 catgt:

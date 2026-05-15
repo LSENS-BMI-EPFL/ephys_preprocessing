@@ -34,6 +34,7 @@ logger.add(
 )
 
 from ephys_preprocessing.preprocessing import (
+    run_band_extractor,
     run_catgt,
     run_overstrike,
     run_dredge,
@@ -118,19 +119,37 @@ def main(input_dir: Path, config_path: Path):
     mouse_name = processed_dir.parents[1].name  # …/{mouse}/{session}/Ephys
 
     # ------------------------------------------------------------------ #
-    # Spike-sorting steps
+    # Filtering, event times, preprocessing, spike-sorting and metrics
     # ------------------------------------------------------------------ #
+
+    if config["band_extractor"]["do"]:
+        logger.info("Starting LFP band extractor.")
+        run_band_extractor.main(input_dir, processed_dir, config["band_extractor"])
+        logger.info(f"Finished band extractor in {elapsed()}.")
+
 
     if config["catgt"]["do"]:
         logger.info("Starting CatGT.")
         run_catgt.main(input_dir, processed_dir, config["catgt"])
         logger.info(f"Finished CatGT in {elapsed()}.")
 
-    # OverStrike — mouse-specific, no config flag needed
-    timespans_list = None
-    if mouse_name == "PB191":
+    # List of time spans to zero out in recording in secs, relative to start of recording
+    if mouse_name == 'AB105':
+        timespans_list = [(0, 24), (1800, 1933), (2389, 3161)]
+    elif mouse_name == 'AB107':
+        timespans_list = [(1247, 1930)]
+    elif mouse_name == 'AB129':
+        timespans_list = [(5580, 1E9)]
+    elif mouse_name == 'AB142':
+        timespans_list = [(3474, 3892)]
+    elif mouse_name == 'PB191':
         timespans_list = [(2350, 2373), (2724, 2778)]
-    if timespans_list:
+    elif mouse_name == 'AB149':
+        timespans_list = [(3200, 3524)]
+    else:
+        timespans_list = [(), ]
+
+    if timespans_list and config['overstrike']['do']:
         logger.info("Starting OverStrike.")
         run_overstrike.main(processed_dir, config["overstrike"], timespans_list=timespans_list)
         logger.info(f"Finished OverStrike in {elapsed()}.")
@@ -150,9 +169,9 @@ def main(input_dir: Path, config_path: Path):
         run_py_bombcell.main(processed_dir, config)
         logger.info(f"Finished Bombcell in {elapsed()}.")
 
-    # ------------------------------------------------------------------ #
-    # Sync steps — require the catgt folder produced above
-    # ------------------------------------------------------------------ #
+    # --------------------------------------------------------------------------- #
+    # Post- event times - requires event times and spike times from spike-sorting
+    # --------------------------------------------------------------------------- #
 
     catgt_dir = find_catgt_folder(processed_dir)
     logger.info(f"Sync processing from catgt folder: {catgt_dir}")
