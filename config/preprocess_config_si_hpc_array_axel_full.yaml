@@ -9,10 +9,10 @@ output_path: '/scratch/bisi/data' #/data?
 mice_info_path: '/home/bisi/mice_info'
 
 band_extractor:
-     do: true
+     do: false
 
 overstrike:
-     do: true
+     do: false
      overstrike_path: '/opt/tools/OverStrike-linux'
 
 catgt:
@@ -28,7 +28,7 @@ artifact_correction:
      mode: 'linear'
 
 motion:
-     do: true
+     do: false
      preset: 'dredge_fast'
 
 drift_correction:

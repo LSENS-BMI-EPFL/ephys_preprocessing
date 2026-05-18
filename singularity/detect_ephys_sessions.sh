@@ -4,7 +4,7 @@
 # Searches for mouse_name/session_name/Ephys folders containing .ap.bin files
 
 DATA_DIR="/scratch/bisi/data"
-OUTPUT_FILE="/home/bisi/code/ephys_preprocessing/config/inputs_axel_test.txt"
+OUTPUT_FILE="/home/bisi/code/ephys_preprocessing/config/inputs_axel_full.txt"
 SUFFIX="corrected"  # Set to "" to find any .ap.bin, or "corrected" for files like *corrected.imec*.ap.bin
 
 echo "========================================"
@@ -61,6 +61,17 @@ echo ""
 # Sort sessions
 IFS=$'\n' sessions=($(sort <<<"${sessions[*]}"))
 unset IFS
+
+# Filter to only keep AB or MH mice
+filtered_sessions=()
+for session in "${sessions[@]}"; do
+    rel_path="${session#$DATA_DIR/}"
+    mouse=$(echo "$rel_path" | cut -d'/' -f1)
+    if [[ "$mouse" == AB* || "$mouse" == MH* ]]; then
+        filtered_sessions+=("$session")
+    fi
+done
+sessions=("${filtered_sessions[@]}")
 
 # Count unique mice (first directory level after DATA_DIR)
 declare -A mice

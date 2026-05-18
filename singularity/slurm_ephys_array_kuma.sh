@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=ephys-array
-#SBATCH --array=1-8%3
+#SBATCH --array=2-8%4  # skip first as it is a comment in the .txt file
 #SBATCH --output=logs/ephys_%A_%a.out
 #SBATCH --error=logs/ephys_%A_%a.err
 #SBATCH --time=12:00:00

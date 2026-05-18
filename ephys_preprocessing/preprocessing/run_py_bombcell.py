@@ -4,10 +4,12 @@ from loguru import logger
 import bombcell as bc
 import yaml
 
-from ephys_preprocessing.utils.ephys_utils import check_if_valid_recording, extract_ks_version
+from ephys_preprocessing.utils.ephys_utils import check_if_valid_recording, extract_ks_version, get_exp_datetime
 from ephys_preprocessing.utils.phylib_utils import load_phy_model
 def main(input_dir, config):
+
     input_dir = os.path.join(input_dir, [f for f in os.listdir(input_dir) if 'catgt' in f][0])
+    date = get_exp_datetime(input_dir)
     catgt_epoch_name = os.path.basename(input_dir)
     epoch_name = catgt_epoch_name.lstrip('catgt_')
 
@@ -19,7 +21,7 @@ def main(input_dir, config):
 
         # Check if probe recording is valid
         mouse_id = epoch_name.split('_')[0]
-        if not check_if_valid_recording(config, mouse_id, probe_id):
+        if not check_if_valid_recording(config, mouse_id, probe_id, date):
             continue
 
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)

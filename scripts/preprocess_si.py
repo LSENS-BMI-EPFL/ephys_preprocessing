@@ -107,9 +107,13 @@ def main(input_dir: Path, config_path: Path):
         return time.strftime("%H:%M:%S", time.gmtime(time.time() - t0))
 
     # Probe count (informational)
-    epoch_name = next(d for d in os.listdir(input_dir) if not d.startswith("."))
-    n_probes = len([f for f in os.listdir(input_dir / epoch_name) if "imec" in f])
-    logger.info(f"Recording with {n_probes} probe(s).")
+    #epoch_name = next(d for d in os.listdir(input_dir) if not d.startswith("."))
+    #n_probes = len([f for f in os.listdir(input_dir / epoch_name) if "imec" in f])
+    #logger.info(f"Recording with {n_probes} probe(s).")
+
+    bin_files = sorted(input_dir.rglob('*.imec*.ap.bin'))
+    n_probes = len(bin_files)
+    logger.info(f"Recording with {n_probes} probes: {list(bin_files)}")
 
     # Resolve processed output directory
     processed_dir = resolve_processed_dir(input_dir, config)
@@ -123,9 +127,9 @@ def main(input_dir: Path, config_path: Path):
     # ------------------------------------------------------------------ #
 
     if config["band_extractor"]["do"]:
-        logger.info("Starting LFP band extractor.")
-        run_band_extractor.main(input_dir, processed_dir, config["band_extractor"])
-        logger.info(f"Finished band extractor in {elapsed()}.")
+        logger.info("Starting extraction of LFP band and/or multi-shank data.")
+        run_band_extractor.main(input_dir, config)
+        logger.info(f"Finished band extraction in {elapsed()}.")
 
 
     if config["catgt"]["do"]:
@@ -147,7 +151,7 @@ def main(input_dir: Path, config_path: Path):
     elif mouse_name == 'AB149':
         timespans_list = [(3200, 3524)]
     else:
-        timespans_list = [(), ]
+        timespans_list = []
 
     if timespans_list and config['overstrike']['do']:
         logger.info("Starting OverStrike.")

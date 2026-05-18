@@ -6,16 +6,20 @@ import yaml
 import spikeinterface.extractors as se
 import spikeinterface.full as si
 
-from ephys_preprocessing.utils.ephys_utils import check_if_valid_recording
+import spikeinterface.preprocessing as spre
+from spikeinterface.exporters import export_to_ibl_gui
+
+from ephys_preprocessing.utils.ephys_utils import check_if_valid_recording, get_exp_datetime
 from ephys_preprocessing.preprocessing.get_artifact_times import run_tprime_alignment
 from ephys_preprocessing.preprocessing.spikeinterface_modules.artifact_correction import artifact_correction
 
 def main(input_dir, config):
     # epoch_name = os.listdir(input_dir)[0]
     input_dir = Path(input_dir)
+    date = get_exp_datetime(input_dir)
     epoch_name = list(input_dir.glob('catgt*'))[0].name
     probe_folders = (input_dir / epoch_name).glob("*imec*")
-    probe_folders = [str(p) for p in probe_folders]    
+    probe_folders = [str(p) for p in probe_folders]
     logger.info('Data to spike-sort: {}'.format(probe_folders))
     n_probes = len(probe_folders)
 
@@ -24,10 +28,10 @@ def main(input_dir, config):
     if 'kilosort2' in sorter_configs['sorter_list']:
         si.Kilosort2Sorter.set_kilosort2_path(sorter_configs['kilosort2']['sorter_path'])
 
-    for probe_id in range(n_probes):   
+    for probe_id in range(n_probes):
         # Check if probe recording is valid
         mouse_id = epoch_name.split('_')[1]
-        if not check_if_valid_recording(config, mouse_id, probe_id):
+        if not check_if_valid_recording(config, mouse_id, probe_id, date):
             continue
 
         probe_folder = '{}_imec{}'.format(epoch_name.replace('catgt_', ''), probe_id)
@@ -38,7 +42,11 @@ def main(input_dir, config):
         if preprocessed_path.exists() and any(preprocessed_path.iterdir()) and not overwrite_preprocessed:
             recording = si.load_extractor(preprocessed_path) #TODO: this throws an error
         else:
+            # Get recording
             recording = se.read_spikeglx(probe_path, stream_id=f'imec{probe_id}.ap')
+
+            # Preprocessing steps before spike sorting
+            # --------------------------------------
             if config['artifact_correction']['do']:
                 logger.info('Correcting magnetic artifact before sorting...')
 
@@ -81,7 +89,10 @@ def main(input_dir, config):
                 **config['sorters']['job_kwargs'],
             )
 
+        # Run spike sorting
         for sorter in sorter_configs['sorter_list']:
+
+
             folder = Path(probe_path) / sorter
             # if (folder / 'phy').exists():
             #     logger.info(f'Sorting already done for {sorter} on IMEC probe {probe_id}')
@@ -96,6 +107,28 @@ def main(input_dir, config):
                 verbose=True,
                 singularity_image=sorter_configs[sorter]["singularity_image"],
                 **sorter_configs[sorter]['sorter_params'],
+            )
+
+            # Test export to IBL GUI
+            logger.info(f"TEST: Saving sorting output for IBL GUI")
+
+            sorting_analyzer = si.create_sorting_analyzer(sorting=sorting, recording=recording)
+            # we need to compute some required extensions
+            sorting_analyzer.compute(
+                ['random_spikes', 'templates', 'spike_amplitudes', 'spike_locations', 'noise_levels',
+                 'quality_metrics'])
+            # optionally, we can pass an LFP recording to compute RMS/PSD in the LFP band
+            recording_lfp = spre.bandpass_filter(recording, freq_min=1, freq_max=300, ignore_low_freq_error=True)
+            # we can also decimate the LFP to speed up the process
+            recording_lfp = spre.decimate(recording_lfp, 10)
+
+            # the export process is fast because everything is pre-computed
+            export_to_ibl_gui(
+                sorting_analyzer=sorting_analyzer,
+                output_folder=folder / 'ibl_gui',
+                lfp_recording=recording_lfp,
+                n_jobs=config['sorters']['job_kwargs']['n_jobs'],
+                remove_if_exists=overwrite_preprocessed
             )
 
             ### The code below gives wrong output in phy, even with the output of Kilosort 

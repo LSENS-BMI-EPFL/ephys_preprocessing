@@ -14,7 +14,7 @@ import pathlib
 from loguru import logger
 
 from ephys_preprocessing.utils import dredge_utils
-from ephys_preprocessing.utils.ephys_utils import check_if_valid_recording
+from ephys_preprocessing.utils.ephys_utils import check_if_valid_recording, get_exp_datetime
 
 
 def main(input_dir, config):
@@ -25,7 +25,7 @@ def main(input_dir, config):
     :return:
     """
 
-
+    date = get_exp_datetime(input_dir)
     epoch_name = [f for f in os.listdir(input_dir) if '_g' in f][0]
     probe_folders = [f for f in os.listdir(os.path.join(input_dir, epoch_name)) if 'imec' in f]
     logger.info('Data to process: {}'.format(sorted(probe_folders)))
@@ -36,7 +36,7 @@ def main(input_dir, config):
 
         # Check if probe recording is valid
         mouse_id = epoch_name.split('_')[1]
-        if not check_if_valid_recording(config, mouse_id, probe_id):
+        if not check_if_valid_recording(config, mouse_id, probe_id, date):
             continue
 
         probe_folder = '{}_imec{}'.format(epoch_name.replace('catgt_', ''), probe_id)

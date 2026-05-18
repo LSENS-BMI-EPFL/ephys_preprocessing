@@ -16,7 +16,7 @@ import json
 from loguru import logger
 from pathlib import Path
 
-from ephys_preprocessing.utils.ephys_utils import check_if_valid_recording
+from ephys_preprocessing.utils.ephys_utils import check_if_valid_recording, get_exp_datetime
 sys.path.insert(0, "/home/bisi/code/iblapps") # for Kuma
 from atlaselectrophysiology.extract_files import extract_data
 from iblatlas.atlas import AllenAtlas
@@ -46,6 +46,7 @@ def main(input_dir, config):
     """
     day_index = 0       # day of recordings, iterate
     input_dir = Path(input_dir)
+    date = get_exp_datetime(input_dir)
     catgt_epoch_name = input_dir.name
     session_date = input_dir.parents[1].name
     epoch_name = catgt_epoch_name.lstrip('catgt_')
@@ -70,7 +71,7 @@ def main(input_dir, config):
     # Perform computations for each probe separately
     for probe_id in sorted(probe_ids):
 
-        if not check_if_valid_recording(config, mouse_id, probe_id, day_id=day_index):
+        if not check_if_valid_recording(config, mouse_id, probe_id, date):
             continue
 
         # Format electrophysiology data

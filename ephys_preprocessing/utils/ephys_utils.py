@@ -13,17 +13,50 @@ import re
 import os
 import pandas as pd
 import numpy as np
+from pathlib import Path
 from collections.abc import Iterable
 from loguru import logger
+from datetime import datetime
+
+def get_exp_datetime(input_dir):
+    """
+    Get experiment datetime from input directory.
+    :param input_dir:
+    :return datetime: str of experiment
+    """
+    # The session name is the folder before the Ephys folder
+    #  e.g. in /scratch/bisi/data/AB133/AB133_20241105_111234/Ephys/, the session name is AB133_20241105_111234
+
+    input_dir = Path(input_dir)
+
+    # Get session folder name
+    path_parts = input_dir.parts
+    if path_parts[-1].startswith("catgt_"):
+        # .../AB133/Recording/AB133_20241105_111234/Ephys/
+        session_name = path_parts[-3]
+    else:
+        # .../AB133/AB133_20241105_111234/Ephys/
+        session_name = path_parts[-2]
+
+    # Extract datetime string
+    datetime_str = session_name.split('_', 1)[1]
+
+    formatted_date = datetime.strptime(
+        datetime_str,
+        "%Y%m%d_%H%M%S"
+    ).strftime("%d.%m.%Y")
+    logger.debug(f"Session {session_name} - Experiment datetime: {formatted_date}")
+    return formatted_date
 
 
-def check_if_valid_recording(config, mouse_id, probe_id, day_id=0):
+
+def check_if_valid_recording(config, mouse_id, probe_id, date):
     """
     Check if recording is valid.
     :param config: (dict) config dict.
     :param mouse_id: (str) mouse name.
     :param probe_id: (int) probe id.
-    :param day_index: (int) day index of recordings (naive, expert).
+    :param date: (str) date of experiment
     :return:
     """
     if mouse_id.startswith('AB') or mouse_id.startswith('MH'):
@@ -34,13 +67,28 @@ def check_if_valid_recording(config, mouse_id, probe_id, day_id=0):
 
     probe_info_df = pd.read_excel(path_to_probe_insertion_info)
 
-    #if 'day_of_recording' not in probe_info_df.columns:
-    #    logger.error('No day_of_recording column in probe insertion info table. Specify to select correct insertion')
+    # convert dataframe column
+    probe_info_df['date'] = pd.to_datetime(probe_info_df['date'], errors='coerce', dayfirst=True)
 
-    probe_info = probe_info_df.loc[(probe_info_df['mouse_name'] == mouse_id)
-                                      & (probe_info_df['probe_id'] == int(probe_id))
-                                    #   & (probe_info_df['day_of_recording'] == int(day_id))
-                                      ]
+    # convert query date
+    date_dt = pd.to_datetime(date, dayfirst=True)
+
+    probe_info = probe_info_df.loc[
+        (probe_info_df['mouse_name'] == mouse_id) &
+        (probe_info_df['probe_id'] == int(probe_id)) &
+        (probe_info_df['date'] == date_dt)
+     ]
+
+   #probe_info_df['date'] = probe_info_df['date'].astype(str)
+   #print(date, type(date), len(probe_info_df[probe_info_df.date==date]))
+   #print(probe_info_df.date.values)
+   #print(mouse_id,probe_id,date)
+   #print(len(probe_info_df.loc[(probe_info_df['mouse_name'] == mouse_id)
+   #                                  & (probe_info_df['probe_id'] == int(probe_id))]))
+   #probe_info = probe_info_df.loc[(probe_info_df['mouse_name'] == mouse_id)
+   #                                  & (probe_info_df['probe_id'] == int(probe_id))
+   #                                &  (probe_info_df['date']==date)
+   #                                  ]
 
     # Check if no entries for that mouse
     if probe_info.empty:
@@ -51,21 +99,44 @@ def check_if_valid_recording(config, mouse_id, probe_id, day_id=0):
         return False
     return True
 
-    # Check if there are clusters
-    #if cluster_info_df.empty:
-    #    return False
 
-    # Check if there are clusters with good or mua labels
-    #if not cluster_info_df['group'].isin(['good', 'mua']).any():
-    #    return False
+def get_probe_version(config,mouse_id,probe_id, date):
+    """
+    Check if probe_version is 1 or 2.
+    :param config:
+    :param mouse_id:
+    :param probe_id:
+    :param date:
+    :return:
+    """
+    if mouse_id.startswith('AB') or mouse_id.startswith('MH'):
+        path_to_probe_insertion_info = os.path.join(config['mice_info_path'], 'joint_probe_insertion_info.xlsx')
+        print('Reading experimental metadata:', path_to_probe_insertion_info)
+    else:
+        path_to_probe_insertion_info = os.path.join(config['mice_info_path'], 'probe_insertion_info.xlsx')
 
-    # Check if only noise clusters
-    #if cluster_info_df['group'].isin(['noise']).all():
-    #    print('Only noise clusters in recording.')
-    #    return False
+    probe_info_df = pd.read_excel(path_to_probe_insertion_info)
 
-    return
+    # convert dataframe column
+    probe_info_df['date'] = pd.to_datetime(probe_info_df['date'], errors='coerce', dayfirst=True)
 
+    # convert query date
+    date_dt = pd.to_datetime(date, dayfirst=True)
+
+    probe_info = probe_info_df.loc[
+        (probe_info_df['mouse_name'] == mouse_id) &
+        (probe_info_df['probe_id'] == int(probe_id)) &
+        (probe_info_df['date'] == date_dt)
+        ]
+
+    probe_info['probe_type'] = probe_info['probe_type'].astype(int)
+    # Check if no entries for that mouse
+    if probe_info.empty:
+        logger.error('No probe insertion info for mouse {} and probe {}. Update probe insertion table.'.format(mouse_id,                                                                                              probe_id))
+        return None
+
+    probe_version = probe_info['probe_type'].values[0]
+    return probe_version
 
 def convert_stereo_coords(azimuth, elevation):
     """
