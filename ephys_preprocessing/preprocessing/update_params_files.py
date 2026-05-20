@@ -13,6 +13,9 @@ def update_params_files(root_dir):
     
     # Walk through all directories
     for dirpath, dirnames, filenames in os.walk(root_dir):
+        if ('AB133' not in dirpath) or ('AB086' not in dirpath) or ('AB121' not in dirpath):
+            if 'kilosort4' not in dirpath:
+                continue
         if 'params.py' in filenames:
             file_path = os.path.join(dirpath, 'params.py')
             print(f"Found params.py at: {file_path}")
@@ -49,7 +52,8 @@ def update_params_files(root_dir):
 if __name__ == "__main__":
     # Get the current directory or specify your root directory
     root_dir = "/mnt/lsens/analysis/Jules_Lebert/data"
-    
+    root_dir = "M:/analysis//Axel_Bisi/data"
+
     print(f"Starting search in: {root_dir}")
     modified = update_params_files(root_dir)
     print(f"\nComplete! Modified {modified} files.")

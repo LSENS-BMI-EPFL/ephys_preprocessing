@@ -4,6 +4,7 @@ from loguru import logger
 import bombcell as bc
 import yaml
 
+from ephys_preprocessing.utils.readSGLX import readMeta
 from ephys_preprocessing.utils.ephys_utils import check_if_valid_recording, extract_ks_version, get_exp_datetime
 from ephys_preprocessing.utils.phylib_utils import load_phy_model
 def main(input_dir, config):
@@ -40,9 +41,6 @@ def main(input_dir, config):
                 kilosort_path = os.path.join(kilosort_folder, 'sorter_output')
 
             save_path = os.path.join(kilosort_path, 'bombcell')
-            print(f' - Bombcell for {ks_name}')
-            print('KS input path:', kilosort_path)
-            print('BC output path:', save_path)
 
             try:
                 apbin_fname = '{}_tcat_corrected.imec{}.ap.bin'.format(epoch_name, probe_id)
@@ -61,16 +59,18 @@ def main(input_dir, config):
                 logger.error(f"Raw data files not found for probe {probe_id} at {path_to_apbin} and {path_to_meta}. Skipping bombcell {ks_name}")
                 continue
 
-            logger.info(f"BC inputs for probe {probe_id}: {path_to_apbin}, {path_to_meta}, \
-            {kilosort_path}, {kilosort_version}")
+            # Load metadata
+            meta_dict = readMeta(Path(path_to_apbin))
+            recording_duration = meta_dict["fileTimeSecs"]
+            logger.info("Getting parameters for Bombcell and updating them. Setting presence ratio bin size to full recording duration.")
             param = bc.get_default_parameters(kilosort_path,
                                               raw_file=path_to_apbin,
                                               meta_file=path_to_meta,
                                               kilosort_version=kilosort_version,
                                               gain_to_uV=500) #hard-coded because imChan0apGain is missing in older recordings -> errors from bombcell
-            param.update({'savePlots':True})
-            logger.info('Running bombcell for IMEC probe {}.'.format(probe_id))
+            param.update({'savePlots':True, 'computeDrift':True, 'presenceRatioBinSize':recording_duration})
 
+            logger.info('Running bombcell for IMEC probe {}.'.format(probe_id))
             # Compute quality metrics
             try:
                 quality_metrics, param, unit_type, unit_type_string, = bc.run_bombcell(kilosort_path, save_path, param,)
@@ -81,7 +81,7 @@ def main(input_dir, config):
                 # Compute all ephys properties - now defaults to ks_dir/bombcell
                 ephys_properties, ephys_param = bc.run_all_ephys_properties(kilosort_path, ephys_param, save_path=save_path)
 
-                # cluster_info table creation
+                # cluster_info table creation for Phy
                 logger.info('Creating cluster_info table for IMEC probe {}.'.format(probe_id))
                 phy_model = load_phy_model(os.path.join(kilosort_path, 'params.py'))
                 phy_model.create_metrics_dataframe()

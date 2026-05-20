@@ -245,6 +245,7 @@ def run(
         rec.reset_times()
         rec = si.highpass_filter(recording=rec, freq_min=300.)
         rec = si.common_reference(rec, reference="global", operator="median")
+        # no phase shift?
 
         motion_dict = {
             'bin_s': NT / FS,

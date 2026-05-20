@@ -53,13 +53,12 @@ def main(input_dir, output_dir, config):
                '-t=0,0',
                '-t_miss_ok',
                '-startsecs=0.0',
-               '-maxsecs=5580', # remove and write down for mouse in SLIMS
                '-ni',
                '-lf',
                '-lffilter=butter,12,1,600',
                '-apfilter=butter,12,300,10000',
                '-ap',
-               '-prb=0:5',
+               '-prb=0:6',
                '-xa=0,0,0,1,0,0',               # Square wave pulse from IMEC slot (on by default)
                '-xa=0,0,1,4,0,0',               # Trial start
                '-xa=0,0,2,1,1,0',               # Auditory stimulus (does not work)

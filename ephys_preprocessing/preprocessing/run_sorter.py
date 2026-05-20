@@ -2,12 +2,15 @@ import os
 import shutil
 from pathlib import Path
 from loguru import logger
+import numpy as np
 import yaml
 import spikeinterface.extractors as se
 import spikeinterface.full as si
 
 import spikeinterface.preprocessing as spre
-from spikeinterface.exporters import export_to_ibl_gui
+from spikeinterface.exporters import export_to_ibl_gui, export_to_phy
+from spikeinterface.core import ChannelSparsity
+from spikeinterface.extractors import read_kilosort_as_analyzer
 
 from ephys_preprocessing.utils.ephys_utils import check_if_valid_recording, get_exp_datetime
 from ephys_preprocessing.preprocessing.get_artifact_times import run_tprime_alignment
@@ -56,11 +59,11 @@ def main(input_dir, config):
                     force_rerun=True,
                     tprime_config=config['tprime'],
                 )
-                # recording = artifact_correction(
-                #     recording=recording,
-                #     artifact_times=artifact_times,
-                #     window_ms=config['artifact_correction']['window_ms'],
-                # )
+                recording = artifact_correction(
+                    recording=recording,
+                    artifact_times=artifact_times,
+                    window_ms=config['artifact_correction']['window_ms'],
+                )
 
                 artifact_times_frame = artifact_times * recording.sampling_frequency
                 recording = si.remove_artifacts(
@@ -74,7 +77,7 @@ def main(input_dir, config):
             # Drift correction before sorting to avoid problem on the clusters
             # where drift correction hangs forever (kilosort4)
             if config['drift_correction']['do']:
-                logger.info('Correcting drift before sorting...')
+                logger.info('Correcting drift before sorting...') #TODO: add filter and phase shift?
                 recording = si.correct_motion(
                     recording=recording,
                     preset=config['drift_correction']['preset'],
@@ -83,11 +86,12 @@ def main(input_dir, config):
 
             logger.info('Saving artifact/drift preprocessed recording raw data')
             recording = recording.save(
-                folder = preprocessed_path, 
-                format='binary', 
+                folder = preprocessed_path,
+                format='binary',
                 overwrite=True,
                 **config['sorters']['job_kwargs'],
             )
+
 
         # Run spike sorting
         for sorter in sorter_configs['sorter_list']:
@@ -109,80 +113,100 @@ def main(input_dir, config):
                 **sorter_configs[sorter]['sorter_params'],
             )
 
-            # Test export to IBL GUI
-            logger.info(f"TEST: Saving sorting output for IBL GUI")
+            ##sorting = si.read_sorter_folder(folder, register_recording=True) #keep in case
+            #print(sorting)
+#
+            ## Test sorting analyzer with Kilosort output
+            ## --------------
+            ##logger.debug(f"TEST: Creating sorting analyzer for {sorter} output")
+            ##sorting_analyzer = read_kilosort_as_analyzer(folder / "sorter_output", gain_to_uV=500)
+            ### Check what the analyzer expects vs what you're loading
+            ##print("Analyzer channel_ids:", sorting_analyzer.channel_ids, len(sorting_analyzer.channel_ids))
+            ##print("Analyzer num_samples:", sorting_analyzer.get_num_samples())
+            ##print()
+            ##print("Recording channel_ids:", recording.channel_ids, len(recording.channel_ids))
+            ##print("Recording num_samples:", recording.get_num_samples())
+            ##sorting_analyzer.set_temporary_recording(recording) #attached recording
+#
+            ## Test building analyzer with sparsity
+            ## --------------
+            ## Build sparsity directly from KS4's per-unit best-channel assignments.
+            ## The default estimate_sparsity() computes rough templates on the fly and picks the
+            ## extremum channel, but a single bad/dominant electrode (ch 312, 3.7× above average
+            ## noise) wins for every unit, collapsing all 506 units onto channels 300-325.
+            ## Using KS4's ch property as the seed for the radius-based sparsity sidesteps this.
+            #channel_locations = recording.get_channel_locations()
+            #distances = np.linalg.norm(
+            #    channel_locations[:, np.newaxis] - channel_locations[np.newaxis, :], axis=2
+            #)
+            #radius_um = 100.0
+            #ks4_best_channels = sorting.get_property("ch")
+            #sparsity_mask = np.zeros((len(sorting.unit_ids), recording.get_num_channels()), dtype=bool)
+            #for unit_idx, best_ch in enumerate(ks4_best_channels):
+            #    sparsity_mask[unit_idx] = distances[int(best_ch)] <= radius_um
+            #sparsity = ChannelSparsity(sparsity_mask, sorting.unit_ids, rec.channel_ids)
+#
+            ## if output.exists() and not overwrite:
+            ##     sorting_analyzer = si.load_sorting_analyzer(output)
+            ## else:
+            ## make the SortingAnalyzer with necessary and some optional extensions
+            #output = folder / 'analyzer' # test
+            #job_kwargs = config['sorters']['job_kwargs']
+            #sorting_analyzer = si.create_sorting_analyzer(sorting, recording,
+            #                                              format="binary_folder", folder=output,
+            #                                              overwrite=overwrite_preprocessed,
+            #                                              sparsity=sparsity,
+            #                                              **job_kwargs,
+            #                                              )
+#
+#
+            #job_kwargs = config['sorters']['job_kwargs']
+            #sorting_analyzer.compute("random_spikes", method="uniform", max_spikes_per_unit=500)
+            #sorting_analyzer.compute("waveforms", **job_kwargs)
+            #sorting_analyzer.compute("templates", **job_kwargs)
+            #sorting_analyzer.compute("noise_levels")
+            #sorting_analyzer.compute("unit_locations", method="monopolar_triangulation")
+            #sorting_analyzer.compute("isi_histograms")
+            #sorting_analyzer.compute("correlograms", window_ms=100, bin_ms=5., **job_kwargs)
+            #sorting_analyzer.compute("principal_components", n_components=3, mode='by_channel_global', whiten=True,
+            #                         **job_kwargs)
+            #sorting_analyzer.compute("quality_metrics", metric_names=["snr", "firing_rate"])
+            #sorting_analyzer.compute("template_similarity")
+            #sorting_analyzer.compute("spike_amplitudes", **job_kwargs)
+#
+            #output = folder / 'analyzer' # test
+            #sorting_analyzer.save_as(
+            #    format="binary_folder",
+            #    folder=output
+            #)
+            ## Test export to Phy
+            #logger.debug(f"TEST: Saving sorting output for Phy")
+            #export_to_phy(sorting_analyzer=sorting_analyzer, output_folder=folder / 'phy')
+#
+            ## Test export to IBL GUI
+            #logger.debug(f"TEST: Saving sorting output for IBL GUI")
+#
+            ## Note keep this for now
+            ##sorting_analyzer = si.create_sorting_analyzer(sorting=sorting, recording=recording)
+            ### we need to compute some required extensions
+            ###sorting_analyzer.compute(
+            ##    ['random_spikes', 'templates', 'spike_amplitudes', 'spike_locations', 'noise_levels',
+            ##     'quality_metrics'])
+#
+            ## optionally, we can pass an LFP recording to compute RMS/PSD in the LFP band
+            #recording_lfp = spre.bandpass_filter(recording, freq_min=1, freq_max=300, ignore_low_freq_error=False)
+            ## we can also decimate the LFP to speed up the process
+            #recording_lfp = spre.decimate(recording_lfp, 10)
+#
+            ## the export process is fast because everything is pre-computed
+            #export_to_ibl_gui(
+            #    sorting_analyzer=sorting_analyzer,
+            #    output_folder=folder / 'ibl_gui',
+            #    lfp_recording=recording_lfp,
+            #    n_jobs=config['sorters']['job_kwargs']['n_jobs'],
+            #    remove_if_exists=overwrite_preprocessed
+            #)
 
-            sorting_analyzer = si.create_sorting_analyzer(sorting=sorting, recording=recording)
-            # we need to compute some required extensions
-            sorting_analyzer.compute(
-                ['random_spikes', 'templates', 'spike_amplitudes', 'spike_locations', 'noise_levels',
-                 'quality_metrics'])
-            # optionally, we can pass an LFP recording to compute RMS/PSD in the LFP band
-            recording_lfp = spre.bandpass_filter(recording, freq_min=1, freq_max=300, ignore_low_freq_error=True)
-            # we can also decimate the LFP to speed up the process
-            recording_lfp = spre.decimate(recording_lfp, 10)
-
-            # the export process is fast because everything is pre-computed
-            export_to_ibl_gui(
-                sorting_analyzer=sorting_analyzer,
-                output_folder=folder / 'ibl_gui',
-                lfp_recording=recording_lfp,
-                n_jobs=config['sorters']['job_kwargs']['n_jobs'],
-                remove_if_exists=overwrite_preprocessed
-            )
-
-            ### The code below gives wrong output in phy, even with the output of Kilosort 
-            ### looking fine, I dont know why. All clusters look like noise and 
-            ### located at the tip of the probe
-
-            # sorting = si.read_kilosort(folder)
-            # # sorting = si.read_sorter_folder(folder)
-            # sorting = si.remove_duplicated_spikes(
-            #     sorting=sorting, 
-            #     censored_period_ms=0.3,
-            #     )
-            # logger.info('Done running Kilosort for IMEC probe {}.'.format(probe_id))
-
-            # sorting_analyzer = si.create_sorting_analyzer(
-            #     sorting=sorting, 
-            #     recording=recording, 
-            #     sparse=True,
-            #     overwrite=True,
-            #     **config['sorters']['job_kwargs'],
-            #     )
-
-            # _ = sorting_analyzer.compute('random_spikes', method="uniform", max_spikes_per_unit=500)
-            # _ = sorting_analyzer.compute('waveforms',  ms_before=1.5,ms_after=2., **config['sorters']['job_kwargs'])
-            # _ = sorting_analyzer.compute('templates', operators=["average", "median", "std"])
-            # _ = sorting_analyzer.compute('noise_levels')
-
-            # # _ = sorting_analyzer.compute('spike_amplitudes', n_jobs = config['sorters']['job_kwargs']['n_jobs'])
-            # # _ = sorting_analyzer.compute("spike_locations", n_jobs = config['sorters']['job_kwargs']['n_jobs'])
-
-            # # _ = sorting_analyzer.compute(['correlograms', 'template_similarity', 'quality_metrics'],
-            # #              extension_params=dict(quality_metrics=dict(metric_names=['snr', 'isi_violation', 'presence_ratio']))
-            # #              )
-            
-            # # sorting_analyzer.save_as(
-            # #     format='zarr', 
-            # #     folder= folder / 'sorting_analyzer.zarr',
-            # #     )
-            
-            # si.export_to_phy(
-            #     sorting_analyzer=sorting_analyzer, 
-            #     output_folder=folder / 'phy', 
-            #     compute_pc_features=False,
-            #     remove_if_exists=True,
-            #     copy_binary=False,
-            #     # use_relative_path=True,
-            #     **config['sorters']['job_kwargs'],
-            #     )
-            # si.export_report(
-            #     sorting_analyzer=sorting_analyzer, 
-            #     output_folder=folder / 'report',
-            #     remove_if_exists=True,
-            #     **config['sorters']['job_kwargs'],
-            #     )
             
         # shutil.rmtree(Path(probe_path) / 'preprocess', ignore_errors=True)
 
