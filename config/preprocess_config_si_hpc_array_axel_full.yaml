@@ -28,7 +28,7 @@ artifact_correction:
      mode: 'linear'
 
 motion:
-     do: false
+     do: true
      preset: 'dredge_fast'
 
 drift_correction:
@@ -37,7 +37,7 @@ drift_correction:
 
 sorters:
      do: true
-     overwrite_preprocessed: true
+     overwrite_preprocessed: true # load extractor throws an error otherwise
      sorter_list:
           - kilosort4
      job_kwargs:

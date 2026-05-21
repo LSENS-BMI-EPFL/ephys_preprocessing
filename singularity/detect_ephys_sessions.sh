@@ -5,7 +5,7 @@
 
 DATA_DIR="/scratch/bisi/data"
 OUTPUT_FILE="/home/bisi/code/ephys_preprocessing/config/inputs_axel_full.txt"
-SUFFIX="corrected"  # Set to "" to find any .ap.bin, or "corrected" for files like *corrected.imec*.ap.bin
+SUFFIX="tcat_corrected"  # Set to "" to find any .ap.bin, or "corrected" for files like *corrected.imec*.ap.bin
 
 echo "========================================"
 echo "Scanning for Ephys sessions in: $DATA_DIR"
