@@ -327,7 +327,6 @@ def compute_metrics(mouse: str, reward_group: str, session: str, probe,
     session_date = session.split("_")[1]
     YYYY, MM, DD = session_date[:4], session_date[4:6], session_date[6:]
     date = f"{DD}.{MM}.{YYYY}"
-    print(date)
 
     return dict(
         mouse=mouse, reward_group=reward_group, session=session, probe=probe,
