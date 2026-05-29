@@ -242,9 +242,9 @@ def run(
 
         NT = 64 * 1024 + 64
         FS = rec.sampling_frequency
-        rec.reset_times()
-        rec = si.highpass_filter(recording=rec, freq_min=300.)
-        rec = si.common_reference(rec, reference="global", operator="median")
+        #rec.reset_times()
+        #rec = si.highpass_filter(recording=rec, freq_min=300.)
+        #rec = si.common_reference(rec, reference="global", operator="median")
         # no phase shift?
 
         motion_dict = {
@@ -267,7 +267,7 @@ def run(
         si.plot_motion_info(
             motion, rec,
             figure=fig,
-            depth_lim=(500, 2000),
+            depth_lim=(0, 3000),
             color_amplitude=True,
             amplitude_cmap="inferno",
             scatter_decimate=10,
