@@ -44,9 +44,9 @@ def main(input_dir, config):
         if mouse_id.startswith('MH'):
             probe_path = probe_path.replace('Axel_Bisi', 'Myriam_Hamon')
 
-        bin_file_name = [f for f in os.listdir(probe_path) if 'ap.bin' in f][0]
-        bin_path = pathlib.Path(os.path.join(probe_path, bin_file_name))
-        bin_path = str(bin_path).replace("_corrected", "") # not using the corrected version here
+        #bin_file_name = [f for f in os.listdir(probe_path) if 'ap.bin' in f][0]
+        #bin_path = pathlib.Path(os.path.join(probe_path, bin_file_name))
+        #bin_path = str(bin_path).replace("_corrected", "") # not using the corrected version here
 
         # Run DREDge pipeline
         logger.info('Running DREDge pipeline on probe {}.'.format(probe_id))

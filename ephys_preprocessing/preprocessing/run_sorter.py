@@ -59,11 +59,11 @@ def main(input_dir, config):
                     force_rerun=True,
                     tprime_config=config['tprime'],
                 )
-                recording = artifact_correction(
-                    recording=recording,
-                    artifact_times=artifact_times,
-                    window_ms=config['artifact_correction']['window_ms'],
-                )
+                #recording = artifact_correction(
+                #    recording=recording,
+                #    artifact_times=artifact_times,
+                #    window_ms=config['artifact_correction']['window_ms'],
+                #)
 
                 artifact_times_frame = artifact_times * recording.sampling_frequency
                 recording = si.remove_artifacts(
@@ -77,7 +77,7 @@ def main(input_dir, config):
             # Drift correction before sorting to avoid problem on the clusters
             # where drift correction hangs forever (kilosort4)
             if config['drift_correction']['do']:
-                logger.info('Correcting drift before sorting...') #TODO: add filter and phase shift?
+                logger.info('Correcting drift before sorting...')
                 recording = si.correct_motion(
                     recording=recording,
                     preset=config['drift_correction']['preset'],
@@ -98,9 +98,6 @@ def main(input_dir, config):
 
 
             folder = Path(probe_path) / sorter
-            # if (folder / 'phy').exists():
-            #     logger.info(f'Sorting already done for {sorter} on IMEC probe {probe_id}')
-            #     continue
 
             logger.info(f'Running {sorter} for IMEC probe {probe_id}')
             sorting = si.run_sorter(
@@ -112,103 +109,6 @@ def main(input_dir, config):
                 singularity_image=sorter_configs[sorter]["singularity_image"],
                 **sorter_configs[sorter]['sorter_params'],
             )
-
-            ##sorting = si.read_sorter_folder(folder, register_recording=True) #keep in case
-            #print(sorting)
-#
-            ## Test sorting analyzer with Kilosort output
-            ## --------------
-            ##logger.debug(f"TEST: Creating sorting analyzer for {sorter} output")
-            ##sorting_analyzer = read_kilosort_as_analyzer(folder / "sorter_output", gain_to_uV=500)
-            ### Check what the analyzer expects vs what you're loading
-            ##print("Analyzer channel_ids:", sorting_analyzer.channel_ids, len(sorting_analyzer.channel_ids))
-            ##print("Analyzer num_samples:", sorting_analyzer.get_num_samples())
-            ##print()
-            ##print("Recording channel_ids:", recording.channel_ids, len(recording.channel_ids))
-            ##print("Recording num_samples:", recording.get_num_samples())
-            ##sorting_analyzer.set_temporary_recording(recording) #attached recording
-#
-            ## Test building analyzer with sparsity
-            ## --------------
-            ## Build sparsity directly from KS4's per-unit best-channel assignments.
-            ## The default estimate_sparsity() computes rough templates on the fly and picks the
-            ## extremum channel, but a single bad/dominant electrode (ch 312, 3.7× above average
-            ## noise) wins for every unit, collapsing all 506 units onto channels 300-325.
-            ## Using KS4's ch property as the seed for the radius-based sparsity sidesteps this.
-            #channel_locations = recording.get_channel_locations()
-            #distances = np.linalg.norm(
-            #    channel_locations[:, np.newaxis] - channel_locations[np.newaxis, :], axis=2
-            #)
-            #radius_um = 100.0
-            #ks4_best_channels = sorting.get_property("ch")
-            #sparsity_mask = np.zeros((len(sorting.unit_ids), recording.get_num_channels()), dtype=bool)
-            #for unit_idx, best_ch in enumerate(ks4_best_channels):
-            #    sparsity_mask[unit_idx] = distances[int(best_ch)] <= radius_um
-            #sparsity = ChannelSparsity(sparsity_mask, sorting.unit_ids, rec.channel_ids)
-#
-            ## if output.exists() and not overwrite:
-            ##     sorting_analyzer = si.load_sorting_analyzer(output)
-            ## else:
-            ## make the SortingAnalyzer with necessary and some optional extensions
-            #output = folder / 'analyzer' # test
-            #job_kwargs = config['sorters']['job_kwargs']
-            #sorting_analyzer = si.create_sorting_analyzer(sorting, recording,
-            #                                              format="binary_folder", folder=output,
-            #                                              overwrite=overwrite_preprocessed,
-            #                                              sparsity=sparsity,
-            #                                              **job_kwargs,
-            #                                              )
-#
-#
-            #job_kwargs = config['sorters']['job_kwargs']
-            #sorting_analyzer.compute("random_spikes", method="uniform", max_spikes_per_unit=500)
-            #sorting_analyzer.compute("waveforms", **job_kwargs)
-            #sorting_analyzer.compute("templates", **job_kwargs)
-            #sorting_analyzer.compute("noise_levels")
-            #sorting_analyzer.compute("unit_locations", method="monopolar_triangulation")
-            #sorting_analyzer.compute("isi_histograms")
-            #sorting_analyzer.compute("correlograms", window_ms=100, bin_ms=5., **job_kwargs)
-            #sorting_analyzer.compute("principal_components", n_components=3, mode='by_channel_global', whiten=True,
-            #                         **job_kwargs)
-            #sorting_analyzer.compute("quality_metrics", metric_names=["snr", "firing_rate"])
-            #sorting_analyzer.compute("template_similarity")
-            #sorting_analyzer.compute("spike_amplitudes", **job_kwargs)
-#
-            #output = folder / 'analyzer' # test
-            #sorting_analyzer.save_as(
-            #    format="binary_folder",
-            #    folder=output
-            #)
-            ## Test export to Phy
-            #logger.debug(f"TEST: Saving sorting output for Phy")
-            #export_to_phy(sorting_analyzer=sorting_analyzer, output_folder=folder / 'phy')
-#
-            ## Test export to IBL GUI
-            #logger.debug(f"TEST: Saving sorting output for IBL GUI")
-#
-            ## Note keep this for now
-            ##sorting_analyzer = si.create_sorting_analyzer(sorting=sorting, recording=recording)
-            ### we need to compute some required extensions
-            ###sorting_analyzer.compute(
-            ##    ['random_spikes', 'templates', 'spike_amplitudes', 'spike_locations', 'noise_levels',
-            ##     'quality_metrics'])
-#
-            ## optionally, we can pass an LFP recording to compute RMS/PSD in the LFP band
-            #recording_lfp = spre.bandpass_filter(recording, freq_min=1, freq_max=300, ignore_low_freq_error=False)
-            ## we can also decimate the LFP to speed up the process
-            #recording_lfp = spre.decimate(recording_lfp, 10)
-#
-            ## the export process is fast because everything is pre-computed
-            #export_to_ibl_gui(
-            #    sorting_analyzer=sorting_analyzer,
-            #    output_folder=folder / 'ibl_gui',
-            #    lfp_recording=recording_lfp,
-            #    n_jobs=config['sorters']['job_kwargs']['n_jobs'],
-            #    remove_if_exists=overwrite_preprocessed
-            #)
-
-            
-        # shutil.rmtree(Path(probe_path) / 'preprocess', ignore_errors=True)
 
 if __name__ == "__main__":
     input_dir = Path('/Volumes/Petersen-Lab/analysis/Axel_Bisi/data/PB191/PB191_20241210_110601/Ephys/')
