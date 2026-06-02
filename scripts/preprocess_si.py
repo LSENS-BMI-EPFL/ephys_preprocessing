@@ -37,7 +37,7 @@ from ephys_preprocessing.preprocessing import (
     run_band_extractor,
     run_catgt,
     run_overstrike,
-    run_dredge,
+    run_motion_estimation,
     run_sorter,
     run_py_bombcell,
     run_tprime,
@@ -178,7 +178,6 @@ def main(input_dir: Path, config_path: Path):
     # --------------------------------------------------------------------------- #
 
     catgt_dir = find_catgt_folder(processed_dir)
-    logger.info(f"Sync processing from catgt folder: {catgt_dir}")
 
     if config["tprime"]["do"]:
         logger.info("Starting TPrime.")

@@ -17,6 +17,11 @@ import sys
 import time
 from pathlib import Path
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+
+mpl.rcParams['figure.facecolor'] = 'white'
+mpl.rcParams['axes.facecolor'] = 'white'
+mpl.rcParams['savefig.facecolor'] = 'white'
 import psutil
 
 import spikeinterface
@@ -270,7 +275,8 @@ def run(
             depth_lim=(0, 3000),
             color_amplitude=True,
             amplitude_cmap="inferno",
-            scatter_decimate=10,
+            scatter_decimate=5,
+            alpha=0.5
         )
 
         fig.suptitle(f"Recording: {folder_path.name}; {preset=}")
