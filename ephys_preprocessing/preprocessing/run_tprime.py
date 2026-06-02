@@ -36,6 +36,7 @@ def main(input_dir, config):
 
     # Get epoch name and run name
     epoch_name = catgt_epoch_name[6:]  # MOUSENAME_gX
+    mouse_id = epoch_name.split('_')[0]
 
     # Get synchronization period
     sglx_metafile_path = os.path.join(input_dir, '{}_tcat.nidq.meta'.format(epoch_name))
@@ -69,6 +70,10 @@ def main(input_dir, config):
         imSampRate = float(ap_meta_dict['imSampRate'])  # probe-specific
 
         kilosort_folders = (pathlib.Path(input_dir) / probe_folder).glob('kilosort*')
+
+        if mouse_id.startswith('AB') or mouse_id.startswith('MH'):
+            kilosort_folders = [f for f in kilosort_folders if f.name == 'kilosort4']
+
         for kilosort_folder in kilosort_folders:
 
             try:

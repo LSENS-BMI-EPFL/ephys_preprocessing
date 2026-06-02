@@ -143,8 +143,9 @@ def main(input_dir, config):
             else:
                 brainreg_path = Path(anat_data_folder, session_date, f'imec{probe_id}.npy')
 
+
         if not brainreg_path.exists():
-            logger.warning(f'Brainreg-segment track file not found for IMEC {probe_id}. Check folder.')
+            logger.warning(f'Brainreg-segment track file not found for IMEC {probe_id} at {brainreg_path}. Check folder.')
             continue
 
         # Load in coordinates of track in CCF space (order - apdvml, origin - top, left, front voxel

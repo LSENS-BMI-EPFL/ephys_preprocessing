@@ -29,22 +29,12 @@ import matplotlib.gridspec as gridspec
 from matplotlib.colors import Normalize
 from matplotlib.cm import ScalarMappable
 
-# ── dark theme ─────────────────────────────────────────────────────────────────
-matplotlib.rcParams.update({
-    "figure.facecolor": "#0d1117",
-    "axes.facecolor":   "#161b22",
-    "axes.edgecolor":   "#30363d",
-    "axes.labelcolor":  "#c9d1d9",
-    "axes.titlecolor":  "#e6edf3",
-    "xtick.color":      "#8b949e",
-    "ytick.color":      "#8b949e",
-    "text.color":       "#c9d1d9",
-    "grid.color":       "#21262d",
-    "grid.linewidth":   0.6,
-    "legend.facecolor": "#161b22",
-    "legend.edgecolor": "#30363d",
-    "font.size":        9,
-})
+
+import matplotlib as mpl
+
+mpl.rcParams['figure.facecolor'] = 'white'
+mpl.rcParams['axes.facecolor'] = 'white'
+mpl.rcParams['savefig.facecolor'] = 'white'
 
 BLUE   = "#58a6ff"
 PURPLE = "#bc8cff"

@@ -13,13 +13,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pathlib
 from loguru import logger
 
-from ephys_preprocessing.utils import dredge_utils
+from ephys_preprocessing.utils import motion_utils
 from ephys_preprocessing.utils.ephys_utils import check_if_valid_recording, get_exp_datetime
 
 
 def main(input_dir, config):
     """
-    Run DREDge on processed data.
+    Run motion estimation on processed data.
     :param input_dir:  path to preprocessed data
     :param config:  config dict
     :return:
@@ -48,8 +48,8 @@ def main(input_dir, config):
         #bin_path = pathlib.Path(os.path.join(probe_path, bin_file_name))
         #bin_path = str(bin_path).replace("_corrected", "") # not using the corrected version here
 
-        # Run DREDge pipeline
-        logger.info('Running DREDge pipeline on probe {}.'.format(probe_id))
+        # Run motion estimation pipeline
+        logger.info('Running motion estimation pipeline on probe {}.'.format(probe_id))
         preset = config['motion']['preset']
         out_path = pathlib.Path(os.path.join(probe_path, preset))
         if mouse_id.startswith('MH'):
@@ -57,7 +57,7 @@ def main(input_dir, config):
 
 
         stream_name = f'imec{probe_id}.ap'
-        dredge_utils.run(folder_path=probe_path,
+        motion_utils.run(folder_path=probe_path,
                          stream_name=stream_name,
                          output_folder=out_path,
                          preset=preset,

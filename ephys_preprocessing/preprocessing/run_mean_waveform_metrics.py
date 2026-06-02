@@ -27,6 +27,7 @@ def main(input_dir):
 
     catgt_epoch_name = os.path.basename(input_dir)
     epoch_name = catgt_epoch_name.lstrip('catgt_')
+    mouse_id = epoch_name.split('_')[0]
 
     probe_folders = [f for f in os.listdir(input_dir) if 'imec' in f]
     probe_ids = [f[-1] for f in probe_folders]
@@ -36,6 +37,10 @@ def main(input_dir):
 
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
         kilosort_folders = (pathlib.Path(input_dir) / probe_folder).glob('kilosort*')
+
+        if mouse_id.startswith('AB') or mouse_id.startswith('MH'):
+            kilosort_folders = [f for f in kilosort_folders if f.name == 'kilosort4']
+
         for kilosort_folder in kilosort_folders:
             # Get output folder
             path_cwave_output = kilosort_folder / 'sorter_output' / 'cwaves'

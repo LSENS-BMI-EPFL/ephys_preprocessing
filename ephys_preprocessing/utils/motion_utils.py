@@ -241,7 +241,7 @@ def run(
 
     else:
         log.info(
-            "Estimating motion with dredge_ap (preset='%s', n_jobs=%d) …",
+            "Estimating motion with (preset='%s', n_jobs=%d) …",
             preset, JOB_KWARGS["n_jobs"],
         )
 
@@ -315,7 +315,7 @@ def _save_motion_figure(motion, figures_folder: Path):
 
         ax.set_xlabel("Time (s)")
         ax.set_ylabel("Displacement (µm)")
-        ax.set_title("DREDge estimated motion")
+        ax.set_title("Estimated motion")
         fig.tight_layout()
 
         out = figures_folder / "dredge_motion.png"

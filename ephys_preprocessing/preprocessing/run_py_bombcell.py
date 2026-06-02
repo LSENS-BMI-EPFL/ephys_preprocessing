@@ -29,6 +29,10 @@ def main(input_dir, config):
         probe_path = os.path.join(input_dir, probe_folder)
 
         kilosort_folders = pathlib.Path(probe_path).glob('kilosort*')
+
+        if mouse_id.startswith('AB') or mouse_id.startswith('MH'):
+            kilosort_folders = [f for f in kilosort_folders if f.name == 'kilosort4']
+
         # Run bombcell for all kilosort folders
         for kilosort_folder in kilosort_folders:
 
@@ -80,14 +84,16 @@ def main(input_dir, config):
                 # Compute all ephys properties - now defaults to ks_dir/bombcell
                 ephys_properties, ephys_param = bc.run_all_ephys_properties(kilosort_path, ephys_param, save_path=save_path)
 
-                # cluster_info table creation for Phy
-                logger.info('Creating cluster_info table for IMEC probe {}.'.format(probe_id))
-                phy_model = load_phy_model(os.path.join(kilosort_path, 'params.py'))
-                phy_model.create_metrics_dataframe()
-                phy_model.save_metrics_tsv(os.path.join(kilosort_path, 'cluster_info.tsv'))
 
             except Exception as e:
-                logger.error(e)
+                logger.error(f'Bombcell failed :{e}')
+
+            # cluster_info table creation for Phy
+            logger.info('Creating cluster_info table for IMEC probe {}.'.format(probe_id))
+            phy_model = load_phy_model(os.path.join(kilosort_path, 'params.py'))
+            phy_model.create_metrics_dataframe()
+            phy_model.save_metrics_tsv(os.path.join(kilosort_path, 'cluster_info.tsv'))
+
 
     return
 
