@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=ephys-array
-#SBATCH --array=2-8%4  # skip first as it is a comment in the .txt file
+#SBATCH --array=1-100%20  # skip first as it is a comment in the .txt file
 #SBATCH --output=logs/ephys_%A_%a.out
 #SBATCH --error=logs/ephys_%A_%a.err
-#SBATCH --time=12:00:00
+#SBATCH --time=16:00:00
 #SBATCH --partition=h100
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=16
@@ -11,7 +11,7 @@
 #SBATCH --mail-user=axel.bisi@epfl.ch
 #SBATCH --mail-type=END
 # ============================================================================
-# SLURM job array — unified ephys pipeline (spikesort + sync) per session
+# SLURM job array — unified ephys pipeline per session
 # Each task reads one line from inputs_axel.txt and runs preprocess_si.py
 # ============================================================================
 
@@ -27,7 +27,7 @@ SIF_IMAGE="ephys-pipeline_latest.sif"
 CONFIG_DIR="/home/bisi/code/ephys_preprocessing/config"
 CONFIG_FILE="${CONFIG_DIR}/preprocess_config_si_hpc_array_axel_full.yaml"
 LOG_DIR="/home/bisi/logs"
-INPUT_FILE="${CONFIG_DIR}/inputs_axel_test.txt"
+INPUT_FILE="${CONFIG_DIR}/inputs_axel_full.txt"
 CODE_DIR="/home/bisi/code/ephys_preprocessing"
 
 BIND_DATA="/scratch/bisi/data:/scratch/bisi/data"

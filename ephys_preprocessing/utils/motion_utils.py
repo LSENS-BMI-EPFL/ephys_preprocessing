@@ -247,7 +247,7 @@ def run(
 
         NT = 64 * 1024 + 64
         FS = rec.sampling_frequency
-        #rec.reset_times()
+        rec.reset_times()
         #rec = si.highpass_filter(recording=rec, freq_min=300.)
         #rec = si.common_reference(rec, reference="global", operator="median")
         # no phase shift?
@@ -257,28 +257,27 @@ def run(
             'histogram_time_smooth_s': NT / FS
         }
 
+        # Estimate drift and save motion object
         rec_corrected, motion = si.correct_motion(recording=rec,
-                                                  preset=preset,
-                                                  folder=motion_folder,
-                                                  output_motion_info=True,
-                                                  n_jobs=28,
-                                                  progress_bar=True,
-                                                  estimate_motion_kwargs=motion_dict,
-                                                  overwrite=overwrite)
+                                                preset=preset,
+                                                folder=motion_folder,
+                                                output_motion_info=True,
+                                                n_jobs=28,
+                                                progress_bar=True,
+                                                estimate_motion_kwargs=motion_dict,
+                                                overwrite=overwrite)
+        si.save_motion_info(motion, motion_folder, overwrite=overwrite)
 
-        #si.save_motion_info(motion, motion_folder, overwrite=overwrite)
-
-        fig = plt.figure(figsize=(14, 8),dpi=300)
+        # Save figure
+        fig = plt.figure(figsize=(14, 8), dpi=300)
         si.plot_motion_info(
             motion, rec,
             figure=fig,
             depth_lim=(0, 3000),
             color_amplitude=True,
             amplitude_cmap="inferno",
-            scatter_decimate=5,
-            alpha=0.5
+            scatter_decimate=10,
         )
-
         fig.suptitle(f"Recording: {folder_path.name}; {preset=}")
         plt.savefig(os.path.join(figures_folder, "motion_results.png"))
 
@@ -489,12 +488,12 @@ if __name__ == "__main__":
     #     skip_existing=True,
     #     ram_threshold_gb=12.0,
     # )
-    bin_file = r"M:\analysis\Axel_Bisi\data\AB133\AB133_20241105_111234\Ephys\catgt_AB133_g0\AB133_g0_imec2\AB133_g0_tcat_corrected.imec2.ap.bin"
-    output_folder = r"M:\analysis\Myriam_Hamon\Presentations\IBL_meetings\test\dredge\AB133_imec2"
-    run(
-        bin_file=bin_file,
-        output_folder=output_folder,
-        preset="dredge",
-        use_lfp=False,
-        overwrite=False,
-    )
+    #bin_file = r"M:\analysis\Axel_Bisi\data\AB133\AB133_20241105_111234\Ephys\catgt_AB133_g0\AB133_g0_imec2\AB133_g0_tcat_corrected.imec2.ap.bin"
+    #output_folder = r"M:\analysis\Myriam_Hamon\Presentations\IBL_meetings\test\dredge\AB133_imec2"
+    #run(
+    #    bin_file=bin_file,
+    #    output_folder=output_folder,
+    #    preset="dredge",
+    #    use_lfp=False,
+    #    overwrite=False,
+    #)

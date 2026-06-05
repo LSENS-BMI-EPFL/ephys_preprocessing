@@ -29,6 +29,7 @@ def main(input_dir, config):
 
     catgt_epoch_name = os.path.basename(input_dir)
     epoch_name = catgt_epoch_name.lstrip('catgt_')
+    mouse_id = epoch_name.split('_')[0]
 
     probe_folders = [f for f in os.listdir(input_dir) if 'imec' in f]
     probe_ids = [f[-1] for f in probe_folders]
@@ -39,20 +40,27 @@ def main(input_dir, config):
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
 
         kilosort_folders = (pathlib.Path(input_dir) / probe_folder).glob('kilosort*')
+
+        if mouse_id.startswith('AB') or mouse_id.startswith('MH'):
+            kilosort_folders = [f for f in kilosort_folders if f.name == 'kilosort4']
+
         for kilosort_folder in kilosort_folders:
             # Create output folder
             path_cwave_output = kilosort_folder / 'sorter_output' / 'cwaves'
             path_cwave_output.mkdir(parents=True, exist_ok=True)
 
+
             # Path to probe binary file
-            try:
-                apbin_fname = '{}_tcat_corrected.imec{}.ap.bin'.format(epoch_name, probe_id)
+            apbin_fname = f'{epoch_name}_tcat_corrected.imec{probe_id}.ap.bin'
+            meta_fname = f'{epoch_name}_tcat_corrected.imec{probe_id}.ap.meta'
+            path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
+            path_to_meta = os.path.join(input_dir, probe_folder, meta_fname)
+
+            if not (os.path.exists(path_to_apbin) and os.path.exists(path_to_meta)):
+                logger.warning('Files with _corrected suffix missing. Using _tcat files.')
+                apbin_fname = f'{epoch_name}_tcat.imec{probe_id}.ap.bin'
+                meta_fname = f'{epoch_name}_tcat.imec{probe_id}.ap.meta'
                 path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
-                os.path.exists(path_to_apbin)
-            except FileNotFoundError:
-                apbin_fname = '{}_tcat.imec{}.ap.bin'.format(epoch_name, probe_id)
-                path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
-                os.path.exists(path_to_apbin)
 
             # Prepare spike data for C_Waves
             path_input_files = kilosort_folder / 'sorter_output'
@@ -129,8 +137,8 @@ def main(input_dir, config):
                 mean_waveforms = np.delete(mean_waveforms, ids_to_remove, axis=0)
 
                 np.save(os.path.join(path_cwave_output, 'mean_waveforms.npy'), mean_waveforms)
-            except:
-                logger.error('Error matching cluster indices in mean_waveforms.npy with cluster_info.tsv file.')
+            except Exception as err:
+                logger.error(f"Error matching cluster indices in mean_waveforms.npy with cluster_info.tsv file: {err}")
                 continue
 
     return

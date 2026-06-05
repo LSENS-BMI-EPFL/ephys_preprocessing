@@ -1,24 +1,5 @@
 """
 run_motion_sorting_correlation.py
-
-Batch runner: iterates over every (mouse, session, probe) under BASE_DATA_PATH,
-computes amplitude/FR ~ motion correlations for KS2 and KS4+DREDge, saves:
-
-  combined_results/motion_sorting_correlation/
-  ├── single/
-  │   └── {mouse}/
-  │       └── {session}_{probe}/
-  │           ├── figure.png
-  │           ├── results_{run_name}.csv   (per-unit DataFrame)
-  │           ├── presence_{run_name}.csv
-  │           └── done.flag
-  └── all_recordings_summary.csv          (one row per mouse/session/probe/run)
-
-Usage
------
-  python run_motion_sorting_correlation.py [--rerun]
-
-  --rerun   reprocess recordings that already have a done.flag
 """
 
 from __future__ import annotations
@@ -29,7 +10,7 @@ import warnings
 from pathlib import Path
 
 import matplotlib
-matplotlib.use("Agg")          # no display needed in batch mode
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import numpy as np
@@ -40,19 +21,20 @@ import one.alf.io as alfio
 import spikeinterface.preprocessing as sp
 
 # ---------------------------------------------------------------------------
-# Config — mirrors the GUI script
+# Config
 # ---------------------------------------------------------------------------
 
 BASE_DATA_PATH = Path(r"M:\analysis\Axel_Bisi\data")
 OUTPUT_BASE    = BASE_DATA_PATH.parent / "combined_results" / "motion_sorting_correlation"
-SINGLE_DIR     = OUTPUT_BASE / "single"
-
-KEEP_LABELS = {"GOOD", "MUA"}
-RUN_COLORS  = ["royalblue", "firebrick"]
-FR_BIN_SIZE = 2.0   # seconds
-ALPHA       = 0.01
-MIN_SPIKES  = 50
-HIGH_PR     = 0.8   # threshold for yield / bar-chart panels
+MOTION_PRESET = 'dredge'
+SINGLE_DIR = OUTPUT_BASE / MOTION_PRESET / "single"
+KEEP_LABELS  = {"GOOD", "MUA"}
+RUN_COLORS   = ["royalblue", "firebrick"]
+FR_BIN_SIZE  = 2.0    # seconds
+PR_BIN_SIZE  = 60.0   # seconds  (presence ratio bins)
+ALPHA        = 0.01
+MIN_SPIKES   = 50
+HIGH_PR      = 0.8
 
 
 # ---------------------------------------------------------------------------
@@ -60,11 +42,10 @@ HIGH_PR     = 0.8   # threshold for yield / bar-chart panels
 # ---------------------------------------------------------------------------
 
 def _run_label(name: str) -> str:
-    return "ks2" if "2" in name.lower().replace("kilosort", "") else "dredge+ks4"
+    return "ks2" if "2" in name.lower().replace("kilosort", "") else f"{MOTION_PRESET}+ks4"
 
 
 def iter_recordings(base: Path):
-    """Yield (mouse, session, probe_str) for every valid imec directory."""
     for mouse_dir in sorted(base.iterdir()):
         if not mouse_dir.is_dir() or mouse_dir.name.startswith("."):
             continue
@@ -90,7 +71,7 @@ def resolve_runs(base: Path, mouse: str, session: str, probe: str) -> dict:
         raise FileNotFoundError(f"No imec dir for {probe} in {session_ephys}")
     imec = imec_dirs[0]
 
-    motion_path = imec / "dredge_fast" / "motion"
+    motion_path = imec / MOTION_PRESET / "motion"
     if not motion_path.is_dir():
         raise FileNotFoundError(f"Motion folder not found: {motion_path}")
 
@@ -98,10 +79,10 @@ def resolve_runs(base: Path, mouse: str, session: str, probe: str) -> dict:
     for ks_dir in sorted(imec.iterdir()):
         if not ks_dir.is_dir() or "kilosort" not in ks_dir.name.lower():
             continue
-        is_ks2      = ks_dir.name.lower() == "kilosort2"
-        ibl_format  = imec / "ibl_format" if is_ks2 else ks_dir / "ibl_format"
-        metrics     = (ks_dir / "cluster_bc_unitType.tsv" if is_ks2
-                       else ks_dir / "sorter_output" / "cluster_bc_unitType.tsv")
+        is_ks2       = ks_dir.name.lower() == "kilosort2"
+        ibl_format   = imec / "ibl_format" if is_ks2 else ks_dir / "ibl_format"
+        metrics      = (ks_dir / "cluster_bc_unitType.tsv" if is_ks2
+                        else ks_dir / "sorter_output" / "cluster_bc_unitType.tsv")
         cluster_info = (ks_dir / "cluster_info.tsv" if is_ks2
                         else ks_dir / "sorter_output" / "cluster_info.tsv")
         if ibl_format.is_dir() and metrics.exists():
@@ -126,36 +107,14 @@ def load_spikes(ibl_format: Path, metrics_file: Path, cluster_info_file: Path) -
     spikes  = alfio.load_object(ibl_format, "spikes")
     metrics = pd.read_csv(metrics_file, sep="\t")
     labels  = metrics["bc_unitType"].values
-
-    ci = pd.read_csv(cluster_info_file, sep="\t")
-    cluster_depths = ci["depth"].values
-
+    ci      = pd.read_csv(cluster_info_file, sep="\t")
     return {
         "times":          spikes["times"],
         "amps":           spikes["amps"] * 1e6,
         "clusters":       spikes["clusters"].astype(int),
         "labels":         labels,
-        "cluster_depths": cluster_depths,
+        "cluster_depths": ci["depth"].values,
     }
-
-
-def load_presence_ratio(ks_dir: Path, is_ks2: bool) -> pd.Series | None:
-    path = (ks_dir / "qMetrics" / "cluster_presence_ratio.tsv" if is_ks2
-            else ks_dir / "sorter_output" / "cluster_presenceRatio.tsv")
-    if not path.exists():
-        warnings.warn(f"presence ratio not found: {path}")
-        return None
-    df = pd.read_csv(path, sep="\t")
-    ratio_col = next(
-        (c for c in df.columns if "ratio" in c.lower() or "presence" in c.lower()),
-        df.columns[-1],
-    )
-    id_col = next(
-        (c for c in df.columns if ("id" in c.lower() or "cluster" in c.lower())
-         and c != ratio_col), None,
-    )
-    index = df[id_col].values if id_col else np.arange(len(df))
-    return pd.Series(df[ratio_col].values, index=index, name="presence_ratio").dropna()
 
 
 # ---------------------------------------------------------------------------
@@ -178,8 +137,7 @@ def _interp_motion(motion, times_s: np.ndarray, depth_um: float) -> np.ndarray:
 
 
 def drift_amplitude_um(motion) -> float:
-    """Peak-to-peak of mean displacement across depth, in µm."""
-    disp = motion.displacement[0]          # (n_time_bins, n_depth_bins)
+    disp = motion.displacement[0]
     mean_disp = disp.mean(axis=1)
     return float(mean_disp.max() - mean_disp.min())
 
@@ -192,13 +150,16 @@ def compute_correlations(data: dict, motion, min_spikes: int = MIN_SPIKES) -> pd
     times          = data["times"]
     amps           = data["amps"]
     clusters       = data["clusters"]
-    clusters       = data["clusters"]
     labels         = data["labels"]
     cluster_depths = data["cluster_depths"]
 
-    t_end       = times[-1]
+    t_end       = float(times.max())
     bin_edges   = np.arange(0.0, t_end + FR_BIN_SIZE, FR_BIN_SIZE)
     bin_centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+
+    # Presence ratio bin edges — shared across all units
+    bin_edges_pr = np.arange(0.0, t_end + PR_BIN_SIZE, PR_BIN_SIZE)
+    n_pr_bins    = len(bin_edges_pr) - 1
 
     records = []
     for uid in np.unique(clusters):
@@ -214,6 +175,7 @@ def compute_correlations(data: dict, motion, min_spikes: int = MIN_SPIKES) -> pd
         if not np.isfinite(depth):
             continue
 
+        # Amplitude ~ motion
         mot_spikes = _interp_motion(motion, t, depth)
         valid_amp  = np.isfinite(mot_spikes) & np.isfinite(a)
         if valid_amp.sum() >= min_spikes:
@@ -221,6 +183,7 @@ def compute_correlations(data: dict, motion, min_spikes: int = MIN_SPIKES) -> pd
         else:
             r_amp, p_amp = np.nan, np.nan
 
+        # Firing rate ~ motion
         counts, _ = np.histogram(t, bins=bin_edges)
         fr        = counts / FR_BIN_SIZE
         mot_bins  = _interp_motion(motion, bin_centers, depth)
@@ -230,7 +193,12 @@ def compute_correlations(data: dict, motion, min_spikes: int = MIN_SPIKES) -> pd
         else:
             r_fr, p_fr = np.nan, np.nan
 
-        coverage_ratio = (t[-1] - t[0]) / t_end if t_end > 0 else np.nan
+        # Presence ratio: fraction of 60s bins containing ≥1 spike
+        counts_pr, _ = np.histogram(t, bins=bin_edges_pr)
+        presence_ratio = (counts_pr > 0).sum() / n_pr_bins
+
+        # Coverage ratio: (last - first spike) / recording duration
+        coverage_ratio = (t.max() - t.min()) / t_end if t_end > 0 else np.nan
 
         records.append({
             "unit_id":        int(uid),
@@ -241,6 +209,7 @@ def compute_correlations(data: dict, motion, min_spikes: int = MIN_SPIKES) -> pd
             "r_fr":           float(r_fr),
             "p_fr":           float(p_fr),
             "depth":          depth,
+            "presence_ratio": float(presence_ratio),
             "coverage_ratio": float(coverage_ratio),
         })
 
@@ -248,14 +217,13 @@ def compute_correlations(data: dict, motion, min_spikes: int = MIN_SPIKES) -> pd
 
 
 # ---------------------------------------------------------------------------
-# Scalar summary for one run
+# Scalar summary
 # ---------------------------------------------------------------------------
 
 def _scalar_summary(
     mouse: str, session: str, probe: str, run_name: str,
-    df: pd.DataFrame, pr: pd.Series | None, motion, alpha: float,
+    df: pd.DataFrame, motion, alpha: float,
 ) -> dict:
-    """Compute all scalar metrics for one (recording, run) pair."""
 
     def _frac_ns(sub_df, col_p):
         s = sub_df.dropna(subset=[col_p])
@@ -265,24 +233,30 @@ def _scalar_summary(
         s = sub_df[col_r].dropna()
         return float(s.abs().median()) if len(s) else np.nan
 
-    good    = df[df["label"] == "GOOD"]
-    mua     = df[df["label"] == "MUA"]
+    good     = df[df["label"] == "GOOD"]
+    mua      = df[df["label"] == "MUA"]
     good_mua = df[df["label"].isin(KEEP_LABELS)]
 
-    row = {
+    # Presence/coverage from computed columns (GOOD+MUA only)
+    gm_pr = good_mua["presence_ratio"].dropna()
+    gm_cr = good_mua["coverage_ratio"].dropna()
+
+    # Over-split: coverage < HIGH_PR AND presence < HIGH_PR
+    df_j      = good_mua.dropna(subset=["coverage_ratio", "presence_ratio"])
+    oversplit = (df_j["coverage_ratio"] < HIGH_PR) & (df_j["presence_ratio"] < HIGH_PR)
+
+    return {
         "mouse":        mouse,
         "session":      session,
         "probe":        probe,
         "run_name":     run_name,
         "run_label":    _run_label(run_name),
-        # drift
         "drift_amplitude_um": drift_amplitude_um(motion),
-        "recording_duration_s": float(df["n_spikes"].sum() / max(1, len(df))),  # placeholder
         # unit counts
-        "n_units_total":    len(df),
-        "n_good":           len(good),
-        "n_mua":            len(mua),
-        "n_good_mua":       len(good_mua),
+        "n_units_total": len(df),
+        "n_good":        len(good),
+        "n_mua":         len(mua),
+        "n_good_mua":    len(good_mua),
         # frac non-sig amplitude
         "frac_nonsig_amp_good":     _frac_ns(good,     "p_amp"),
         "frac_nonsig_amp_mua":      _frac_ns(mua,      "p_amp"),
@@ -291,48 +265,29 @@ def _scalar_summary(
         "frac_nonsig_fr_good":      _frac_ns(good,     "p_fr"),
         "frac_nonsig_fr_mua":       _frac_ns(mua,      "p_fr"),
         "frac_nonsig_fr_good_mua":  _frac_ns(good_mua, "p_fr"),
-        # median |r| amplitude
-        "median_abs_r_amp_good":    _med_abs_r(good,     "r_amp"),
-        "median_abs_r_amp_mua":     _med_abs_r(mua,      "r_amp"),
+        # median |r|
+        "median_abs_r_amp_good":     _med_abs_r(good,     "r_amp"),
+        "median_abs_r_amp_mua":      _med_abs_r(mua,      "r_amp"),
         "median_abs_r_amp_good_mua": _med_abs_r(good_mua, "r_amp"),
-        # median |r| FR
-        "median_abs_r_fr_good":     _med_abs_r(good,     "r_fr"),
-        "median_abs_r_fr_mua":      _med_abs_r(mua,      "r_fr"),
-        "median_abs_r_fr_good_mua": _med_abs_r(good_mua, "r_fr"),
-        # coverage ratio (GOOD+MUA only)
-        "median_coverage_ratio": float(good_mua["coverage_ratio"].median()),
-        "n_high_coverage":       int((good_mua["coverage_ratio"] > HIGH_PR).sum()),
-        "frac_high_coverage":    float((good_mua["coverage_ratio"] > HIGH_PR).mean())
-                                 if len(good_mua) else np.nan,
+        "median_abs_r_fr_good":      _med_abs_r(good,     "r_fr"),
+        "median_abs_r_fr_mua":       _med_abs_r(mua,      "r_fr"),
+        "median_abs_r_fr_good_mua":  _med_abs_r(good_mua, "r_fr"),
+        # presence ratio (computed, GOOD+MUA)
+        "n_good_mua_pr":         len(gm_pr),
+        "median_presence_ratio": float(gm_pr.median()) if len(gm_pr) else np.nan,
+        "n_high_presence":       int((gm_pr > HIGH_PR).sum()),
+        "frac_high_presence":    float((gm_pr > HIGH_PR).mean()) if len(gm_pr) else np.nan,
+        # coverage ratio (GOOD+MUA)
+        "median_coverage_ratio": float(gm_cr.median()) if len(gm_cr) else np.nan,
+        "n_high_coverage":       int((gm_cr > HIGH_PR).sum()),
+        "frac_high_coverage":    float((gm_cr > HIGH_PR).mean()) if len(gm_cr) else np.nan,
+        # over-split
+        "frac_oversplit": float(oversplit.mean()) if len(df_j) else np.nan,
     }
-
-    # presence ratio (all clusters from TSV, not filtered by label)
-    if pr is not None:
-        pr_vals = np.asarray(pr.values, dtype=float)
-        row.update({
-            "n_clusters_pr":        len(pr_vals),
-            "median_presence_ratio": float(np.nanmedian(pr_vals)),
-            "n_high_presence":       int((pr_vals > HIGH_PR).sum()),
-            "frac_high_presence":    float((pr_vals > HIGH_PR).mean()),
-        })
-        # over-split: join on unit_id to get both metrics
-        df_j = df[df["label"].isin(KEEP_LABELS)].copy()
-        df_j["presence_ratio"] = df_j["unit_id"].map(pr)
-        df_j = df_j.dropna(subset=["coverage_ratio", "presence_ratio"])
-        oversplit = (
-            (df_j["coverage_ratio"] < HIGH_PR) & (df_j["presence_ratio"] < HIGH_PR)
-        )
-        row["frac_oversplit"] = float(oversplit.mean()) if len(df_j) else np.nan
-    else:
-        for k in ("n_clusters_pr", "median_presence_ratio",
-                  "n_high_presence", "frac_high_presence", "frac_oversplit"):
-            row[k] = np.nan
-
-    return row
 
 
 # ---------------------------------------------------------------------------
-# Plotting (stripped of plt.show; identical logic to GUI script)
+# Plotting
 # ---------------------------------------------------------------------------
 
 def _sq(ax):
@@ -367,12 +322,12 @@ def _pick_example_units(df, col_r, col_p, alpha):
 
 
 def _scatter_data_for_unit(data, motion, uid):
-    mask  = data["clusters"] == uid
-    t     = data["times"][mask]
-    a     = data["amps"][mask]
-    depth = float(data["cluster_depths"][uid])
-    mot_spikes = _interp_motion(motion, t, depth)
-    t_end       = data["times"][-1]
+    mask        = data["clusters"] == uid
+    t           = data["times"][mask]
+    a           = data["amps"][mask]
+    depth       = float(data["cluster_depths"][uid])
+    mot_spikes  = _interp_motion(motion, t, depth)
+    t_end       = float(data["times"].max())
     bin_edges   = np.arange(0.0, t_end + FR_BIN_SIZE, FR_BIN_SIZE)
     bin_centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
     counts, _   = np.histogram(t, bins=bin_edges)
@@ -383,13 +338,13 @@ def _scatter_data_for_unit(data, motion, uid):
 
 def plot_results(
     results: dict, run_data: dict, run_motions: dict,
-    presence: dict, alpha: float,
+    alpha: float,
     session_info: tuple | None = None,
     save_path: Path | None = None,
     show: bool = False,
 ) -> None:
     run_names  = list(results.keys())
-    colors     = RUN_COLORS[: len(run_names)]
+    colors     = RUN_COLORS[:len(run_names)]
     leg_labels = [_run_label(n) for n in run_names]
 
     ex_run  = run_names[0]
@@ -402,7 +357,7 @@ def plot_results(
 
     fig = plt.figure(figsize=(16, 24))
     id_line = " | ".join(session_info) if session_info else ""
-    fig.suptitle(f"{id_line} | motion/sorting correlation" , fontsize=11, y=1.0)
+    fig.suptitle(f"{id_line} | motion/sorting correlation", fontsize=11, y=1.0)
     gs = gridspec.GridSpec(6, 4, figure=fig)
 
     # -- helpers ---
@@ -498,7 +453,6 @@ def plot_results(
         ax_viol.set_ylabel(xlabel, fontsize=8); ax_viol.set_title(f"{title_prefix} by run", fontsize=9)
         ax_viol.set_ylim(-0.05, 1.18); ax_viol.set_xlim(0.4, len(active) + 0.6)
         ax_viol.spines["top"].set_visible(False); ax_viol.spines["right"].set_visible(False)
-
         thresholds = np.linspace(0, 1, 200)
         for name, color, lbl in zip(active, viol_cols, viol_lbls):
             vals  = np.asarray(data_dict[name], dtype=float)
@@ -529,24 +483,26 @@ def plot_results(
         leg = ax_cnt.legend(fontsize=7); leg.get_frame().set_visible(False)
         ax_cnt.relim(); ax_cnt.autoscale_view()
 
-    # -- rows --
+    # -- Row 0: fraction bars --
     _bar_panel(fig.add_subplot(gs[0, :2]), "p_amp",
                "Amplitude ~ motion  |  fraction non-significant")
     _bar_panel(fig.add_subplot(gs[0, 2:]), "p_fr",
                "Firing rate ~ motion  |  fraction non-significant")
 
+    # -- Row 1: r distributions --
     _hist_panel(fig.add_subplot(gs[1, 0]), "r_amp", "GOOD", "r(amp ~ motion)  GOOD")
     _hist_panel(fig.add_subplot(gs[1, 1]), "r_amp", "MUA",  "r(amp ~ motion)  MUA")
     _hist_panel(fig.add_subplot(gs[1, 2]), "r_fr",  "GOOD", "r(FR ~ motion)  GOOD")
     _hist_panel(fig.add_subplot(gs[1, 3]), "r_fr",  "MUA",  "r(FR ~ motion)  MUA")
 
+    # -- Row 2: example scatters --
     gs2 = gridspec.GridSpecFromSubplotSpec(2, 3, subplot_spec=gs[2, :], hspace=1.0, wspace=0.4)
     for col, (uid, ttl) in enumerate(zip(
             [uid_amp_corr, uid_amp_mid, uid_amp_indep], ["correlated", "middle", "independent"])):
         if uid is not None:
             ms, a, _, _ = _scatter_data_for_unit(ex_data, ex_mot, uid)
             _scatter_panel(fig.add_subplot(gs2[0, col]), uid,
-                           "r_amp", "p_amp", ms, a, "Motion (µm)", "Amplitude (µV)", f"Amp  {ttl}")
+                           "r_amp", "p_amp", ms, a, "Motion (µm)", "Amplitude", f"Amp  {ttl}")
     for col, (uid, ttl) in enumerate(zip(
             [uid_fr_corr, uid_fr_mid, uid_fr_indep], ["correlated", "middle", "independent"])):
         if uid is not None:
@@ -554,47 +510,56 @@ def plot_results(
             _scatter_panel(fig.add_subplot(gs2[1, col]), uid,
                            "r_fr", "p_fr", mb, fr, "Motion (µm)", "Firing rate (Hz)", f"FR  {ttl}")
 
-    valid_runs = [n for n in run_names if presence.get(n) is not None]
-    _draw_distribution_row(3, {n: presence[n] for n in valid_runs},
-                           xlabel="Presence ratio", threshold=HIGH_PR,
-                           title_prefix="Presence ratio")
+    # -- Row 3: presence ratio (computed, GOOD+MUA) --
+    pr_data = {
+        n: results[n].loc[results[n]["label"].isin(KEEP_LABELS), "presence_ratio"].dropna().values
+        for n in run_names
+    }
+    _draw_distribution_row(3, pr_data, xlabel="Presence ratio (60s bins)",
+                           threshold=HIGH_PR, title_prefix="Presence ratio")
 
+    # -- Row 4: coverage ratio (GOOD+MUA) --
     cov_data = {
         n: results[n].loc[results[n]["label"].isin(KEEP_LABELS), "coverage_ratio"].dropna().values
         for n in run_names
     }
-    _draw_distribution_row(4, cov_data, xlabel="Coverage ratio", threshold=HIGH_PR,
-                           title_prefix="Coverage ratio")
+    _draw_distribution_row(4, cov_data, xlabel="Coverage ratio",
+                           threshold=HIGH_PR, title_prefix="Coverage ratio")
 
-    LABEL_COLORS = {"GOOD": "seagreen", "MUA": "darkorange"}
-    for col_idx, run_name in enumerate(valid_runs):
+    # -- Row 5: over-split diagnostic scatter --
+    LABEL_COLORS = {"GOOD": "seagreen", "MUA": "chocolate"}
+    for col_idx, run_name in enumerate(run_names):
         ax_sc = _sq(fig.add_subplot(gs[5, col_idx * 2: col_idx * 2 + 2]))
-        pr    = presence[run_name]
         df_r  = results[run_name].copy()
-        df_r["presence_ratio"] = df_r["unit_id"].map(pr)
         df_r  = df_r.dropna(subset=["coverage_ratio", "presence_ratio"])
+
         bg = df_r[~df_r["label"].isin(KEEP_LABELS)]
         if len(bg):
             ax_sc.scatter(bg["coverage_ratio"], bg["presence_ratio"],
                           s=4, alpha=0.15, color="grey", linewidths=0, zorder=1)
+
         for label, grp in df_r[df_r["label"].isin(KEEP_LABELS)].groupby("label"):
             ax_sc.scatter(grp["coverage_ratio"], grp["presence_ratio"],
                           s=8, alpha=0.5, color=LABEL_COLORS[label],
                           label=label, linewidths=0, zorder=2)
+
+        # diagonal: presence = coverage (theoretical upper bound)
+        ax_sc.plot([0, 1], [0, 1], color="k", lw=0.8, ls="--", alpha=0.3)
         ax_sc.axvline(HIGH_PR, color="k", lw=0.6, ls="--", alpha=0.4)
         ax_sc.axhline(HIGH_PR, color="k", lw=0.6, ls="--", alpha=0.4)
         for (x, y, txt) in [(0.08, 0.08, "over-split?"),
-                            (0.08, 0.90, "dense\nbut short"),
+                             #(0.08, 0.90, "dense\nbut short"), # impossible
                              (0.84, 0.08, "sparse"),
-                            (0.84, 0.90, "stable")]:
+                             (0.84, 0.90, "stable")]:
             ax_sc.text(x, y, txt, transform=ax_sc.transAxes,
                        fontsize=6, color="#666666", va="bottom" if y > 0.5 else "top")
         ax_sc.set_xlim(-0.02, 1.02); ax_sc.set_ylim(-0.02, 1.08)
         ax_sc.set_xlabel("Coverage ratio  (last−first spike / recording)", fontsize=8)
-        ax_sc.set_ylabel("Presence ratio", fontsize=8)
+        ax_sc.set_ylabel("Presence ratio  (60s bins)", fontsize=8)
         ax_sc.set_title(f"Over-split diagnostic  –  {leg_labels[run_names.index(run_name)]}", fontsize=9)
         ax_sc.spines["top"].set_visible(False); ax_sc.spines["right"].set_visible(False)
-        leg = ax_sc.legend(fontsize=7, markerscale=1.5, loc='upper center'); leg.get_frame().set_visible(False)
+        leg = ax_sc.legend(fontsize=7, markerscale=1.5, loc="upper left")
+        leg.get_frame().set_visible(False)
 
     fig.tight_layout()
     if save_path:
@@ -612,16 +577,11 @@ def process_recording(
     mouse: str, session: str, probe: str,
     out_dir: Path, alpha: float, min_spikes: int,
 ) -> list[dict]:
-    """
-    Run the full analysis for one (mouse, session, probe).
-    Returns a list of scalar summary dicts (one per run).
-    """
     runs = resolve_runs(BASE_DATA_PATH, mouse, session, probe)
 
     results     = {}
     run_data    = {}
     run_motions = {}
-    presence    = {}
 
     for run_name, paths in runs.items():
         print(f"    Loading {run_name} …")
@@ -633,37 +593,25 @@ def process_recording(
         run_data[run_name]    = data
         run_motions[run_name] = motion
 
-        pr = load_presence_ratio(paths["ks_dir"], paths["is_ks2"])
-        presence[run_name] = pr
-
-        # Save per-unit CSV
         df.to_csv(out_dir / f"results_{run_name}.csv", index=False)
-        if pr is not None:
-            pr.reset_index().to_csv(out_dir / f"presence_{run_name}.csv", index=False)
+        print(f"      {len(df)} units  |  {len(df[df['label'].isin(KEEP_LABELS)])} GOOD/MUA")
 
-        print(f"      {len(df)} units  |  "
-              f"{len(df[df['label'].isin(KEEP_LABELS)])} GOOD/MUA")
-
-    # Save figure
     plot_results(
-        results, run_data, run_motions, presence, alpha=alpha,
+        results, run_data, run_motions, alpha=alpha,
         session_info=(mouse, session, probe),
         save_path=out_dir / "figure.png",
         show=False,
     )
 
-    # Compute scalar summaries
     summaries = []
     for run_name in runs:
         row = _scalar_summary(
             mouse, session, probe, run_name,
-            results[run_name], presence[run_name], run_motions[run_name], alpha,
+            results[run_name], run_motions[run_name], alpha,
         )
         summaries.append(row)
 
-    # Save per-recording summary so skipped runs can be recovered later
     pd.DataFrame(summaries).to_csv(out_dir / "summary.csv", index=False)
-
     return summaries
 
 
@@ -673,34 +621,30 @@ def process_recording(
 
 def main():
     parser = argparse.ArgumentParser(description="Batch motion-sorting correlation")
-    parser.add_argument("--rerun", action="store_true",
-                        help="Reprocess recordings that already have done.flag")
-    parser.add_argument("--alpha", type=float, default=ALPHA,
-                        help=f"Significance threshold (default {ALPHA})")
-    parser.add_argument("--min-spikes", type=int, default=MIN_SPIKES,
-                        help=f"Minimum spikes per unit (default {MIN_SPIKES})")
+    parser.add_argument("--rerun", action="store_true")
+    parser.add_argument("--alpha", type=float, default=ALPHA)
+    parser.add_argument("--min-spikes", type=int, default=MIN_SPIKES)
     args = parser.parse_args()
 
+
     SINGLE_DIR.mkdir(parents=True, exist_ok=True)
-    (OUTPUT_BASE / "summary_figures").mkdir(parents=True, exist_ok=True)
+    (OUTPUT_BASE / MOTION_PRESET / "summary_figures").mkdir(parents=True, exist_ok=True)
 
     all_summaries = []
     recordings    = list(iter_recordings(BASE_DATA_PATH))
     print(f"Found {len(recordings)} recordings to process.")
 
-    #recordings = recordings[::20]
-    exclude = ['AB068', 'AB077']
+    exclude    = ["AB068", "AB077"]
     recordings = [r for r in recordings if r[0] not in exclude]
-    #recordings = [r for r in recordings if 'AB126' in r]
 
     for i, (mouse, session, probe) in enumerate(recordings, 1):
         out_dir = SINGLE_DIR / mouse / f"{session}_{probe}"
         out_dir.mkdir(parents=True, exist_ok=True)
         flag = out_dir / "done.flag"
 
-        if flag.exists() and not args.rerun:
-            print(f"[{i}/{len(recordings)}] SKIP {mouse}/{session}/{probe}")
-            continue
+        #if flag.exists() and not args.rerun:
+        #    print(f"[{i}/{len(recordings)}] SKIP {mouse}/{session}/{probe}")
+        #    continue
 
         print(f"[{i}/{len(recordings)}] {mouse}/{session}/{probe}")
         try:
@@ -716,11 +660,8 @@ def main():
             print(f"  ERROR:")
             traceback.print_exc()
 
-    # Build master CSV: combine freshly computed summaries with any previously
-    # saved per-recording summary CSVs from skipped recordings.
-    prev_csvs = sorted(SINGLE_DIR.glob("*/*/summary.csv"))
     prev_rows = []
-    for csv in prev_csvs:
+    for csv in sorted(SINGLE_DIR.glob("*/*/summary.csv")):
         try:
             prev_rows.append(pd.read_csv(csv))
         except Exception:
@@ -728,10 +669,10 @@ def main():
 
     all_dfs = ([pd.DataFrame(all_summaries)] if all_summaries else []) + prev_rows
     if all_dfs:
-        master  = pd.concat(all_dfs, ignore_index=True).drop_duplicates(
+        master = pd.concat(all_dfs, ignore_index=True).drop_duplicates(
             subset=["mouse", "session", "probe", "run_name"], keep="last"
         )
-        out_csv = OUTPUT_BASE / "all_recordings_summary.csv"
+        out_csv = OUTPUT_BASE / MOTION_PRESET / "all_recordings_summary.csv"
         master.to_csv(out_csv, index=False)
         print(f"\nSaved master summary → {out_csv}  ({len(master)} rows)")
     else:

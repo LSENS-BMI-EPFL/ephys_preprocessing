@@ -159,9 +159,9 @@ def main(input_dir: Path, config_path: Path):
         logger.info(f"Finished OverStrike in {elapsed()}.")
 
     if config["motion"]["do"]:
-        logger.info("Starting DREDge.")
-        run_dredge.main(processed_dir, config)
-        logger.info(f"Finished DREDge in {elapsed()}.")
+        logger.info("Starting motion estimation.")
+        run_motion_estimation.main(processed_dir, config)
+        logger.info(f"Finished motion estimation in {elapsed()}.")
 
     if config["sorters"]["do"]:
         logger.info("Starting sorter.")

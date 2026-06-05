@@ -45,18 +45,17 @@ def main(input_dir):
             # Get output folder
             path_cwave_output = kilosort_folder / 'sorter_output' / 'cwaves'
 
-            # Get sampling rate
-            try:
-                metafile_name = '{}_tcat_corrected.imec{}.ap.meta'.format(epoch_name, probe_id)
-                apbin_metafile_path = os.path.join(input_dir, probe_folder, metafile_name)
-                ap_meta_dict = readSGLX.readMeta(pathlib.Path(apbin_metafile_path))
 
-            except FileNotFoundError:
+            meta_fname = f'{epoch_name}_tcat_corrected.imec{probe_id}.ap.meta'
+            path_to_meta = os.path.join(input_dir, probe_folder, meta_fname)
 
-                metafile_name = '{}_tcat.imec{}.ap.meta'.format(epoch_name, probe_id)
-                apbin_metafile_path = os.path.join(input_dir, probe_folder, metafile_name)
-                ap_meta_dict = readSGLX.readMeta(pathlib.Path(apbin_metafile_path))
+            if not (os.path.exists(path_to_meta)):
+                logger.warning('Files with _corrected suffix missing. Using _tcat files.')
+                meta_fname = f'{epoch_name}_tcat.imec{probe_id}.ap.meta'
+                path_to_meta = os.path.join(input_dir, probe_folder, meta_fname)
 
+            # Read sampling rate
+            ap_meta_dict = readSGLX.readMeta(pathlib.Path(pathlib.Path(path_to_meta)))
             imSampRate = float(ap_meta_dict['imSampRate'])  # probe-specific
 
             # Load mean waveform data from C_waves

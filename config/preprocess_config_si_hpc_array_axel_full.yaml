@@ -21,22 +21,22 @@ catgt:
      overwrite: false
 
 artifact_correction:
-     do: true
+     do: false
      window_ms: 3
-     ms_before: 0.2
-     ms_after: 3.7
+     ms_before: 1
+     ms_after: 2
      mode: 'linear'
 
 motion:
      do: true
-     preset: 'dredge_fast'
+     preset: 'dredge'
 
 drift_correction:
-     do: true
+     do: false
      preset: 'dredge_fast'
 
 sorters:
-     do: true
+     do: false
      overwrite_preprocessed: true # load extractor throws an error otherwise
      sorter_list:
           - kilosort4
@@ -63,7 +63,7 @@ sorters:
                do_correction: true
 
 bombcell:
-     do: true
+     do: false
      # Python-only bombcell (no MATLAB required in container)
      bombcell_path: '/opt/tools/bombcell'
      run_bombcell_path: '/opt/code/ephys_preprocessing/matlab'
@@ -71,13 +71,13 @@ bombcell:
      matlab_path: ''  # Not used for Python-only bombcell
 
 tprime:
-     do: true
+     do: false
      tprime_path: '/opt/tools/TPrime-linux'
      syncperiod: 1
      default_tostream_probe: 0
 
 cwaves:
-     do: true
+     do: false
      cwaves_path: '/opt/tools/C_Waves-linux'
      samples_per_spike: 82
      pre_samples: 30
@@ -85,12 +85,12 @@ cwaves:
      snr_radius: 8
 
 mean_waveform_metrics:
-     do: true
+     do: false
 
 depth_estimation:
      do: false # Requires LFP data
 
 ibl_conversion:
-     do: true #Requires having IBL libraries
+     do: false #Requires having IBL libraries
      overwrite: true
 

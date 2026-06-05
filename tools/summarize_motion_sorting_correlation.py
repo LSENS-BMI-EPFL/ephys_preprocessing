@@ -45,9 +45,10 @@ from itertools import cycle
 
 BASE_DATA_PATH = Path(r"M:\analysis\Axel_Bisi\data")
 OUTPUT_BASE    = BASE_DATA_PATH.parent / "combined_results" / "motion_sorting_correlation"
-FIG_DIR        = OUTPUT_BASE / "summary_figures"
+MOTION_PRESET = 'dredge_fast'
+FIG_DIR        = OUTPUT_BASE / MOTION_PRESET / "summary_figures"
 
-RUN_COLORS  = {"ks2": "royalblue", "dredge+ks4": "firebrick"}
+RUN_COLORS  = {"ks2": "royalblue", f"{MOTION_PRESET}+ks4": "firebrick"}
 HIGH_PR     = 0.8
 ALPHA_FIG   = 0.01     # for significance annotations on figures
 
@@ -69,7 +70,7 @@ def load_summary(csv_path: Path) -> pd.DataFrame:
     # Ensure run_label column exists
     if "run_label" not in df.columns:
         df["run_label"] = df["run_name"].apply(
-            lambda n: "ks2" if "2" in n.lower().replace("kilosort", "") else "dredge+ks4"
+            lambda n: "ks2" if "2" in n.lower().replace("kilosort", "") else f"{MOTION_PRESET}+ks4"
         )
     return df
 
@@ -81,7 +82,7 @@ def pivot_paired(df: pd.DataFrame) -> pd.DataFrame:
     Only keeps recordings that have BOTH runs.
     """
     ks2 = df[df["run_label"] == "ks2"].set_index(["mouse", "session", "probe"])
-    ks4 = df[df["run_label"] == "dredge+ks4"].set_index(["mouse", "session", "probe"])
+    ks4 = df[df["run_label"] == f"{MOTION_PRESET}+ks4"].set_index(["mouse", "session", "probe"])
     common = ks2.index.intersection(ks4.index)
     ks2 = ks2.loc[common].add_suffix("_ks2")
     ks4 = ks4.loc[common].add_suffix("_ks4")
@@ -107,7 +108,7 @@ def _despine(ax):
 
 def _paired_scatter(
     ax, x: np.ndarray, y: np.ndarray, mouse_labels: list,
-    xlabel: str = "ks2", ylabel: str = "dredge+ks4",
+    xlabel: str = "ks2", ylabel: str = f"{MOTION_PRESET}+ks4",
     title: str = "",
     lims: tuple | None = None,
     add_wilcoxon: bool = True,
@@ -181,10 +182,9 @@ def fig_nonsig_paired(paired: pd.DataFrame, metric: str, title_tag: str, fname: 
         x = paired.get(f"{col}_ks2",  pd.Series(dtype=float)).values.astype(float)
         y = paired.get(f"{col}_ks4",  pd.Series(dtype=float)).values.astype(float)
         _paired_scatter(ax, x, y, mice,
-                        xlabel="ks2", ylabel="dredge+ks4",
+                        xlabel="ks2", ylabel=f"{MOTION_PRESET}+ks4",
                         title=label_tag, lims=(-0.02, 1.02))
 
-    _add_mouse_legend(fig, mice)
     fig.tight_layout()
     _save(fig, fname)
 
@@ -204,7 +204,7 @@ def fig_r_distributions(df: pd.DataFrame, single_dir: Path, fname: str) -> None:
         mouse    = parts[-3]
         ses_prob = parts[-2]
         run_name = run_csv.stem.replace("results_", "")
-        run_lbl  = "ks2" if "2" in run_name.lower().replace("kilosort", "") else "dredge+ks4"
+        run_lbl  = "ks2" if "2" in run_name.lower().replace("kilosort", "") else f"{MOTION_PRESET}+ks4"
         try:
             sub = pd.read_csv(run_csv, usecols=["label", "r_amp", "r_fr"])
             sub["run_label"] = run_lbl
@@ -227,7 +227,7 @@ def fig_r_distributions(df: pd.DataFrame, single_dir: Path, fname: str) -> None:
         ("r_fr",  "GOOD", "r(FR ~ motion)  GOOD"),
         ("r_fr",  "MUA",  "r(FR ~ motion)  MUA"),
     ]
-    colors = {"ks2": "royalblue", "dredge+ks4": "firebrick"}
+    colors = {"ks2": "royalblue", f"{MOTION_PRESET}+ks4": "firebrick"}
     for ax, (col_r, lbl, title) in zip(axes, panels):
         for run_lbl, color in colors.items():
             sub = pool[(pool["run_label"] == run_lbl) & (pool["label"] == lbl)][col_r].dropna()
@@ -254,13 +254,12 @@ def fig_r_distributions(df: pd.DataFrame, single_dir: Path, fname: str) -> None:
 
 def fig_presence_ratio_paired(paired: pd.DataFrame, fname: str) -> None:
     fig, ax = plt.subplots(figsize=(5, 5))
-    fig.suptitle("Median presence ratio", fontsize=12)
+    fig.suptitle("Median presence ratio  (computed, 60s bins, GOOD+MUA)", fontsize=12)
     mice = paired["mouse"].tolist()
     x = paired["median_presence_ratio_ks2"].values.astype(float)
     y = paired["median_presence_ratio_ks4"].values.astype(float)
-    _paired_scatter(ax, x, y, mice, xlabel="ks2", ylabel="dredge+ks4",
+    _paired_scatter(ax, x, y, mice, xlabel="ks2", ylabel=f"{MOTION_PRESET}+ks4",
                     title="Median presence ratio", lims=(0, 1.05))
-    _add_mouse_legend(fig, mice)
     fig.tight_layout()
     _save(fig, fname)
 
@@ -271,21 +270,20 @@ def fig_presence_ratio_paired(paired: pd.DataFrame, fname: str) -> None:
 
 def fig_yield_paired(paired: pd.DataFrame, fname: str) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-    fig.suptitle(f"Yield  (n units with presence ratio > {HIGH_PR})", fontsize=12)
+    fig.suptitle(f"Yield  (units with computed presence ratio > {HIGH_PR},  60s bins, GOOD+MUA)", fontsize=12)
     mice = paired["mouse"].tolist()
 
     x_n = paired["n_high_presence_ks2"].values.astype(float)
     y_n = paired["n_high_presence_ks4"].values.astype(float)
     _paired_scatter(axes[0], x_n, y_n, mice,
-                    title="Absolute count", xlabel="ks2", ylabel="dredge+ks4")
+                    title="Absolute count", xlabel="ks2", ylabel=f"{MOTION_PRESET}+ks4")
 
     x_f = paired["frac_high_presence_ks2"].values.astype(float)
     y_f = paired["frac_high_presence_ks4"].values.astype(float)
     _paired_scatter(axes[1], x_f, y_f, mice,
-                    title="Fraction", xlabel="ks2", ylabel="dredge+ks4",
+                    title="Fraction", xlabel="ks2", ylabel=f"{MOTION_PRESET}+ks4",
                     lims=(0, 1.05))
 
-    _add_mouse_legend(fig, mice)
     fig.tight_layout()
     _save(fig, fname)
 
@@ -300,9 +298,8 @@ def fig_coverage_paired(paired: pd.DataFrame, fname: str) -> None:
     mice = paired["mouse"].tolist()
     x = paired["median_coverage_ratio_ks2"].values.astype(float)
     y = paired["median_coverage_ratio_ks4"].values.astype(float)
-    _paired_scatter(ax, x, y, mice, xlabel="ks2", ylabel="dredge+ks4",
+    _paired_scatter(ax, x, y, mice, xlabel="ks2", ylabel=f"{MOTION_PRESET}+ks4",
                     title="Median coverage ratio", lims=(0, 1.05))
-    _add_mouse_legend(fig, mice)
     fig.tight_layout()
     _save(fig, fname)
 
@@ -314,10 +311,10 @@ def fig_coverage_paired(paired: pd.DataFrame, fname: str) -> None:
 def fig_oversplit(df: pd.DataFrame, paired: pd.DataFrame, fname: str) -> None:
     """Bar of mean frac_oversplit per method, with per-recording dots."""
     fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-    fig.suptitle(f"Over-split fraction  (coverage < {HIGH_PR} AND presence < {HIGH_PR},  GOOD+MUA)",
+    fig.suptitle(f"Over-split fraction  (coverage < {HIGH_PR} AND presence < {HIGH_PR},  computed 60s bins, GOOD+MUA)",
                  fontsize=11)
 
-    colors = {"ks2": "royalblue", "dredge+ks4": "firebrick"}
+    colors = {"ks2": "royalblue", f"{MOTION_PRESET}+ks4": "firebrick"}
     mice   = paired["mouse"].tolist()
     m_cols = mouse_colors(mice)
 
@@ -341,10 +338,9 @@ def fig_oversplit(df: pd.DataFrame, paired: pd.DataFrame, fname: str) -> None:
     x = paired["frac_oversplit_ks2"].values.astype(float)
     y = paired["frac_oversplit_ks4"].values.astype(float)
     _paired_scatter(ax, x, y, mice,
-                    title="Paired (per recording)", xlabel="ks2", ylabel="dredge+ks4",
+                    title="Paired (per recording)", xlabel="ks2", ylabel=f"{MOTION_PRESET}+ks4",
                     lims=(0, 1.02))
 
-    _add_mouse_legend(fig, mice)
     fig.tight_layout()
     _save(fig, fname)
 
@@ -381,7 +377,6 @@ def fig_drift_vs_nonsig(paired: pd.DataFrame, fname: str) -> None:
         ax.set_ylabel("Gain in frac_nonsig  (ks4 − ks2)", fontsize=9)
         ax.set_title(title, fontsize=10); _despine(ax)
 
-    _add_mouse_legend(fig, mice)
     fig.tight_layout()
     _save(fig, fname)
 
@@ -392,7 +387,7 @@ def fig_drift_vs_nonsig(paired: pd.DataFrame, fname: str) -> None:
 
 def fig_drift_vs_pr(paired: pd.DataFrame, fname: str) -> None:
     fig, ax = plt.subplots(figsize=(5.5, 5))
-    fig.suptitle("Drift amplitude vs gain in median presence ratio", fontsize=12)
+    fig.suptitle("Drift amplitude vs gain in median presence ratio  (computed, 60s bins, GOOD+MUA)", fontsize=11)
 
     mice   = paired["mouse"].tolist()
     m_cols = mouse_colors(mice)
@@ -414,8 +409,8 @@ def fig_drift_vs_pr(paired: pd.DataFrame, fname: str) -> None:
         xfit = np.linspace(drift[valid].min(), drift[valid].max(), 100)
         ax.plot(xfit, m_fit * xfit + b, "k-", lw=1, alpha=0.5)
     ax.set_xlabel("Drift amplitude (µm, ks2 recording)", fontsize=9)
-    ax.set_ylabel("Gain in median PR  (ks4 − ks2)", fontsize=9)
-    _despine(ax); _add_mouse_legend(fig, mice)
+    ax.set_ylabel("Gain in median presence ratio  (ks4 − ks2)", fontsize=9)
+    _despine(ax)
     fig.tight_layout()
     _save(fig, fname)
 
@@ -433,14 +428,14 @@ def fig_per_mouse(paired: pd.DataFrame, fname: str) -> None:
     metrics = [
         ("frac_nonsig_amp_good_mua", "Frac non-sig amp\n(GOOD+MUA)"),
         ("frac_nonsig_fr_good_mua",  "Frac non-sig FR\n(GOOD+MUA)"),
-        ("median_presence_ratio",    "Median presence ratio"),
-        ("median_coverage_ratio",    "Median coverage ratio"),
+        ("median_presence_ratio",    "Median presence ratio\n(computed, 60s bins, GOOD+MUA)"),
+        ("median_coverage_ratio",    "Median coverage ratio\n(GOOD+MUA)"),
     ]
     mice   = sorted(paired["mouse"].unique())
-    colors = {"ks2": "royalblue", "dredge+ks4": "firebrick"}
+    colors = {"ks2": "royalblue", f"{MOTION_PRESET}+ks4": "firebrick"}
 
     fig, axes = plt.subplots(1, len(metrics), figsize=(16, 5))
-    fig.suptitle("Per-mouse breakdown  (ks2 vs dredge+ks4)", fontsize=12)
+    fig.suptitle(f"Per-mouse breakdown  (ks2 vs {MOTION_PRESET}+ks4)", fontsize=12)
 
     for ax, (base_col, ylabel) in zip(axes, metrics):
         positions_ks2 = []
@@ -459,7 +454,7 @@ def fig_per_mouse(paired: pd.DataFrame, fname: str) -> None:
 
         for positions, vals_list, color, lbl in [
             (positions_ks2, vals_ks2, "royalblue", "ks2"),
-            (positions_ks4, vals_ks4, "firebrick", "dredge+ks4"),
+            (positions_ks4, vals_ks4, "firebrick", f"{MOTION_PRESET}+ks4"),
         ]:
             if not vals_list:
                 continue
@@ -498,7 +493,7 @@ def fig_multi_probe(paired: pd.DataFrame, fname: str) -> None:
 
     metric_pairs = [
         ("frac_nonsig_amp_good_mua", "Gain frac non-sig amp"),
-        ("median_presence_ratio",    "Gain median PR"),
+        ("median_presence_ratio",    "Gain median presence ratio\n(computed, 60s bins)"),
     ]
     sessions = multi["session_key"].unique()
     m_cols   = mouse_colors(multi["mouse"].tolist())
@@ -515,7 +510,6 @@ def fig_multi_probe(paired: pd.DataFrame, fname: str) -> None:
             mouse = sub["mouse"].iloc[0]
             color = m_cols[mouse]
             probes = sub["probe"].tolist()
-            # Connect probes of the same session with a line
             for pi, (probe, g) in enumerate(zip(probes, gain)):
                 ax.scatter(probe, g, s=20, color=color, alpha=0.8, linewidths=0)
             if len(gain) >= 2:
@@ -526,7 +520,6 @@ def fig_multi_probe(paired: pd.DataFrame, fname: str) -> None:
         ax.set_ylabel(ylabel, fontsize=9)
         ax.set_title(ylabel, fontsize=10); _despine(ax)
 
-    _add_mouse_legend(fig, multi["mouse"].tolist())
     fig.tight_layout()
     _save(fig, fname)
 
@@ -539,7 +532,7 @@ def main():
     parser = argparse.ArgumentParser(description="Dataset-level summary figures")
     parser.add_argument(
         "--csv", type=Path,
-        default=OUTPUT_BASE / "all_recordings_summary.csv",
+        default=OUTPUT_BASE / MOTION_PRESET / "all_recordings_summary.csv",
         help="Path to the master summary CSV",
     )
     args = parser.parse_args()
@@ -553,7 +546,7 @@ def main():
     paired = pivot_paired(df)
     print(f"  {len(paired)} paired recordings (both runs present)")
 
-    single_dir = OUTPUT_BASE / "single"
+    single_dir = OUTPUT_BASE / MOTION_PRESET /  "single"
 
     print("Generating figures …")
 

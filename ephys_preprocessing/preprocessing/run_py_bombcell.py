@@ -39,29 +39,28 @@ def main(input_dir, config):
             # Set paths
             ks_name = kilosort_folder.name
             kilosort_version = extract_ks_version(ks_name)
-            if (mouse_id.startswith('AB') or mouse_id.startswith('MH')) and ks_name == 'kilosort2':
+            if (mouse_id.startswith('AB') or mouse_id.startswith('MH')) and ks_name == 'kilosort2':     #legacy org
                 kilosort_path = os.path.join(kilosort_folder)
             else:
-                kilosort_path = os.path.join(kilosort_folder, 'sorter_output')
-
+                kilosort_path = os.path.join(kilosort_folder, 'sorter_output')       #default spikeinterface orc
             save_path = os.path.join(kilosort_path, 'bombcell')
 
-            try:
-                apbin_fname = '{}_tcat_corrected.imec{}.ap.bin'.format(epoch_name, probe_id)
-                meta_fname = '{}_tcat_corrected.imec{}.ap.meta'.format(epoch_name, probe_id)
+            apbin_fname = f'{epoch_name}_tcat_corrected.imec{probe_id}.ap.bin'
+            meta_fname = f'{epoch_name}_tcat_corrected.imec{probe_id}.ap.meta'
+            path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
+            path_to_meta = os.path.join(input_dir, probe_folder, meta_fname)
+
+            if not (os.path.exists(path_to_apbin) and os.path.exists(path_to_meta)):
+                logger.warning('Files with _corrected suffix missing. Using _tcat files.')
+                apbin_fname = f'{epoch_name}_tcat.imec{probe_id}.ap.bin'
+                meta_fname = f'{epoch_name}_tcat.imec{probe_id}.ap.meta'
                 path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
                 path_to_meta = os.path.join(input_dir, probe_folder, meta_fname)
 
-            except FileNotFoundError:
-                apbin_fname = '{}_tcat.imec{}.ap.bin'.format(epoch_name, probe_id)
-                meta_fname = '{}_tcat.imec{}.ap.meta'.format(epoch_name, probe_id)
-                path_to_apbin = os.path.join(input_dir, probe_folder, apbin_fname)
-                path_to_meta = os.path.join(input_dir, probe_folder, meta_fname)
-
-            # If paths don't exist, log error and skip
-            if not os.path.exists(path_to_apbin) or not os.path.exists(path_to_meta):
-                logger.error(f"Raw data files not found for probe {probe_id} at {path_to_apbin} and {path_to_meta}. Skipping bombcell {ks_name}")
-                continue
+                # If paths still don't exist, log error and skip
+                if not os.path.exists(path_to_apbin) or not os.path.exists(path_to_meta):
+                    logger.error(f"Raw data files not found for probe {probe_id} at {path_to_apbin} and {path_to_meta}. Skipping bombcell {ks_name}")
+                    continue
 
             # Load metadata
             logger.info("Getting parameters for Bombcell and updating them. Nullifying presence ratio metric for GOOD units.")

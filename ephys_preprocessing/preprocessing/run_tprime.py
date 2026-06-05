@@ -56,17 +56,17 @@ def main(input_dir, config):
     valid_probes = []
     for probe_id in range(n_probes):
         probe_folder = '{}_imec{}'.format(epoch_name, probe_id)
-        try:
-            metafile_name = '{}_tcat_corrected.imec{}.ap.meta'.format(epoch_name, probe_id)
-            apbin_metafile_path = os.path.join(input_dir, probe_folder, metafile_name)
-            ap_meta_dict = readSGLX.readMeta(pathlib.Path(apbin_metafile_path))
 
-        except FileNotFoundError:
+        meta_fname = f'{epoch_name}_tcat_corrected.imec{probe_id}.ap.meta'
+        path_to_meta = os.path.join(input_dir, probe_folder, meta_fname)
 
-            metafile_name = '{}_tcat.imec{}.ap.meta'.format(epoch_name, probe_id)
-            apbin_metafile_path = os.path.join(input_dir, probe_folder, metafile_name)
-            ap_meta_dict = readSGLX.readMeta(pathlib.Path(apbin_metafile_path))
+        if not (os.path.exists(path_to_meta)):
+            logger.warning('Files with _corrected suffix missing. Using _tcat files.')
+            meta_fname = f'{epoch_name}_tcat.imec{probe_id}.ap.meta'
+            path_to_meta = os.path.join(input_dir, probe_folder, meta_fname)
 
+        # Read sampling rate
+        ap_meta_dict = readSGLX.readMeta(pathlib.Path(pathlib.Path(path_to_meta)))
         imSampRate = float(ap_meta_dict['imSampRate'])  # probe-specific
 
         kilosort_folders = (pathlib.Path(input_dir) / probe_folder).glob('kilosort*')
@@ -101,16 +101,18 @@ def main(input_dir, config):
         default_tostream_probe = config['default_tostream_probe']
 
     path_ref_probe = os.path.join(input_dir, '{}_imec{}'.format(epoch_name, default_tostream_probe))
-    try:
-        ref_probe_edges_file = '{}_tcat_corrected.imec{}.ap.xd_{}_6_500.txt'.format(epoch_name,
-                                                                                    default_tostream_probe,
-                                                                                    int(ap_meta_dict[
-                                                                                            'nSavedChans']) - 1)
-    except FileNotFoundError:
+    ref_probe_edges_file = '{}_tcat_corrected.imec{}.ap.xd_{}_6_500.txt'.format(epoch_name,
+                                                                                default_tostream_probe,
+                                                                                int(ap_meta_dict[
+                                                                                        'nSavedChans']) - 1)
+    ref_probe_edge_path = os.path.join(path_ref_probe, ref_probe_edges_file)
+    if not os.path.exists(ref_probe_edge_path):
         ref_probe_edges_file = '{}_tcat.imec{}.ap.xd_{}_6_500.txt'.format(epoch_name,
                                                                                     default_tostream_probe,
                                                                                     int(ap_meta_dict[
                                                                                             'nSavedChans']) - 1)
+        ref_probe_edge_path = os.path.join(path_ref_probe, ref_probe_edges_file)
+
     # Set reference streams
     if sys.platform.startswith('win'):
         Tprime_fullpath = 'Tprime'
@@ -124,7 +126,7 @@ def main(input_dir, config):
 
     command = [Tprime_fullpath,
                '-syncperiod={}'.format(syncperiod),                                         # arg: reference data stream edge times (IMEC 0)
-               '-tostream={}'.format(os.path.join(path_ref_probe, ref_probe_edges_file)),   # arg: stream index, sync pulse edge times
+               '-tostream={}'.format(ref_probe_edge_path),   # arg: stream index, sync pulse edge times
                '-fromstream={},{}'.format(nidq_stream_idx,
                                           os.path.join(input_dir, epoch_name + '_tcat.nidq.xa_0_0.txt'))
                ]
