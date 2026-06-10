@@ -1,5 +1,6 @@
 # EphysUtils
 
+**Work in progress.**
 Pipeline to preprocess extracellular electrophysiology Neuropixels data acquired using SpikeGLX. 🐁🔌
 
 ### Notes about this pipeline ♻️
